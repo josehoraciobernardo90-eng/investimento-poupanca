@@ -1,22 +1,28 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Cofre Capital API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: users
+    description: User management
+  - name: loans
+    description: Loan management
+  - name: requests
+    description: Loan and deposit requests
+  - name: audit
+    description: Audit log
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +30,331 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all members
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create a new member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserBody"
+      responses:
+        "201":
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{userId}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get user with capital map
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User detail with capital map
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserDetail"
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserBody"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /loans:
+    get:
+      operationId: listLoans
+      tags: [loans]
+      summary: List all loans
+      responses:
+        "200":
+          description: List of loans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Loan"
+
+  /loans/{loanId}:
+    get:
+      operationId: getLoan
+      tags: [loans]
+      summary: Get loan detail
+      parameters:
+        - name: loanId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Loan detail with traceability
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanDetail"
+    patch:
+      operationId: updateLoan
+      tags: [loans]
+      summary: Update loan (pay, close, etc)
+      parameters:
+        - name: loanId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLoanBody"
+      responses:
+        "200":
+          description: Updated loan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Loan"
+
+  /loans/{loanId}/liquidate:
+    post:
+      operationId: liquidateLoan
+      tags: [loans]
+      summary: Liquidate a loan and distribute returns
+      parameters:
+        - name: loanId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LiquidateBody"
+      responses:
+        "200":
+          description: Liquidation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiquidationResult"
+
+  /requests/loan:
+    get:
+      operationId: listLoanRequests
+      tags: [requests]
+      summary: List loan requests
+      responses:
+        "200":
+          description: List of loan requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LoanRequest"
+    post:
+      operationId: createLoanRequest
+      tags: [requests]
+      summary: Create a loan request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLoanRequestBody"
+      responses:
+        "201":
+          description: Created loan request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanRequest"
+
+  /requests/loan/{requestId}/approve:
+    post:
+      operationId: approveLoanRequest
+      tags: [requests]
+      summary: Approve a loan request and allocate capital
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Approved loan with allocation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanDetail"
+
+  /requests/loan/{requestId}/reject:
+    post:
+      operationId: rejectLoanRequest
+      tags: [requests]
+      summary: Reject a loan request
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Rejected request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoanRequest"
+
+  /requests/deposit:
+    get:
+      operationId: listDepositRequests
+      tags: [requests]
+      summary: List deposit requests
+      responses:
+        "200":
+          description: List of deposit requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DepositRequest"
+    post:
+      operationId: createDepositRequest
+      tags: [requests]
+      summary: Create a deposit request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDepositRequestBody"
+      responses:
+        "201":
+          description: Created deposit request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepositRequest"
+
+  /requests/deposit/{requestId}/approve:
+    post:
+      operationId: approveDepositRequest
+      tags: [requests]
+      summary: Approve a deposit request
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Approved deposit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepositRequest"
+
+  /requests/deposit/{requestId}/reject:
+    post:
+      operationId: rejectDepositRequest
+      tags: [requests]
+      summary: Reject a deposit request
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Rejected deposit request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DepositRequest"
+
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [users]
+      summary: Get dashboard summary
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+
+  /audit:
+    get:
+      operationId: listAudit
+      tags: [audit]
+      summary: Get audit log
+      responses:
+        "200":
+          description: Audit log entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditEntry"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +362,303 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        nome:
+          type: string
+        foto:
+          type: string
+        status:
+          type: string
+          enum: [Ativo, Congelado]
+        saldo_base:
+          type: integer
+        lucro_acumulado:
+          type: integer
+      required: [id, nome, foto, status, saldo_base, lucro_acumulado]
+
+    CreateUserBody:
+      type: object
+      properties:
+        nome:
+          type: string
+        foto:
+          type: string
+        status:
+          type: string
+          enum: [Ativo, Congelado]
+        saldo_base:
+          type: integer
+      required: [nome, foto, saldo_base]
+
+    UpdateUserBody:
+      type: object
+      properties:
+        nome:
+          type: string
+        status:
+          type: string
+          enum: [Ativo, Congelado]
+        saldo_base:
+          type: integer
+
+    CirculationItem:
+      type: object
+      properties:
+        loan_id:
+          type: string
+        tomador_id:
+          type: string
+        tomador_nome:
+          type: string
+        tomador_foto:
+          type: string
+        valor_contribuido:
+          type: integer
+        pctDoEmprestimo:
+          type: number
+        taxa_atual:
+          type: integer
+        dias:
+          type: integer
+        data_inicio:
+          type: integer
+        status:
+          type: string
+        juro_esperado:
+          type: integer
+        total_esperado:
+          type: integer
+      required: [loan_id, tomador_id, tomador_nome, tomador_foto, valor_contribuido, pctDoEmprestimo, taxa_atual, dias, data_inicio, status, juro_esperado, total_esperado]
+
+    UserDetail:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        emCaixa:
+          type: integer
+        emCirculacao:
+          type: array
+          items:
+            $ref: "#/components/schemas/CirculationItem"
+        totalEmCirculacao:
+          type: integer
+        totalJuroEsperado:
+          type: integer
+        patrimonioTotal:
+          type: integer
+      required: [user, emCaixa, emCirculacao, totalEmCirculacao, totalJuroEsperado, patrimonioTotal]
+
+    TraceItem:
+      type: object
+      properties:
+        owner_id:
+          type: string
+        owner_nome:
+          type: string
+        owner_foto:
+          type: string
+        valor_contribuido:
+          type: integer
+        pctReal:
+          type: number
+        juro:
+          type: integer
+        total:
+          type: integer
+      required: [owner_id, owner_nome, owner_foto, valor_contribuido, pctReal, juro, total]
+
+    Loan:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        tomador_nome:
+          type: string
+        tomador_foto:
+          type: string
+        valor_original:
+          type: integer
+        data_inicio:
+          type: integer
+        taxa_atual:
+          type: integer
+        status:
+          type: string
+          enum: [Ativo, Atrasado, Liquidado]
+        valor_pago:
+          type: integer
+        dias:
+          type: integer
+        juro_total:
+          type: integer
+        total_devido:
+          type: integer
+      required: [id, user_id, tomador_nome, tomador_foto, valor_original, data_inicio, taxa_atual, status, valor_pago, dias, juro_total, total_devido]
+
+    UpdateLoanBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [Ativo, Atrasado, Liquidado]
+        valor_pago:
+          type: integer
+
+    LiquidateBody:
+      type: object
+      properties:
+        valor_pago:
+          type: integer
+      required: [valor_pago]
+
+    LoanDetail:
+      type: object
+      properties:
+        loan:
+          $ref: "#/components/schemas/Loan"
+        traces:
+          type: array
+          items:
+            $ref: "#/components/schemas/TraceItem"
+        projecoes:
+          type: array
+          items:
+            $ref: "#/components/schemas/Projecao"
+      required: [loan, traces, projecoes]
+
+    Projecao:
+      type: object
+      properties:
+        taxa:
+          type: integer
+        label:
+          type: string
+        juroTotal:
+          type: integer
+        totalDevido:
+          type: integer
+        cor:
+          type: string
+      required: [taxa, label, juroTotal, totalDevido, cor]
+
+    LiquidationResult:
+      type: object
+      properties:
+        loan:
+          $ref: "#/components/schemas/Loan"
+        distribuicao:
+          type: array
+          items:
+            $ref: "#/components/schemas/TraceItem"
+        juroPool:
+          type: integer
+        juroTomador:
+          type: integer
+      required: [loan, distribuicao, juroPool, juroTomador]
+
+    LoanRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        user_nome:
+          type: string
+        user_foto:
+          type: string
+        valor:
+          type: integer
+        motivo:
+          type: string
+        status:
+          type: string
+          enum: [Pendente, Aprovado, Rejeitado]
+        ts:
+          type: integer
+      required: [id, user_id, user_nome, user_foto, valor, motivo, status, ts]
+
+    CreateLoanRequestBody:
+      type: object
+      properties:
+        user_id:
+          type: string
+        valor:
+          type: integer
+        motivo:
+          type: string
+      required: [user_id, valor, motivo]
+
+    DepositRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        user_nome:
+          type: string
+        user_foto:
+          type: string
+        valor:
+          type: integer
+        status:
+          type: string
+          enum: [Pendente, Aprovado, Rejeitado]
+        ts:
+          type: integer
+      required: [id, user_id, user_nome, user_foto, valor, status, ts]
+
+    CreateDepositRequestBody:
+      type: object
+      properties:
+        user_id:
+          type: string
+        valor:
+          type: integer
+      required: [user_id, valor]
+
+    Dashboard:
+      type: object
+      properties:
+        caixa:
+          type: integer
+        lucros:
+          type: integer
+        naRua:
+          type: integer
+        total:
+          type: integer
+        membros_ativos:
+          type: integer
+        emprestimos_ativos:
+          type: integer
+        solicitacoes_pendentes:
+          type: integer
+      required: [caixa, lucros, naRua, total, membros_ativos, emprestimos_ativos, solicitacoes_pendentes]
+
+    AuditEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        ts:
+          type: integer
+        tipo:
+          type: string
+        desc:
+          type: string
+        valor:
+          type: integer
+        user:
+          type: string
+      required: [id, ts, tipo, desc, valor, user]

@@ -1,0 +1,343 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+
+// ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
+const T = {
+  gold:"#C9A84C", goldLight:"#E8CC7A", goldDim:"#7A6028",
+  ink:"#0A0C0F", surface:"#0F1217", panel:"#151A23",
+  border:"#1E2633", text:"#E8EAF0", muted:"#5A6478",
+  success:"#2ECC71", danger:"#E74C3C", warn:"#F39C12",
+  blue:"#3B82F6", teal:"#14B8A6", purple:"#A855F7",
+};
+
+// ─── DADOS INICIAIS ───────────────────────────────────────────────────────────
+// Cenário demo que ilustra o algoritmo de rastreio:
+//   Caixa inicial: João 300, Maria 400, Jorge 300, Eva 500, Ana 250, Bruno 180
+//   Empréstimo 1 (Lucas = u_lucas pede 700 MT):
+//     → Maria(400) perde tudo; João e Jorge perdem 150 cada (500/2 restantes de 300)
+//   Empréstimo 2 (Felipe pede 300 MT):
+//     → Eva(500) cobre tudo sozinha
+const NOW = Date.now();
+const DAY = 86400000;
+
+const INITIAL_DB = {
+  users: [
+    { id:"u1", nome:"João Silva",    foto:"JS", status:"Ativo",    saldo_base:15000, lucro_acumulado:3200  }, // 300-150-150+depósito=150 restante
+    { id:"u2", nome:"Maria Santos",  foto:"MS", status:"Ativo",    saldo_base:20000, lucro_acumulado:0     }, // 0 em caixa (tudo com Lucas)
+    { id:"u3", nome:"Jorge Nunes",   foto:"JN", status:"Ativo",    saldo_base:15000, lucro_acumulado:1800  }, // 150 restante
+    { id:"u4", nome:"Lucas Rocha",   foto:"LR", status:"Ativo",    saldo_base:0,     lucro_acumulado:0     }, // tomador activo
+    { id:"u5", nome:"Eva Marques",   foto:"EM", status:"Ativo",    saldo_base:20000, lucro_acumulado:8400  }, // 200 restante após empréstimo 2
+    { id:"u6", nome:"Ana Ferreira",  foto:"AF", status:"Ativo",    saldo_base:25000, lucro_acumulado:5100  },
+    { id:"u7", nome:"Felipe Costa",  foto:"FC", status:"Ativo",    saldo_base:0,     lucro_acumulado:0     }, // tomador activo
+    { id:"u8", nome:"Bruno Mateus",  foto:"BM", status:"Congelado",saldo_base:18000, lucro_acumulado:900   },
+  ],
+  loans: [
+    // Lucas pediu 700 MT: Maria(400 todo) + João(150) + Jorge(150)
+    {
+      id:"l1", user_id:"u4", valor_original:70000,
+      data_inicio:NOW-40*DAY, taxa_atual:20, status:"Ativo", valor_pago:0,
+    },
+    // Felipe pediu 300 MT: Eva cobre tudo sozinha (maior)
+    {
+      id:"l2", user_id:"u7", valor_original:30000,
+      data_inicio:NOW-15*DAY, taxa_atual:10, status:"Ativo", valor_pago:0,
+    },
+  ],
+  // ─── RASTREIO EXACTO: cada centavo sabe de onde veio ───────────────────────
+  // l1 = 700 MT: Maria perde tudo (400), João perde metade (150), Jorge perde metade (150)
+  traceability: [
+    { loan_id:"l1", owner_id:"u2", valor_contribuido:40000 }, // Maria — TODO o seu saldo (400 MT)
+    { loan_id:"l1", owner_id:"u1", valor_contribuido:15000 }, // João  — metade (150 MT de 300)
+    { loan_id:"l1", owner_id:"u3", valor_contribuido:15000 }, // Jorge — metade (150 MT de 300)
+    { loan_id:"l2", owner_id:"u5", valor_contribuido:30000 }, // Eva   — cobre tudo sozinha (300 MT de 500)
+  ],
+  loan_requests: [],
+  deposit_requests: [],
+  audit_log: [
+    { id:"a1", ts:NOW-40*DAY, tipo:"EMPRESTIMO",
+      desc:"Lucas Rocha pediu 700,00 MT | Maria perdeu TODO (400) | João 150 | Jorge 150 — algoritmo: maior 1º, resto dividido",
+      valor:70000, user:"u4" },
+    { id:"a2", ts:NOW-15*DAY, tipo:"EMPRESTIMO",
+      desc:"Felipe Costa pediu 300,00 MT | Eva cobre sozinha (maior investidor com 500) — sobra 200 MT de Eva em caixa",
+      valor:30000, user:"u7" },
+    { id:"a3", ts:NOW-5*DAY, tipo:"DEPOSITO",
+      desc:"João Silva depositou 50,00 MT — capital novo em caixa (independente do que está com Lucas)",
+      valor:5000, user:"u1" },
+  ],
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  MOTOR DE RASTREIO DE CAPITAL — O CÉREBRO DO COFRE
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+//  ALGORITMO DE ALOCAÇÃO (alocarCapital):
+//  ─────────────────────────────────────
+//  Dado um empréstimo de X MT e uma lista de membros disponíveis:
+//
+//  Passo 1 — MAIOR PRIMEIRO:
+//    O membro com mais saldo perde TODO o seu saldo (ou o necessário se cobrir tudo)
+//
+//  Passo 2 — DIVISÃO IGUAL DOS RESTANTES:
+//    O valor que falta é dividido igualmente entre os outros membros
+//
+//  Exemplo: empréstimo 700 MT, caixa = João 300, Maria 400, Jorge 300
+//    → Maria (maior) perde TUDO: 400 MT
+//    → Falta: 300 MT ÷ 2 = 150 MT de João + 150 MT de Jorge
+//    → João fica com 150 MT em caixa, Jorge fica com 150 MT em caixa
+//    → Maria fica com 0 MT em caixa (tudo a produzir com Lucas)
+//
+//  RASTREIO EM TEMPO REAL:
+//    Cada registo de traceability diz exactamente:
+//    "X MT do membro A estão com o tomador B a render juro Z"
+//
+//  JURO SIMPLES SOBRE CAPITAL ORIGINAL:
+//    Mês 1 (0-30d): 10% → 700 × 10% = 70 MT de juro
+//    Mês 2 (31-60d): 20% → 700 × 20% = 140 MT de juro  (substitui, não acumula)
+//    Mês 3 (61d+): 50% → 700 × 50% = 350 MT de juro
+//
+//  DISTRIBUIÇÃO AO LIQUIDAR:
+//    50% do juro → lucro do TOMADOR
+//    50% do juro → distribuído entre INVESTIDORES proporcionalmente ao capital contribuído
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * ALGORITMO PRINCIPAL: Aloca o capital do cofre para um empréstimo.
+ * Maior contribuidor perde tudo primeiro; os restantes dividem igualmente.
+ */
+function alocarCapital(valorEmprestimo, membrosDisponiveis) {
+  // Ordena por saldo descendente: o mais rico primeiro
+  const ordenados = [...membrosDisponiveis].sort((a, b) => b.saldo_base - a.saldo_base);
+  let restante = valorEmprestimo;
+  const contribuicoes = [];
+
+  // PASSO 1: tirar tudo do maior (ou o necessário se cobrir sozinho)
+  const maior = ordenados[0];
+  const tirarDoMaior = Math.min(maior.saldo_base, restante);
+  contribuicoes.push({ owner_id: maior.id, valor_contribuido: tirarDoMaior });
+  restante -= tirarDoMaior;
+
+  // PASSO 2: dividir o restante igualmente pelos outros
+  if (restante > 0 && ordenados.length > 1) {
+    const outros = ordenados.slice(1).filter(m => m.saldo_base > 0);
+    if (outros.length > 0) {
+      const partePorMembro = Math.round(restante / outros.length);
+      outros.forEach((m, i) => {
+        const isUltimo = i === outros.length - 1;
+        // Último absorve arredondamentos para garantir soma exacta
+        const tirar = isUltimo
+          ? Math.min(m.saldo_base, restante)
+          : Math.min(m.saldo_base, partePorMembro);
+        if (tirar > 0) {
+          contribuicoes.push({ owner_id: m.id, valor_contribuido: tirar });
+          restante -= tirar;
+        }
+      });
+    }
+  }
+
+  return contribuicoes;
+}
+
+/** Juro simples sobre capital original. Taxa substitui — não se acumula. */
+function calcJuros(valorOriginal, taxaAtual) {
+  const juroTotal = Math.round(valorOriginal * taxaAtual / 100);
+  return { juroTotal, totalDevido: valorOriginal + juroTotal };
+}
+
+/** Projecção das 3 fases */
+function calcProjecoes(valorOriginal) {
+  return [
+    { taxa:10, label:"Mês 1 — 10%", juroTotal:Math.round(valorOriginal*0.10), totalDevido:valorOriginal+Math.round(valorOriginal*0.10), cor:T.gold   },
+    { taxa:20, label:"Mês 2 — 20%", juroTotal:Math.round(valorOriginal*0.20), totalDevido:valorOriginal+Math.round(valorOriginal*0.20), cor:T.warn   },
+    { taxa:50, label:"Mês 3 — 50%", juroTotal:Math.round(valorOriginal*0.50), totalDevido:valorOriginal+Math.round(valorOriginal*0.50), cor:T.danger },
+  ];
+}
+
+/**
+ * Distribui o juroPool (50% do juro) entre investidores.
+ * Proporção = valor_contribuido / total_contribuido (preciso, sem arredondamentos perdidos).
+ */
+function distribuirJuro(juroPool, traces) {
+  if (!traces.length) return [];
+  const totalContrib = traces.reduce((s, t) => s + t.valor_contribuido, 0);
+  if (totalContrib === 0) return traces.map(t => ({ ...t, juro:0, pctReal:0, total:t.valor_contribuido }));
+  let soma = 0;
+  return traces.map((t, i) => {
+    const isUlt = i === traces.length - 1;
+    const juro  = isUlt ? juroPool - soma : Math.round(juroPool * (t.valor_contribuido / totalContrib));
+    soma += juro;
+    return { owner_id:t.owner_id, valor_contribuido:t.valor_contribuido,
+             pctReal:(t.valor_contribuido / totalContrib * 100), juro, total:t.valor_contribuido+juro };
+  });
+}
+
+/** Patrimônio total projetado */
+function calcPatrimonio(db) {
+  const caixa  = db.users.reduce((s,u) => s+u.saldo_base, 0);
+  const lucros = db.users.reduce((s,u) => s+u.lucro_acumulado, 0);
+  const naRua  = db.loans.filter(l=>["Ativo","Atrasado"].includes(l.status))
+                         .reduce((s,l) => s+calcJuros(l.valor_original,l.taxa_atual).totalDevido, 0);
+  return { caixa, lucros, naRua, total:caixa+lucros+naRua };
+}
+
+/**
+ * MAPA DE CAPITAL DE UM MEMBRO — o núcleo do rastreio
+ * Retorna: quanto está em caixa, quanto está em cada empréstimo, juro esperado de cada
+ */
+function mapaCapitalMembro(userId, db) {
+  const user = db.users.find(u => u.id === userId);
+  if (!user) return null;
+
+  // Capital em caixa: o que está fisicamente disponível
+  const emCaixa = user.saldo_base;
+
+  // Capital em circulação: cada empréstimo activo onde este membro contribuiu
+  const emCirculacao = db.traceability
+    .filter(t => t.owner_id === userId)
+    .map(t => {
+      const loan = db.loans.find(l => l.id === t.loan_id);
+      if (!loan || !["Ativo","Atrasado"].includes(loan.status)) return null;
+      const tomador = db.users.find(u => u.id === loan.user_id);
+      const allTraces = db.traceability.filter(x => x.loan_id === t.loan_id);
+      const { juroTotal } = calcJuros(loan.valor_original, loan.taxa_atual);
+      const jPool = juroTotal - Math.round(juroTotal * 0.5);
+      const distrib = distribuirJuro(jPool, allTraces);
+      const minha = distrib.find(d => d.owner_id === userId);
+      const meuJuro = minha ? minha.juro : 0;
+      const totalContrib = allTraces.reduce((s,x) => s+x.valor_contribuido, 0);
+      return {
+        loan_id:          t.loan_id,
+        tomador_id:       loan.user_id,
+        tomador_nome:     tomador?.nome || "—",
+        tomador_foto:     tomador?.foto || "??",
+        valor_contribuido:t.valor_contribuido,
+        pctDoEmprestimo:  (t.valor_contribuido / totalContrib * 100),
+        taxa_atual:       loan.taxa_atual,
+        dias:             Math.floor((NOW - loan.data_inicio) / DAY),
+        data_inicio:      loan.data_inicio,
+        status:           loan.status,
+        juro_esperado:    meuJuro,
+        total_esperado:   t.valor_contribuido + meuJuro,
+      };
+    }).filter(Boolean);
+
+  const totalEmCirculacao = emCirculacao.reduce((s,x) => s+x.valor_contribuido, 0);
+  const totalJuroEsperado = emCirculacao.reduce((s,x) => s+x.juro_esperado, 0);
+  const patrimonioTotal   = emCaixa + totalEmCirculacao + totalJuroEsperado + user.lucro_acumulado;
+
+  return { user, emCaixa, emCirculacao, totalEmCirculacao, totalJuroEsperado, patrimonioTotal };
+}
+
+// ─── UTILITÁRIOS ──────────────────────────────────────────────────────────────
+const fmt       = (c) => `${(c/100).toLocaleString("pt-MZ",{minimumFractionDigits:2})} MT`;
+const fmtS      = (c) => c>=100000000?`${(c/100000000).toFixed(2)}M MT`:c>=100000?`${(c/100000).toFixed(2)}k MT`:`${(c/100).toFixed(2)} MT`;
+const daysSince = (ts) => Math.floor((NOW-ts)/DAY);
+const nextEsc   = (ts) => {
+  const d = daysSince(ts);
+  if (d<30) return { dias:30-d, proxTaxa:"20%",          cor:T.warn   };
+  if (d<60) return { dias:60-d, proxTaxa:"50%",          cor:T.danger };
+  if (d<90) return { dias:90-d, proxTaxa:"Congelamento", cor:T.danger };
+  return         { dias:0,    proxTaxa:"Congelado",     cor:T.muted  };
+};
+const taxaCor   = (t) => t===10?T.gold : t===20?T.warn : T.danger;
+
+// ─── HOOK CONTADOR ANIMADO ────────────────────────────────────────────────────
+function useAnimatedCount(target, dur=900) {
+  const [val, setVal] = useState(target);
+  const prev = useRef(target);
+  const raf  = useRef(null);
+  useEffect(() => {
+    if (prev.current === target) return;
+    const start=prev.current, diff=target-start, t0=performance.now();
+    const ease=(t)=>t<.5?2*t*t:-1+(4-2*t)*t;
+    const tick=(now)=>{
+      const p=Math.min(1,(now-t0)/dur);
+      setVal(Math.round(start+diff*ease(p)));
+      if(p<1) raf.current=requestAnimationFrame(tick);
+      else { prev.current=target; setVal(target); }
+    };
+    raf.current=requestAnimationFrame(tick);
+    return ()=>cancelAnimationFrame(raf.current);
+  }, [target]);
+  return val;
+}
+function AnimVal({ cents, style }) {
+  return <span style={style}>{fmt(useAnimatedCount(cents))}</span>;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  UI PRIMITIVOS
+// ═══════════════════════════════════════════════════════════════════════════════
+const PAL={JS:"#8B5CF6",MS:"#EC4899",JN:"#10B981",LR:"#EF4444",EM:"#F59E0B",AF:"#3B82F6",FC:"#14B8A6",BM:"#6B7280"};
+function Avatar({ foto, size=36, status }) {
+  return (
+    <div style={{position:"relative",display:"inline-flex",flexShrink:0}}>
+      <div style={{width:size,height:size,borderRadius:"50%",background:PAL[foto]||T.gold,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*.33,fontWeight:700,color:"#fff",fontFamily:"'Syne',sans-serif"}}>{foto}</div>
+      {status&&<div style={{position:"absolute",bottom:0,right:0,width:size*.28,height:size*.28,borderRadius:"50%",background:status==="Ativo"?T.success:T.danger,border:`2px solid ${T.panel}`}}/>}
+    </div>
+  );
+}
+function Badge({ label, cor }) {
+  const c=cor||T.muted;
+  return <span style={{padding:"2px 9px",borderRadius:20,fontSize:10,fontWeight:700,letterSpacing:.7,textTransform:"uppercase",whiteSpace:"nowrap",background:c+"22",color:c,border:`1px solid ${c}44`,fontFamily:"'Syne',sans-serif"}}>{label}</span>;
+}
+function Card({ children, style, glow, flash }) {
+  return <div style={{background:T.panel,border:`1px solid ${glow?T.goldDim:flash?T.success+"66":T.border}`,borderRadius:16,padding:20,boxShadow:glow?`0 0 40px ${T.gold}18`:flash?`0 0 28px ${T.success}22`:"0 2px 20px #00000040",transition:"border-color .4s,box-shadow .4s",...style}}>{children}</div>;
+}
+function SecTitle({ children, action }) {
+  return <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:`1px solid ${T.border}`,paddingBottom:10,marginBottom:16}}><p style={{margin:0,color:T.gold,fontSize:11,letterSpacing:1.4,textTransform:"uppercase",fontFamily:"'Syne',sans-serif",fontWeight:700}}>{children}</p>{action}</div>;
+}
+function PBar({ value, max, color=T.gold, h=4 }) {
+  return <div style={{height:h,background:T.border,borderRadius:4,overflow:"hidden"}}><div style={{width:`${Math.min(100,max>0?(value/max)*100:0)}%`,height:"100%",background:color,borderRadius:4,transition:"width 1s ease"}}/></div>;
+}
+function HR() { return <div style={{height:1,background:T.border,margin:"10px 0"}}/>; }
+function VRow({ label, valor, cor, sub, bold }) {
+  return <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0"}}><span style={{color:sub?T.muted:T.text,fontSize:sub?11:13,fontFamily:"'DM Sans',sans-serif"}}>{label}</span><span style={{color:cor||T.text,fontFamily:"'Syne',sans-serif",fontWeight:bold?800:600,fontSize:bold?15:13}}>{valor}</span></div>;
+}
+function Inp({ value, onChange, placeholder, type="text" }) {
+  return <input type={type} value={value} onChange={onChange} placeholder={placeholder} style={{width:"100%",padding:"12px 16px",borderRadius:10,background:T.ink,border:`1px solid ${T.border}`,color:T.text,fontFamily:"'DM Sans',sans-serif",fontSize:15,outline:"none"}} onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.border}/>;
+}
+function Btn({ children, onClick, v="primary", disabled }) {
+  const s={
+    primary:{background:`linear-gradient(135deg,${T.gold},${T.goldLight})`,color:T.ink,border:"none"},
+    danger: {background:T.danger+"22",color:T.danger,border:`1px solid ${T.danger}44`},
+    ghost:  {background:T.border,color:T.text,border:`1px solid ${T.border}`},
+    success:{background:T.success+"22",color:T.success,border:`1px solid ${T.success}44`},
+    outline:{background:"transparent",color:T.gold,border:`1px solid ${T.gold}44`},
+  }[v]||{};
+  return <button onClick={disabled?undefined:onClick} style={{padding:"12px 0",borderRadius:11,width:"100%",fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:13,cursor:disabled?"not-allowed":"pointer",opacity:disabled?.4:1,...s}} onMouseDown={e=>{if(!disabled)e.currentTarget.style.transform="scale(.98)"}} onMouseUp={e=>e.currentTarget.style.transform="scale(1)"}>{children}</button>;
+}
+function Toast({ type, message, onClose }) {
+  const m={success:T.success,error:T.danger,warn:T.warn,info:T.blue};
+  const ic={success:"✓",error:"✕",warn:"⚠",info:"ℹ"};
+  useEffect(()=>{const t=setTimeout(onClose,5000);return()=>clearTimeout(t);},[]);
+  return <div style={{position:"fixed",bottom:24,right:24,zIndex:9999,background:T.panel,border:`1px solid ${m[type]}44`,borderLeft:`3px solid ${m[type]}`,borderRadius:13,padding:"14px 20px",maxWidth:420,display:"flex",alignItems:"center",gap:12,boxShadow:"0 8px 40px #00000080",animation:"slideIn .3s ease"}}><span style={{color:m[type],fontWeight:700,fontSize:16}}>{ic[type]}</span><span style={{color:T.text,fontSize:13,fontFamily:"'DM Sans',sans-serif",flex:1,lineHeight:1.5}}>{message}</span><button onClick={onClose} style={{background:"none",border:"none",color:T.muted,cursor:"pointer",fontSize:18}}>×</button></div>;
+}
+function Modal({ title, children, onClose }) {
+  return <div style={{position:"fixed",inset:0,zIndex:1000,background:"#00000095",display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(6px)"}} onClick={onClose}><div style={{background:T.panel,border:`1px solid ${T.border}`,borderRadius:20,padding:28,width:"92%",maxWidth:560,boxShadow:"0 40px 80px #000000c0",maxHeight:"92vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}}><h3 style={{margin:0,color:T.gold,fontFamily:"'Syne',sans-serif",fontSize:17,fontWeight:800}}>{title}</h3><button onClick={onClose} style={{background:T.border,border:"none",color:T.text,borderRadius:8,width:32,height:32,cursor:"pointer",fontSize:18}}>×</button></div>{children}</div></div>;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  COMPONENTE: MAPA DE CAPITAL DE UM MEMBRO
+//  Mostra exactamente onde está cada centavo do membro
+// ═══════════════════════════════════════════════════════════════════════════════
+function MapaCapital({ mapa, compact }) {
+  if (!mapa) return null;
+  const { user, emCaixa, emCirculacao, totalEmCirculacao, totalJuroEsperado, patrimonioTotal } = mapa;
+  const totalCapitalBruto = emCaixa + totalEmCirculacao;
+  const temTudoEmCaixa = emCirculacao.length === 0;
+
+  return (
+    <div style={{background:T.ink,borderRadius:12,padding:14}}>
+      {!compact && <p style={{margin:"0 0 12px",color:T.muted,fontSize:10,letterSpacing:1.4,textTransform:"uppercase",fontFamily:"'Syne',sans-serif",fontWeight:700}}>Mapa de Capital — {user.nome}</p>}
+
+      {/* Barra visual de composição */}
+      <div style={{marginBottom:12}}>
+        <div style={{height:10,borderRadius:8,overflow:"hidden",background:T.border,display:"flex"}}>
+          {emCaixa>0&&<div style={{width:`${totalCapitalBruto>0?(emCaixa/totalCapitalBruto*100):0}%`,background:T.success,transition:"width 1s ease"}}/>}
+          {emCirculacao.map((c,i)=>{
+            const cor=[T.gold,T.warn,T.danger,T.teal,T.blue,T.purple][i%6];
+            return <div key={c.loan_id} style={{width:`${totalCapitalBruto>0?(c.valor_contribuido/totalCapitalBruto*100):0}%`,background:cor,transition:"width 1s ease"}}/>;
+          })}
+        </div>
+        <div style={{display:"flex",gap:10,marginTop:6,flexWrap:"wrap"}}>
+          {emCaixa>0&&<div style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:8,height:8,borderRadius:2,background:T.success}}/><spa

@@ -1,0 +1,16 @@
+packages:
+  "framer-motion": "For page transitions, smooth staggering of list items, and premium interactive feel"
+  "date-fns": "For formatting timestamps into human-readable Mozambican dates"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility for merging tailwind classes without conflicts"
+  "recharts": "For rendering beautiful financial charts on the dashboard"
+
+images:
+  - path: "artifacts/cofre/public/images/auth-bg.png"
+    description: "Abstract premium dark background with subtle gold geometric lines and soft glowing light leaks"
+    aspect_ratio: "16:9"
+
+notes:
+  - "Assuming all monetary values from the API are in centavos (integers). Frontend divides by 100 and formats as MZN."
+  - "App is strictly dark mode to fit the premium financial vault aesthetic."
+  - "Timestamps are assumed to be in seconds (Unix time), multiplied by 1000 for Date object."
