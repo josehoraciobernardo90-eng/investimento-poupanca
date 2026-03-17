@@ -49,23 +49,32 @@ export default function RequestsPage() {
     e.preventDefault();
     const val = parseInputMoney(valor);
     if (!userId || val <= 0) return;
-    if (createType === "loan") {
-      await createLoanMut.mutateAsync({ data: { user_id: userId, valor: val, motivo } });
-    } else {
-      await createDepMut.mutateAsync({ data: { user_id: userId, valor: val } });
+    try {
+      if (createType === "loan") {
+        await createLoanMut.mutateAsync({ data: { user_id: userId, valor: val, motivo } });
+      } else {
+        await createDepMut.mutateAsync({ data: { user_id: userId, valor: val } });
+      }
+      setCreateType(null);
+      setUserId(""); setValor(""); setMotivo("");
+    } catch {
+      // Error feedback is handled by onError toast in the hooks
     }
-    setCreateType(null);
-    setUserId(""); setValor(""); setMotivo("");
   };
 
   const handleConfirmApprove = async () => {
     if (!confirmApprove) return;
-    if (confirmApprove.type === "loan") {
-      await approveLoanMut.mutateAsync({ requestId: confirmApprove.req.id });
-    } else {
-      await approveDepMut.mutateAsync({ requestId: confirmApprove.req.id });
+    try {
+      if (confirmApprove.type === "loan") {
+        await approveLoanMut.mutateAsync({ requestId: confirmApprove.req.id });
+      } else {
+        await approveDepMut.mutateAsync({ requestId: confirmApprove.req.id });
+      }
+    } catch {
+      // Error feedback is handled by onError toast in the hooks
+    } finally {
+      setConfirmApprove(null);
     }
-    setConfirmApprove(null);
   };
 
   const isApproving = approveLoanMut.isPending || approveDepMut.isPending;
