@@ -32,15 +32,19 @@ router.post("/loan/:requestId/approve", async (req, res) => {
   const loanReq = await db.query.loanRequestsTable.findFirst({
     where: eq(loanRequestsTable.id, requestId)
   });
-  if (!loanReq) return res.status(404).json({ error: "Request not found" });
-  if (loanReq.status !== "Pendente") return res.status(400).json({ error: "Request already processed" });
+  if (!loanReq) return res.status(404).json({ error: "Solicitação não encontrada" });
+  if (loanReq.status !== "Pendente") return res.status(400).json({ error: "Esta solicitação já foi processada" });
 
   const membrosAtivos = await db.select().from(usersTable).where(eq(usersTable.status, "Ativo"));
   const membrosComSaldo = membrosAtivos.filter(m => m.saldo_base > 0 && m.id !== loanReq.user_id);
 
   const totalDisponivel = membrosComSaldo.reduce((s, m) => s + m.saldo_base, 0);
   if (totalDisponivel < loanReq.valor) {
-    return res.status(400).json({ error: "Saldo insuficiente no cofre para este empréstimo" });
+    const disp = (totalDisponivel / 100).toLocaleString("pt-MZ", { minimumFractionDigits: 2 });
+    const nec  = (loanReq.valor    / 100).toLocaleString("pt-MZ", { minimumFractionDigits: 2 });
+    return res.status(400).json({
+      error: `Saldo insuficiente no cofre. Disponível: ${disp} MT — Necessário: ${nec} MT`,
+    });
   }
 
   const contribuicoes = alocarCapital(loanReq.valor, membrosComSaldo);
@@ -96,6 +100,9 @@ router.post("/loan/:requestId/approve", async (req, res) => {
 
 router.post("/loan/:requestId/reject", async (req, res) => {
   const { requestId } = req.params;
+  const existing = await db.query.loanRequestsTable.findFirst({ where: eq(loanRequestsTable.id, requestId) });
+  if (!existing) return res.status(404).json({ error: "Solicitação não encontrada" });
+  if (existing.status !== "Pendente") return res.status(400).json({ error: "Esta solicitação já foi processada" });
   const [updated] = await db.update(loanRequestsTable).set({ status: "Rejeitado" })
     .where(eq(loanRequestsTable.id, requestId)).returning();
   const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, updated.user_id) });
@@ -127,8 +134,8 @@ router.post("/deposit/:requestId/approve", async (req, res) => {
   const depReq = await db.query.depositRequestsTable.findFirst({
     where: eq(depositRequestsTable.id, requestId)
   });
-  if (!depReq) return res.status(404).json({ error: "Request not found" });
-  if (depReq.status !== "Pendente") return res.status(400).json({ error: "Already processed" });
+  if (!depReq) return res.status(404).json({ error: "Solicitação não encontrada" });
+  if (depReq.status !== "Pendente") return res.status(400).json({ error: "Esta solicitação já foi processada" });
 
   const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, depReq.user_id) });
   if (user) {
@@ -152,6 +159,9 @@ router.post("/deposit/:requestId/approve", async (req, res) => {
 
 router.post("/deposit/:requestId/reject", async (req, res) => {
   const { requestId } = req.params;
+  const existing = await db.query.depositRequestsTable.findFirst({ where: eq(depositRequestsTable.id, requestId) });
+  if (!existing) return res.status(404).json({ error: "Solicitação não encontrada" });
+  if (existing.status !== "Pendente") return res.status(400).json({ error: "Esta solicitação já foi processada" });
   const [updated] = await db.update(depositRequestsTable).set({ status: "Rejeitado" })
     .where(eq(depositRequestsTable.id, requestId)).returning();
   const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, updated.user_id) });
