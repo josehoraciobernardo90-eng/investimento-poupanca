@@ -80,3 +80,5 @@ Generated sources: .guides/usage.md [1705B] .guides/setup.md [584B] esm\index.es
 [debug] [2026-03-27T12:31:05.389Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
 [debug] [2026-03-27T20:26:25.272Z] [Firebase Plugin] Received CLI notification.
 [debug] [2026-03-27T20:26:25.384Z] [Firebase Plugin] Received emulators shutdown notification.
+[info] [Firebase Plugin] Stopping Data Connect toolkit
+[warn] !  Data Connect Emulator has exited upon receiving signal: SIGINT 
