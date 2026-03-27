@@ -82,3 +82,14 @@ Generated sources: .guides/usage.md [1705B] .guides/setup.md [584B] esm\index.es
 [debug] [2026-03-27T20:26:25.384Z] [Firebase Plugin] Received emulators shutdown notification.
 [info] [Firebase Plugin] Stopping Data Connect toolkit
 [warn] !  Data Connect Emulator has exited upon receiving signal: SIGINT 
+[debug] [2026-03-27T21:21:26.805Z] [Firebase Plugin] Activating Firebase extension.
+[info] [Firebase Plugin] Checked firebase-tools, is up to date!
+[debug] [2026-03-27T21:21:44.004Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2026-03-27T21:21:44.007Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-27T21:21:44.008Z] > authorizing via signed-in user (josehoraciobernardo90@gmail.com)
+[debug] [2026-03-27T21:21:44.016Z] Checked if tokens are valid: false, expires at: 1774644765519
+[debug] [2026-03-27T21:21:44.017Z] Checked if tokens are valid: false, expires at: 1774644765519
+[debug] [2026-03-27T21:21:44.018Z] > refreshing access token with scopes: []
+[debug] [2026-03-27T21:21:44.021Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-03-27T21:21:44.022Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-03-27T21:21:44.047Z] [Firebase Plugin] VSCode notification server listening on port 40001
