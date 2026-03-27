@@ -1,9 +1,10 @@
 import { useLoans } from "@/hooks/use-loans";
 import { formatMT, formatDate } from "@/lib/utils";
+import { calcularStatusEmprestimo } from "@/lib/auto-freeze";
 import { PageLoader } from "@/components/ui/page-loader";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Link } from "wouter";
-import { Search, Calendar, ChevronRight } from "lucide-react";
+import { Search, Calendar, ChevronRight, ShieldAlert } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 
@@ -19,7 +20,15 @@ export default function LoansPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-display font-bold text-white mb-2">Empréstimos</h1>
-        <p className="text-muted-foreground">Acompanhe os empréstimos ativos, atrasos e liquidações.</p>
+        <p className="text-muted-foreground">Acompanhe os empréstimos, juros por fase e congelamentos automáticos.</p>
+      </div>
+
+      {/* Regras resumidas */}
+      <div className="flex flex-wrap gap-2">
+        <span className="text-xs px-3 py-1 bg-success/10 text-success border border-success/20 rounded-full font-medium">Mês 1 → 10%</span>
+        <span className="text-xs px-3 py-1 bg-warning/10 text-warning border border-warning/20 rounded-full font-medium">Mês 2 → 20%</span>
+        <span className="text-xs px-3 py-1 bg-destructive/10 text-destructive border border-destructive/20 rounded-full font-medium">Mês 3 → 50% ⚠️</span>
+        <span className="text-xs px-3 py-1 bg-destructive/30 text-white border border-destructive rounded-full font-medium">Não pagou → 🔒 Bloqueio</span>
       </div>
 
       <div className="glass-panel rounded-2xl p-2 flex items-center gap-3">
@@ -39,51 +48,93 @@ export default function LoansPage() {
             <thead>
               <tr className="border-b border-white/10 bg-white/5 text-sm">
                 <th className="p-4 font-medium text-muted-foreground">Mutuário</th>
-                <th className="p-4 font-medium text-muted-foreground">Valor Original</th>
-                <th className="p-4 font-medium text-muted-foreground">Taxa/Dias</th>
-                <th className="p-4 font-medium text-muted-foreground">Devido Total</th>
+                <th className="p-4 font-medium text-muted-foreground">Base (fixa)</th>
+                <th className="p-4 font-medium text-muted-foreground">Fase / Juro</th>
+                <th className="p-4 font-medium text-muted-foreground">Total a Devolver</th>
+                <th className="p-4 font-medium text-muted-foreground">Prazo</th>
                 <th className="p-4 font-medium text-muted-foreground">Status</th>
                 <th className="p-4 font-medium text-muted-foreground text-right">Ação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {filtered.map((loan, i) => (
-                <motion.tr 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.05 }}
-                  key={loan.id} 
-                  className="hover:bg-white/5 transition-colors group"
-                >
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center font-bold text-xs text-white">
-                        {loan.tomador_foto}
+              {filtered.map((loan, i) => {
+                const s = calcularStatusEmprestimo(loan.valor_original, loan.data_inicio);
+                const faseClass = {
+                  1: "text-success",
+                  2: "text-warning", 
+                  3: "text-destructive",
+                  VENCIDO: "text-destructive font-bold",
+                };
+                return (
+                  <motion.tr 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                    key={loan.id} 
+                    className={`hover:bg-white/5 transition-colors group ${s.deveBloqueiar ? "bg-destructive/5" : ""}`}
+                  >
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center font-bold text-xs text-white">
+                          {loan.tomador_foto}
+                        </div>
+                        <div>
+                          <span className="font-medium text-white">{loan.tomador_nome}</span>
+                          {s.deveBloqueiar && (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <ShieldAlert className="w-3 h-3 text-destructive" />
+                              <span className="text-[10px] text-destructive font-bold">CONTA BLOQUEADA</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <span className="font-medium text-white">{loan.tomador_nome}</span>
-                    </div>
-                  </td>
-                  <td className="p-4 font-mono text-white">{formatMT(loan.valor_original)}</td>
-                  <td className="p-4">
-                    <div className="flex flex-col">
-                      <span className="text-primary font-medium">{loan.taxa_atual}%</span>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Calendar className="w-3 h-3" /> {loan.dias} dias
-                      </span>
-                    </div>
-                  </td>
-                  <td className="p-4 font-mono text-white font-bold">{formatMT(loan.total_devido)}</td>
-                  <td className="p-4"><StatusBadge status={loan.status} /></td>
-                  <td className="p-4 text-right">
-                    <Link href={`/emprestimos/${loan.id}`} className="inline-flex items-center justify-center p-2 rounded-lg bg-white/5 hover:bg-primary hover:text-primary-foreground transition-colors">
-                      <ChevronRight className="w-4 h-4" />
-                    </Link>
-                  </td>
-                </motion.tr>
-              ))}
+                    </td>
+                    <td className="p-4 font-mono text-white">{formatMT(loan.valor_original)}</td>
+                    <td className="p-4">
+                      <div className="flex flex-col">
+                        <span className={`font-medium ${faseClass[s.fase]}`}>
+                          {s.fase === "VENCIDO" ? "🔒 VENCIDO" : `Mês ${s.fase} — ${s.taxaAtual}%`}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          Juro: {formatMT(s.juro)}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4 font-mono text-white font-bold">{formatMT(s.totalDevido)}</td>
+                    <td className="p-4">
+                      <div className="flex flex-col">
+                        {s.diasRestantes > 0 ? (
+                          <>
+                            <span className={`text-sm font-bold ${s.diasRestantes <= 5 ? "text-destructive" : s.diasRestantes <= 10 ? "text-warning" : "text-success"}`}>
+                              {s.diasRestantes} dias
+                            </span>
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Calendar className="w-3 h-3" /> {loan.dias} dias corridos
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-sm font-bold text-destructive">Expirado</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      {s.deveBloqueiar ? (
+                        <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-destructive text-white animate-pulse">🔒 Bloqueado</span>
+                      ) : (
+                        <StatusBadge status={loan.status} />
+                      )}
+                    </td>
+                    <td className="p-4 text-right">
+                      <Link href={`/emprestimos/${loan.id}`} className="inline-flex items-center justify-center p-2 rounded-lg bg-white/5 hover:bg-primary hover:text-primary-foreground transition-colors">
+                        <ChevronRight className="w-4 h-4" />
+                      </Link>
+                    </td>
+                  </motion.tr>
+                );
+              })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={7} className="p-8 text-center text-muted-foreground">
                     Nenhum empréstimo encontrado.
                   </td>
                 </tr>

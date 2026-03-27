@@ -1,0 +1,15 @@
+I0326 22:26:47.729030   40892 load.go:31] Reloading schema and connectors...
+I0326 22:26:47.848117   40892 control.go:100] [projects/emulator/locations/emulator/services/investimentopoupanca bd61] UpdateResources(): done
+Main schema: sources: schema\schema.gql [1992B] 
+Connector "example": sources: example\mutations.gql [1243B] example\queries.gql [1801B] 
+I0326 22:26:47.878958   40892 codegen.go:102] [connector "example" javascriptSdk] Generating sources into "C:\\Users\\DELL\\Downloads\\Investimento poupanca\\src\\dataconnect-generated"
+I0326 22:26:47.891111   40892 codegen.go:102] [connector "example" javascriptSdk] Generating sources into "C:\\Users\\DELL\\Downloads\\Investimento poupanca\\lib\\db\\src\\dataconnect-generated"
+I0326 22:26:47.909450   40892 collector.go:107] schema extensions wrote into "C:\\Users\\DELL\\Downloads\\Investimento poupanca\\dataconnect\\.dataconnect\\schema"
+Generated sources: prelude.gql [80888B] main\input.gql [28927B] main\relation.gql [14318B] main\query.gql [5099B] main\mutation.gql [13679B] main\implicit.gql [1261B] 
+I0326 22:26:47.916098   40892 collector.go:107] connector "example" javascriptSdk wrote into "C:\\Users\\DELL\\Downloads\\Investimento poupanca\\src\\dataconnect-generated"
+Generated sources: .guides/usage.md [1705B] .guides/setup.md [584B] .guides/config.json [236B] package.json [637B] index.d.ts [8025B] esm\index.esm.js [3570B] esm\package.json [17B] index.cjs.js [4060B] README.md [40804B] 
+I0326 22:26:47.928897   40892 installsdk.go:86] Running command: pnpm link src\dataconnect-generated
+E0326 22:26:47.928897   40892 installsdk.go:88] Failed to install package: exec: "pnpm": executable file not found in %PATH%
+I0326 22:26:47.939299   40892 collector.go:107] connector "example" javascriptSdk wrote into "C:\\Users\\DELL\\Downloads\\Investimento poupanca\\lib\\db\\src\\dataconnect-generated"
+Generated sources: esm\index.esm.js [3570B] index.cjs.js [4060B] package.json [637B] README.md [40804B] .guides/usage.md [1705B] .guides/setup.md [584B] .guides/config.json [236B] index.d.ts [8025B] esm\package.json [17B] 
+I0326 22:26:47.942841   40892 installsdk.go:86] Running command: C:\Program Files\nodejs\npm.cmd install file:src\dataconnect-generated

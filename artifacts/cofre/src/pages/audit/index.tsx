@@ -1,7 +1,7 @@
 import { useAudit } from "@/hooks/use-audit";
 import { formatMT, formatDateTime } from "@/lib/utils";
 import { PageLoader } from "@/components/ui/page-loader";
-import { History, ArrowRightLeft, Landmark, DollarSign, UserPlus } from "lucide-react";
+import { History, ArrowRightLeft, Landmark, DollarSign, UserPlus, ShieldAlert } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function AuditPage() {
@@ -15,6 +15,7 @@ export default function AuditPage() {
       case "LIQUIDACAO": return <Landmark className="w-4 h-4 text-success" />;
       case "DEPOSITO": return <DollarSign className="w-4 h-4 text-info" />;
       case "MEMBRO": return <UserPlus className="w-4 h-4 text-primary" />;
+      case "CONGELAMENTO": return <ShieldAlert className="w-4 h-4 text-destructive" />;
       default: return <History className="w-4 h-4 text-muted-foreground" />;
     }
   };

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useUsers, useCreateUser } from "@/hooks/use-users";
+import { useUsers } from "@/hooks/use-users";
+import { useCreateMembershipRequest } from "@/hooks/use-requests";
 import { formatMT } from "@/lib/utils";
 import { PageLoader } from "@/components/ui/page-loader";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -9,7 +10,7 @@ import { motion } from "framer-motion";
 
 export default function MembersPage() {
   const { data: users, isLoading } = useUsers();
-  const createMutation = useCreateUser();
+  const createMutation = useCreateMembershipRequest();
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
@@ -43,13 +44,13 @@ export default function MembersPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-display font-bold text-white">Membros</h1>
-          <p className="text-muted-foreground">Gerencie os investidores do cofre.</p>
+          <p className="text-muted-foreground">Comunidade de investidores do cofre.</p>
         </div>
         <button 
           onClick={() => setIsDialogOpen(true)}
           className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl font-semibold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
         >
-          <Plus className="w-5 h-5" /> Adicionar Membro
+          <Plus className="w-5 h-5" /> Registar Adesão
         </button>
       </div>
 
@@ -116,7 +117,8 @@ export default function MembersPage() {
             <button onClick={() => setIsDialogOpen(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-white">
               <X className="w-5 h-5" />
             </button>
-            <h2 className="text-xl font-bold text-white mb-6">Novo Membro</h2>
+            <h2 className="text-xl font-bold text-white mb-2">Pedido de Adesão</h2>
+            <p className="text-muted-foreground text-sm mb-6">Submeta os dados para a administração aprovar a sua entrada no Cofre.</p>
             
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
@@ -128,7 +130,7 @@ export default function MembersPage() {
                 <input required maxLength={2} value={foto} onChange={e=>setFoto(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-primary uppercase" placeholder="JS" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1">Aporte Inicial (MT)</label>
+                <label className="block text-sm font-medium text-muted-foreground mb-1">Aporte Inicial Proposto (MT)</label>
                 <input required type="text" value={saldo} onChange={e=>setSaldo(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-primary" placeholder="1000.00" />
               </div>
               
@@ -137,7 +139,7 @@ export default function MembersPage() {
                 disabled={createMutation.isPending}
                 className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-bold mt-6 hover:bg-primary/90 disabled:opacity-50"
               >
-                {createMutation.isPending ? "Criando..." : "Criar Membro"}
+                {createMutation.isPending ? "Submetendo..." : "Submeter Adesão"}
               </button>
             </form>
           </motion.div>
@@ -146,3 +148,4 @@ export default function MembersPage() {
     </div>
   );
 }
+
