@@ -2,9 +2,11 @@ import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Component, ReactNode } from "react";
+import { Component, ReactNode, useState } from "react";
+import { AdminProvider } from "@/hooks/use-admin";
 
 import { AppLayout } from "@/components/layout/AppLayout";
+import { SplashScreen } from "@/components/layout/SplashScreen";
 import DashboardPage from "@/pages/dashboard";
 import MembersPage from "@/pages/members/index";
 import MemberDetailPage from "@/pages/members/detail";
@@ -24,7 +26,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// ─── Global Error Boundary ─────────────────────────────────────────────────
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; message: string }> {
   constructor(props: { children: ReactNode }) {
     super(props);
@@ -84,16 +85,24 @@ function Router() {
 }
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <WouterRouter>
-            <Router />
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
-      </QueryClientProvider>
+      {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
+      
+      {!showSplash && (
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <AdminProvider>
+              <WouterRouter>
+                <Router />
+              </WouterRouter>
+              <Toaster />
+            </AdminProvider>
+          </TooltipProvider>
+        </QueryClientProvider>
+      )}
     </ErrorBoundary>
   );
 }

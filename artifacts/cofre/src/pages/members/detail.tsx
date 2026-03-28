@@ -18,8 +18,8 @@ export default function MemberDetailPage() {
   if (isLoading) return <PageLoader />;
   if (!data) return <div className="text-destructive p-8 bg-destructive/10 rounded-xl">Membro não encontrado.</div>;
 
-  const toggleStatus = () => {
-    updateMutation.mutate({
+  const toggleStatus = async () => {
+    await updateMutation.mutateAsync({
       userId: id,
       data: {
         status: data.user.status === "Ativo" ? "Congelado" : "Ativo"
@@ -68,12 +68,48 @@ export default function MemberDetailPage() {
         <StatCard title="Juro Esperado" value={formatMT(data.totalJuroEsperado)} icon={<TrendingUp className="text-success" />} />
       </div>
 
-      <h2 className="text-xl font-bold text-white mt-10 mb-4 border-b border-white/10 pb-2">Capital em Circulação</h2>
-
-      {data.emCirculacao.length === 0 ? (
-        <div className="glass-panel rounded-2xl p-10 text-center text-muted-foreground">
-           Nenhum capital alocado em empréstimos no momento.
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-10">
+        {/* Left Column: Personal Profile */}
+        <div className="lg:col-span-1">
+          <h2 className="text-xl font-bold text-white mb-4 border-b border-white/10 pb-2 flex items-center gap-2">
+            <Briefcase className="w-5 h-5 text-primary" /> Perfil do Investidor
+          </h2>
+          <div className="glass-panel rounded-2xl p-6 space-y-4">
+            <div>
+               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Contacto Principal (Telefone)</p>
+               <p className="font-mono text-white tracking-wide">{data.user.telefone || "Não fornecido"}</p>
+            </div>
+            <div>
+               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">E-mail</p>
+               <p className="text-white">{data.user.email || "Não fornecido"}</p>
+            </div>
+            <div>
+               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Endereço Fiscal</p>
+               <p className="text-white">{data.user.endereco || "Não fornecido"}</p>
+            </div>
+            <div className="pt-4 border-t border-white/5 grid grid-cols-2 gap-4">
+               <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">NUIT</p>
+                  <p className="font-mono text-white">{data.user.nuit || "Não fornecido"}</p>
+               </div>
+               <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Profissão/Área</p>
+                  <p className="text-white">{data.user.profissao || "Não especificado"}</p>
+               </div>
+            </div>
+          </div>
         </div>
+
+        {/* Right Column: Active Loans / Circulation */}
+        <div className="lg:col-span-2">
+          <h2 className="text-xl font-bold text-white mb-4 border-b border-white/10 pb-2 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-primary" /> Capital em Circulação
+          </h2>
+
+          {data.emCirculacao.length === 0 ? (
+            <div className="glass-panel rounded-2xl p-10 text-center text-muted-foreground">
+               Nenhum capital alocado em empréstimos no momento.
+            </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {data.emCirculacao.map((item, i) => (
@@ -112,6 +148,8 @@ export default function MemberDetailPage() {
           ))}
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 }

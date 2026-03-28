@@ -5,24 +5,19 @@ import { rtdb } from "@/lib/firebase";
 export const storeEmitter = new EventTarget();
 export const emitMockDataChange = () => setTimeout(() => storeEmitter.dispatchEvent(new Event("change")), 0);
 
-// --- FIREBASE MIRRORS ---
-export let mockUsers: any[] = [];
-export let mockDashboard: any = {
-  caixa: 0, 
-  lucros: 0, 
-  naRua: 0, 
-  total: 0, 
-  membros_ativos: 0, 
-  emprestimos_ativos: 0, 
-  solicitacoes_pendentes: 0
+export const dbStore = {
+  users: [] as any[],
+  dashboard: {
+    caixa: 0, lucros: 0, naRua: 0, total: 0, membros_ativos: 0, emprestimos_ativos: 0, solicitacoes_pendentes: 0
+  } as any,
+  loans: [] as any[],
+  loanDetails: {} as Record<string, any>,
+  userDetails: {} as Record<string, any>,
+  loanRequests: [] as any[],
+  depositRequests: [] as any[],
+  membershipRequests: [] as any[],
+  audit: [] as any[]
 };
-export let mockLoans: any[] = [];
-export let mockLoanDetails: Record<string, any> = {};
-export let mockUserDetails: Record<string, any> = {};
-export let mockLoanRequests: any[] = [];
-export let mockDepositRequests: any[] = [];
-export let mockMembershipRequests: any[] = [];
-export let mockAudit: any[] = [];
 
 let isInitialized = false;
 
@@ -31,47 +26,48 @@ export function initFirebaseSync() {
   isInitialized = true;
 
   onValue(ref(rtdb, 'users'), snap => { 
-    mockUsers = snap.val() ? Object.values(snap.val()) : []; 
+    dbStore.users = snap.val() ? Object.values(snap.val()) : []; 
     emitMockDataChange(); 
   });
   
   onValue(ref(rtdb, 'userDetails'), snap => { 
-    mockUserDetails = snap.val() || {}; 
+    dbStore.userDetails = snap.val() || {}; 
     emitMockDataChange(); 
   });
   
   onValue(ref(rtdb, 'dashboard'), snap => { 
-    if (snap.val()) mockDashboard = { ...mockDashboard, ...snap.val() }; 
+    if (snap.val()) dbStore.dashboard = { ...dbStore.dashboard, ...snap.val() }; 
     emitMockDataChange(); 
   });
   
   onValue(ref(rtdb, 'loans'), snap => { 
-    mockLoans = snap.val() ? Object.values(snap.val()) : []; 
+    dbStore.loans = snap.val() ? Object.values(snap.val()) : []; 
     emitMockDataChange(); 
   });
   
   onValue(ref(rtdb, 'loanDetails'), snap => { 
-    mockLoanDetails = snap.val() || {}; 
+    dbStore.loanDetails = snap.val() || {}; 
     emitMockDataChange(); 
   });
   
   onValue(ref(rtdb, 'loanRequests'), snap => { 
-    mockLoanRequests = snap.val() ? Object.values(snap.val() as Record<string,any>).sort((a,b)=>b.ts - a.ts) : []; 
+    dbStore.loanRequests = snap.val() ? Object.values(snap.val() as Record<string,any>).sort((a,b)=>b.ts - a.ts) : []; 
     emitMockDataChange(); 
   });
   
   onValue(ref(rtdb, 'depositRequests'), snap => { 
-    mockDepositRequests = snap.val() ? Object.values(snap.val() as Record<string,any>).sort((a,b)=>b.ts - a.ts) : []; 
+    dbStore.depositRequests = snap.val() ? Object.values(snap.val() as Record<string,any>).sort((a,b)=>b.ts - a.ts) : []; 
     emitMockDataChange(); 
   });
   
   onValue(ref(rtdb, 'membershipRequests'), snap => { 
-    mockMembershipRequests = snap.val() ? Object.values(snap.val() as Record<string,any>).sort((a,b)=>b.ts - a.ts) : []; 
+    console.log("[FIREBASE SYNC] membershipRequests arrived:", snap.val());
+    dbStore.membershipRequests = snap.val() ? Object.values(snap.val() as Record<string,any>).sort((a,b)=>b.ts - a.ts) : []; 
     emitMockDataChange(); 
   });
   
   onValue(ref(rtdb, 'audit'), snap => { 
-    mockAudit = snap.val() ? Object.values(snap.val() as Record<string,any>).sort((a,b)=>b.ts - a.ts) : []; 
+    dbStore.audit = snap.val() ? Object.values(snap.val() as Record<string,any>).sort((a,b)=>b.ts - a.ts) : []; 
     emitMockDataChange(); 
   });
 }

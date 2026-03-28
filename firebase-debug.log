@@ -1,0 +1,66 @@
+[debug] [2026-03-28T15:21:44.295Z] ----------------------------------------------------------------------
+[debug] [2026-03-28T15:21:44.300Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\DELL\AppData\Local\npm-cache\_npx\ba4f1959e38407b5\node_modules\firebase-tools\lib\bin\firebase.js deploy --only dataconnect --project investimento-poupaca
+[debug] [2026-03-28T15:21:44.301Z] CLI Version:   15.12.0
+[debug] [2026-03-28T15:21:44.301Z] Platform:      win32
+[debug] [2026-03-28T15:21:44.301Z] Node Version:  v24.13.1
+[debug] [2026-03-28T15:21:44.301Z] Time:          Sat Mar 28 2026 17:21:44 GMT+0200 (Hora da África Central)
+[debug] [2026-03-28T15:21:44.302Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-28T15:21:49.771Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-28T15:21:49.771Z] > authorizing via signed-in user (josehoraciobernardo90@gmail.com)
+[debug] [2026-03-28T15:21:49.772Z] [iam] checking project investimento-poupaca for permissions ["cloudsql.databases.create","cloudsql.databases.update","cloudsql.instances.connect","cloudsql.instances.create","cloudsql.instances.get","cloudsql.instances.list","cloudsql.instances.update","cloudsql.users.create","firebase.projects.get","firebasedataconnect.connectors.create","firebasedataconnect.connectors.delete","firebasedataconnect.connectors.list","firebasedataconnect.connectors.update","firebasedataconnect.operations.get","firebasedataconnect.schemas.create","firebasedataconnect.schemas.delete","firebasedataconnect.schemas.list","firebasedataconnect.schemas.update","firebasedataconnect.services.create","firebasedataconnect.services.delete","firebasedataconnect.services.list","firebasedataconnect.services.update"]
+[debug] [2026-03-28T15:21:49.775Z] Checked if tokens are valid: true, expires at: 1774714884311
+[debug] [2026-03-28T15:21:49.775Z] Checked if tokens are valid: true, expires at: 1774714884311
+[debug] [2026-03-28T15:21:49.777Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/investimento-poupaca:testIamPermissions [none]
+[debug] [2026-03-28T15:21:49.777Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/investimento-poupaca:testIamPermissions  x-goog-user-project=investimento-poupaca
+[debug] [2026-03-28T15:21:49.778Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/investimento-poupaca:testIamPermissions {"permissions":["cloudsql.databases.create","cloudsql.databases.update","cloudsql.instances.connect","cloudsql.instances.create","cloudsql.instances.get","cloudsql.instances.list","cloudsql.instances.update","cloudsql.users.create","firebase.projects.get","firebasedataconnect.connectors.create","firebasedataconnect.connectors.delete","firebasedataconnect.connectors.list","firebasedataconnect.connectors.update","firebasedataconnect.operations.get","firebasedataconnect.schemas.create","firebasedataconnect.schemas.delete","firebasedataconnect.schemas.list","firebasedataconnect.schemas.update","firebasedataconnect.services.create","firebasedataconnect.services.delete","firebasedataconnect.services.list","firebasedataconnect.services.update"]}
+[debug] [2026-03-28T15:21:51.865Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/investimento-poupaca:testIamPermissions 200
+[debug] [2026-03-28T15:21:51.866Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/investimento-poupaca:testIamPermissions {"permissions":["cloudsql.databases.create","cloudsql.databases.update","cloudsql.instances.connect","cloudsql.instances.create","cloudsql.instances.get","cloudsql.instances.list","cloudsql.instances.update","cloudsql.users.create","firebase.projects.get","firebasedataconnect.connectors.create","firebasedataconnect.connectors.delete","firebasedataconnect.connectors.list","firebasedataconnect.connectors.update","firebasedataconnect.operations.get","firebasedataconnect.schemas.create","firebasedataconnect.schemas.delete","firebasedataconnect.schemas.list","firebasedataconnect.schemas.update","firebasedataconnect.services.create","firebasedataconnect.services.delete","firebasedataconnect.services.list","firebasedataconnect.services.update"]}
+[info] 
+[info] === Deploying to 'investimento-poupaca'...
+[info] 
+[info] i  deploying dataconnect 
+[info] i  dataconnect: ensuring required API firebasedataconnect.googleapis.com is enabled... 
+[debug] [2026-03-28T15:21:51.877Z] Checked if tokens are valid: true, expires at: 1774714884311
+[debug] [2026-03-28T15:21:51.877Z] Checked if tokens are valid: true, expires at: 1774714884311
+[info] i  dataconnect: ensuring required API sqladmin.googleapis.com is enabled... 
+[debug] [2026-03-28T15:21:51.878Z] Checked if tokens are valid: true, expires at: 1774714884311
+[debug] [2026-03-28T15:21:51.879Z] Checked if tokens are valid: true, expires at: 1774714884311
+[debug] [2026-03-28T15:21:51.879Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/investimento-poupaca/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-03-28T15:21:51.879Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/investimento-poupaca/services/firebasedataconnect.googleapis.com  x-goog-user-project=investimento-poupaca
+[debug] [2026-03-28T15:21:51.882Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/investimento-poupaca/services/sqladmin.googleapis.com [none]
+[debug] [2026-03-28T15:21:51.882Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/investimento-poupaca/services/sqladmin.googleapis.com  x-goog-user-project=investimento-poupaca
+[debug] [2026-03-28T15:21:54.131Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/investimento-poupaca/services/sqladmin.googleapis.com 200
+[debug] [2026-03-28T15:21:54.131Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/investimento-poupaca/services/sqladmin.googleapis.com [omitted]
+[info] +  dataconnect: required API sqladmin.googleapis.com is enabled 
+[debug] [2026-03-28T15:21:54.159Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/investimento-poupaca/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-03-28T15:21:54.159Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/investimento-poupaca/services/firebasedataconnect.googleapis.com [omitted]
+[info] +  dataconnect: required API firebasedataconnect.googleapis.com is enabled 
+[debug] [2026-03-28T15:21:54.233Z] Checked if tokens are valid: true, expires at: 1774714884311
+[debug] [2026-03-28T15:21:54.234Z] Checked if tokens are valid: true, expires at: 1774714884311
+[debug] [2026-03-28T15:21:54.234Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/investimento-poupaca/billingInfo [none]
+[debug] [2026-03-28T15:21:55.130Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/investimento-poupaca/billingInfo 200
+[debug] [2026-03-28T15:21:55.131Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/investimento-poupaca/billingInfo {"name":"projects/investimento-poupaca/billingInfo","projectId":"investimento-poupaca","billingAccountName":"billingAccounts/013755-8CA876-151F04","billingEnabled":true}
+[debug] [2026-03-28T15:21:55.131Z] Checked if tokens are valid: true, expires at: 1774714884311
+[debug] [2026-03-28T15:21:55.132Z] Checked if tokens are valid: true, expires at: 1774714884311
+[debug] [2026-03-28T15:21:55.132Z] >>> [apiv2][query] GET https://mobilesdk-pa.googleapis.com/v1/accessmanagement/tos:getStatus [none]
+[debug] [2026-03-28T15:21:56.184Z] <<< [apiv2][status] GET https://mobilesdk-pa.googleapis.com/v1/accessmanagement/tos:getStatus 200
+[debug] [2026-03-28T15:21:56.185Z] <<< [apiv2][body] GET https://mobilesdk-pa.googleapis.com/v1/accessmanagement/tos:getStatus {"overallStatus":"ACCEPTED","uTosStatus":{"tos":{"id":"firebase","tosId":"FIREBASE_UNIVERSAL"},"status":"ACCEPTED","acceptedVersion":7},"childTosStatus":[{"tos":{"id":"cloud","tosId":"CLOUD_PLATFORM"},"status":"ACCEPTED","acceptedVersion":39},{"tos":{"id":"firebase_b2b","tosId":"FIREBASE_B2B"},"status":"ACCEPTED","acceptedVersion":1},{"tos":{"id":"universal","tosId":"GOOGLE_APIS"},"status":"ACCEPTED","acceptedVersion":6}],"termsUrl":"https://firebase.google.com/terms","perServiceStatus":[{"tosId":"APP_CHECK","serviceStatus":{"tos":{"id":"app_check","tosId":"APP_CHECK"},"status":"ACCEPTED","acceptedVersion":3}},{"tosId":"APP_HOSTING_TOS","serviceStatus":{"tos":{"id":"app_hosting","tosId":"APP_HOSTING_TOS"},"status":"ACCEPTED","acceptedVersion":3}},{"tosId":"FIREBASE_DATA_CONNECT","serviceStatus":{"tos":{"id":"data_connect","tosId":"FIREBASE_DATA_CONNECT"},"status":"ACCEPTED","acceptedVersion":3}},{"tosId":"CORE_APPS","serviceStatus":{"tos":{"id":"core_apps","tosId":"CORE_APPS"},"status":"ACCEPTED","acceptedVersion":1}},{"tosId":"VERTEX_AI_IN_FIREBASE","serviceStatus":{"tos":{"id":"vertex_ai_in_firebase","tosId":"VERTEX_AI_IN_FIREBASE"},"status":"ACCEPTED","acceptedVersion":2}},{"tosId":"FIREBASE_CRASHLYTICS_APP_DISTRIBUTION","serviceStatus":{"tos":{"id":"firebase_crashlytics_app_distribution","tosId":"FIREBASE_CRASHLYTICS_APP_DISTRIBUTION"},"status":"ACCEPTED","acceptedVersion":4}},{"tosId":"GENERATIVE_LANGUAGE","serviceStatus":{"tos":{"id":"generative-language-api","tosId":"GENERATIVE_LANGUAGE"},"status":"ACCEPTED","acceptedVersion":3}}]}
+[info] i  dataconnect: downloading dataconnect-emulator-3.3.1.exe... {"metadata":{"emulator":{"name":"dataconnect"},"message":"downloading dataconnect-emulator-3.3.1.exe..."}}
+[debug] [2026-03-28T15:21:56.195Z] >>> [apiv2][query] GET https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.3.1 
+[debug] [2026-03-28T15:21:57.020Z] <<< [apiv2][status] GET https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.3.1 200
+[debug] [2026-03-28T15:21:57.021Z] <<< [apiv2][body] GET https://storage.googleapis.com/firemat-preview-drop/emulator/dataconnect-emulator-windows-amd64-v3.3.1 [stream]
+[info] i  dataconnect: Removing outdated emulator files: dataconnect-emulator-3.2.1.exe {"metadata":{"emulator":{"name":"dataconnect"},"message":"Removing outdated emulator files: dataconnect-emulator-3.2.1.exe"}}
+[debug] [2026-03-28T15:22:16.806Z] Error: EPERM, Permission denied: \\?\C:\Users\DELL\.cache\firebase\emulators\dataconnect-emulator-3.2.1.exe '\\?\C:\Users\DELL\.cache\firebase\emulators\dataconnect-emulator-3.2.1.exe'
+    at Object.rmSync (node:fs:1220:18)
+    at Object.removeSync (C:\Users\DELL\AppData\Local\npm-cache\_npx\ba4f1959e38407b5\node_modules\fs-extra\lib\remove\index.js:15:28)
+    at removeOldFiles (C:\Users\DELL\AppData\Local\npm-cache\_npx\ba4f1959e38407b5\node_modules\firebase-tools\lib\emulator\download.js:81:16)
+    at downloadEmulator (C:\Users\DELL\AppData\Local\npm-cache\_npx\ba4f1959e38407b5\node_modules\firebase-tools\lib\emulator\download.js:51:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async downloadIfNecessary (C:\Users\DELL\AppData\Local\npm-cache\_npx\ba4f1959e38407b5\node_modules\firebase-tools\lib\emulator\downloadableEmulators.js:434:9)
+    at async DataConnectEmulator.build (C:\Users\DELL\AppData\Local\npm-cache\_npx\ba4f1959e38407b5\node_modules\firebase-tools\lib\emulator\dataconnectEmulator.js:190:29)
+    at async build (C:\Users\DELL\AppData\Local\npm-cache\_npx\ba4f1959e38407b5\node_modules\firebase-tools\lib\dataconnect\build.js:17:25)
+    at async default_1 (C:\Users\DELL\AppData\Local\npm-cache\_npx\ba4f1959e38407b5\node_modules\firebase-tools\lib\deploy\dataconnect\prepare.js:35:33)
+    at async chain (C:\Users\DELL\AppData\Local\npm-cache\_npx\ba4f1959e38407b5\node_modules\firebase-tools\lib\deploy\index.js:45:9)
+[error] 
+[error] Error: An unexpected error has occurred.

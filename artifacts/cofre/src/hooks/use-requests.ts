@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { useMockDataSync } from "@/hooks/use-mock-store";
-import { mockLoanRequests, mockDepositRequests, mockMembershipRequests, mockUserDetails, mockUsers, mockDashboard, mockAudit, mockLoans, mockLoanDetails } from "@/data/mock-data";
 import { formatMT } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { ref, update } from "firebase/database";
 import { rtdb } from "@/lib/firebase";
+import { dbStore } from "@/data/firebase-data";
 
 export function useRequests() {
   useMockDataSync();
   return {
-    memberships: mockMembershipRequests,
-    loans: mockLoanRequests,
-    deposits: mockDepositRequests,
+    memberships: dbStore.membershipRequests,
+    loans: dbStore.loanRequests,
+    deposits: dbStore.depositRequests,
     isLoading: false,
     isError: false,
   };
@@ -25,11 +25,11 @@ export function useCreateLoanRequest() {
     mutateAsync: async ({ data }: { data: { user_id: string; valor: number; motivo: string } }) => {
       setIsPending(true);
       try {
-        const userDetail = mockUserDetails[data.user_id];
+        const userDetail = dbStore.userDetails[data.user_id];
         if (!userDetail) throw new Error("Membro não encontrado");
 
         const limiteTotal = userDetail.emCaixa * 1.30;
-        const emprestimosAtivos = mockLoans.filter(l => l.user_id === data.user_id && l.status !== "Liquidado");
+        const emprestimosAtivos = dbStore.loans.filter(l => l.user_id === data.user_id && l.status !== "Liquidado");
         const dividaAtiva = emprestimosAtivos.reduce((acc, l) => acc + l.total_devido, 0);
         const limiteDisponivel = Math.max(0, limiteTotal - dividaAtiva);
 
@@ -85,14 +85,14 @@ export function useApproveLoanRequest() {
     mutateAsync: async ({ requestId }: { requestId: string }) => {
       setIsPending(true);
       try {
-        const req = mockLoanRequests.find(r => r.id === requestId);
+        const req = dbStore.loanRequests.find(r => r.id === requestId);
         if (!req || req.status !== "Pendente") {
           toast({ title: "Aviso", description: "Este pedido já foi processado ou não existe.", variant: "destructive" });
           return;
         }
 
         let valorRestante = req.valor;
-        const usersList = Object.values(mockUserDetails)
+        const usersList = Object.values(dbStore.userDetails)
           .filter(u => u.emCaixa > 0)
           .sort((a, b) => b.emCaixa - a.emCaixa);
 
@@ -105,9 +105,9 @@ export function useApproveLoanRequest() {
         const updates: Record<string, any> = {};
         updates[`loanRequests/${requestId}/status`] = "Aprovado";
         
-        updates[`dashboard/caixa`] = mockDashboard.caixa - req.valor;
-        updates[`dashboard/naRua`] = mockDashboard.naRua + req.valor;
-        updates[`dashboard/emprestimos_ativos`] = mockDashboard.emprestimos_ativos + 1;
+        updates[`dashboard/caixa`] = dbStore.dashboard.caixa - req.valor;
+        updates[`dashboard/naRua`] = dbStore.dashboard.naRua + req.valor;
+        updates[`dashboard/emprestimos_ativos`] = dbStore.dashboard.emprestimos_ativos + 1;
 
         const tsNow = Math.floor(Date.now() / 1000);
         const traces: any[] = [];
@@ -134,7 +134,7 @@ export function useApproveLoanRequest() {
             loan_id: "l" + req.id,
             tomador_id: req.user_id,
             tomador_nome: req.user_nome,
-            tomador_foto: mockUsers.find(mu => mu.id === req.user_id)?.foto || "",
+            tomador_foto: dbStore.users.find((mu: any) => mu.id === req.user_id)?.foto || "",
             valor_contribuido: contributo,
             pctDoEmprestimo: pctReal,
             status: "Ativo",
@@ -163,7 +163,7 @@ export function useApproveLoanRequest() {
           id: "l" + req.id,
           user_id: req.user_id,
           tomador_nome: req.user_nome,
-          tomador_foto: mockUsers.find(mu => mu.id === req.user_id)?.foto || "",
+          tomador_foto: dbStore.users.find((mu: any) => mu.id === req.user_id)?.foto || "",
           valor_original: req.valor,
           data_inicio: tsNow,
           taxa_atual: 10,
@@ -215,7 +215,7 @@ export function useRejectLoanRequest() {
     isPending,
     mutate: async ({ requestId }: { requestId: string }) => {
       setIsPending(true);
-      const req = mockLoanRequests.find(r => r.id === requestId);
+      const req = dbStore.loanRequests.find(r => r.id === requestId);
       if (req && req.status === "Pendente") {
         const updates: any = {};
         updates[`loanRequests/${requestId}/status`] = "Rejeitado";
@@ -239,7 +239,7 @@ export function useCreateDepositRequest() {
     mutateAsync: async ({ data }: { data: { user_id: string; valor: number } }) => {
       setIsPending(true);
       try {
-        const user = mockUsers.find(u => u.id === data.user_id);
+        const user = dbStore.users.find(u => u.id === data.user_id);
         const newReqId = "dr" + Date.now();
         const newReq = {
           id: newReqId,
@@ -278,13 +278,13 @@ export function useApproveDepositRequest() {
     mutateAsync: async ({ requestId }: { requestId: string }) => {
       setIsPending(true);
       try {
-        const req = mockDepositRequests.find(r => r.id === requestId);
+        const req = dbStore.depositRequests.find(r => r.id === requestId);
         if (!req || req.status !== "Pendente") return;
 
         const updates: any = {};
         updates[`depositRequests/${requestId}/status`] = "Aprovado";
         
-        const u = mockUserDetails[req.user_id];
+        const u = dbStore.userDetails[req.user_id];
         if (u) {
           const novaCaixa = u.emCaixa + req.valor;
           updates[`userDetails/${req.user_id}/emCaixa`] = novaCaixa;
@@ -292,8 +292,8 @@ export function useApproveDepositRequest() {
           updates[`users/${req.user_id}/saldo_base`] = novaCaixa;
         }
 
-        updates[`dashboard/caixa`] = mockDashboard.caixa + req.valor;
-        updates[`dashboard/total`] = mockDashboard.total + req.valor;
+        updates[`dashboard/caixa`] = dbStore.dashboard.caixa + req.valor;
+        updates[`dashboard/total`] = dbStore.dashboard.total + req.valor;
 
         const auditId = "a" + Date.now();
         updates[`audit/${auditId}`] = {
@@ -319,7 +319,7 @@ export function useRejectDepositRequest() {
     isPending,
     mutate: async ({ requestId }: { requestId: string }) => {
       setIsPending(true);
-      const req = mockDepositRequests.find(r => r.id === requestId);
+      const req = dbStore.depositRequests.find(r => r.id === requestId);
       if (req && req.status === "Pendente") {
         const updates: any = {};
         updates[`depositRequests/${requestId}/status`] = "Rejeitado";
@@ -340,7 +340,14 @@ export function useCreateMembershipRequest() {
   const { toast } = useToast();
   return {
     isPending,
-    mutateAsync: async ({ data }: { data: { nome: string; foto: string; saldo_base: number } }) => {
+    mutateAsync: async ({ data }: { 
+      data: { 
+        nome: string; foto: string; saldo_base: number;
+        nacionalidade?: string; profissao?: string;
+        telefone?: string; email?: string;
+        endereco?: string; nuit?: string;
+      } 
+    }) => {
       setIsPending(true);
       try {
         const newReqId = "mr" + Date.now();
@@ -349,6 +356,12 @@ export function useCreateMembershipRequest() {
           nome: data.nome,
           foto: data.foto,
           saldo_base: data.saldo_base,
+          nacionalidade: data.nacionalidade || "",
+          profissao: data.profissao || "",
+          telefone: data.telefone || "",
+          email: data.email || "",
+          endereco: data.endereco || "",
+          nuit: data.nuit || "",
           status: "Pendente" as const,
           ts: Math.floor(Date.now() / 1000)
         };
@@ -373,14 +386,27 @@ export function useApproveMembershipRequest() {
     mutateAsync: async ({ requestId }: { requestId: string }) => {
       setIsPending(true);
       try {
-        const req = mockMembershipRequests.find(r => r.id === requestId);
+        const req = dbStore.membershipRequests.find(r => r.id === requestId);
         if (!req || req.status !== "Pendente") return;
         
         const updates: any = {};
         updates[`membershipRequests/${requestId}/status`] = "Aprovado";
         
         const newUserId = "u" + Date.now();
-        const newUser = { id: newUserId, nome: req.nome, foto: req.foto, status: "Ativo" as const, saldo_base: req.saldo_base, lucro_acumulado: 0 };
+        const newUser = { 
+          id: newUserId, 
+          nome: req.nome, 
+          foto: req.foto, 
+          status: "Ativo" as const, 
+          saldo_base: req.saldo_base, 
+          lucro_acumulado: 0,
+          nacionalidade: req.nacionalidade,
+          profissao: req.profissao,
+          telefone: req.telefone,
+          email: req.email,
+          endereco: req.endereco,
+          nuit: req.nuit
+        };
         
         updates[`users/${newUserId}`] = newUser;
         updates[`userDetails/${newUserId}`] = {
@@ -419,7 +445,7 @@ export function useRejectMembershipRequest() {
      isPending,
      mutate: async ({ requestId }: { requestId: string }) => {
         setIsPending(true);
-        const req = mockMembershipRequests.find(r => r.id === requestId);
+        const req = dbStore.membershipRequests.find(r => r.id === requestId);
         if (req && req.status === "Pendente") {
            const updates: any = {};
            updates[`membershipRequests/${requestId}/status`] = "Rejeitado";

@@ -1,8 +1,10 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Users, Coins, ArrowLeftRight, History, Vault } from "lucide-react";
+import { LayoutDashboard, Users, Coins, ArrowLeftRight, History, Vault, Lock, Unlock, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useAdmin } from "@/hooks/use-admin";
+import { AdminAuthModal } from "@/components/layout/AdminAuthModal";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -14,6 +16,12 @@ const navItems = [
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
+  const { isAdmin, logout } = useAdmin();
+  const [showAuth, setShowAuth] = useState(false);
+  
+  // Rotas restritas que exigem auth admin
+  const isRestrictedRoute = location.startsWith("/solicitacoes") || location.startsWith("/auditoria");
+  const accessDenied = isRestrictedRoute && !isAdmin;
 
   return (
     <div className="min-h-screen flex bg-background text-foreground overflow-hidden">
@@ -56,15 +64,18 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </div>
         
         <div className="p-4 border-t border-white/5">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-primary/50 flex items-center justify-center text-primary-foreground font-bold text-sm shadow-lg">
-              AD
+          <button 
+            onClick={() => isAdmin ? logout() : setShowAuth(true)}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 transition-colors text-left"
+          >
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-lg ${isAdmin ? 'bg-gradient-to-tr from-success to-success/50 text-success-foreground' : 'bg-gradient-to-tr from-muted to-muted-foreground/50 text-white'}`}>
+              {isAdmin ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
             </div>
-            <div>
-              <p className="text-sm font-medium text-white">Admin</p>
-              <p className="text-xs text-muted-foreground">Sistema</p>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-white">Administrador</p>
+              <p className="text-xs text-muted-foreground">{isAdmin ? "Desbloqueado" : "Bloqueado"}</p>
             </div>
-          </div>
+          </button>
         </div>
       </motion.aside>
 
@@ -81,7 +92,28 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {/* Page Content */}
         <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-10 scroll-smooth pb-24 md:pb-10">
           <div className="max-w-6xl mx-auto">
-            {children}
+            <AnimatePresence mode="wait">
+              {accessDenied ? (
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                  className="flex flex-col items-center justify-center h-[60vh] text-center"
+                >
+                  <ShieldAlert className="w-20 h-20 text-destructive/50 mb-6" />
+                  <h2 className="text-3xl font-bold text-white mb-2">Acesso Restrito</h2>
+                  <p className="text-muted-foreground max-w-md mb-8">Esta área é reservada apenas para a administração do Cofre Capital.</p>
+                  <button 
+                    onClick={() => setShowAuth(true)}
+                    className="bg-primary text-primary-foreground px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-primary/90"
+                  >
+                    <Lock className="w-5 h-5"/> Desbloquear Acesso
+                  </button>
+                </motion.div>
+              ) : (
+                <motion.div key={location} initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.3 }}>
+                  {children}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
         
@@ -103,8 +135,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </Link>
             );
           })}
+          <button 
+            onClick={() => isAdmin ? logout() : setShowAuth(true)}
+            className={cn("flex flex-col items-center justify-center w-14 h-14 rounded-xl", isAdmin ? "text-success" : "text-muted-foreground")}
+          >
+            {isAdmin ? <Unlock className="w-5 h-5 mb-1" /> : <Lock className="w-5 h-5 mb-1" />}
+            <span className="text-[10px] font-medium">Admin</span>
+          </button>
         </div>
       </main>
+      
+      <AdminAuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
     </div>
   );
 }

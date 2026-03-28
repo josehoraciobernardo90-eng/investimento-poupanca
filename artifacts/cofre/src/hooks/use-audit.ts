@@ -1,10 +1,10 @@
-import { mockAudit } from "@/data/mock-data";
+import { dbStore } from "@/data/firebase-data";
 import { useMockDataSync } from "@/hooks/use-mock-store";
 
 export function useAudit() {
   useMockDataSync();
   return {
-    data: mockAudit,
+    data: dbStore.audit,
     isLoading: false,
     isError: false,
   };

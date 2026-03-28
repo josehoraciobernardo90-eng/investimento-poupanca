@@ -1,17 +1,17 @@
-import { mockDashboard, mockLoanRequests, mockDepositRequests, mockMembershipRequests } from "@/data/mock-data";
+import { dbStore } from "@/data/firebase-data";
 import { useMockDataSync } from "@/hooks/use-mock-store";
 
 export function useDashboard() {
   useMockDataSync();
   
   const pendentes = 
-    mockLoanRequests.filter(r => r.status === "Pendente").length +
-    mockDepositRequests.filter(r => r.status === "Pendente").length +
-    mockMembershipRequests.filter(r => r.status === "Pendente").length;
+    dbStore.loanRequests.filter(r => r.status === "Pendente").length +
+    dbStore.depositRequests.filter(r => r.status === "Pendente").length +
+    dbStore.membershipRequests.filter(r => r.status === "Pendente").length;
     
   return {
     data: {
-      ...mockDashboard,
+      ...dbStore.dashboard,
       solicitacoes_pendentes: pendentes
     },
     isLoading: false,

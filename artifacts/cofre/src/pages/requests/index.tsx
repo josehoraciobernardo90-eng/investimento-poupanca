@@ -17,6 +17,11 @@ type AnyRequest = {
   status: string;
   ts: number;
   motivo?: string;
+  nacionalidade?: string;
+  telefone?: string;
+  nuit?: string;
+  endereco?: string;
+  profissao?: string;
 };
 
 export default function RequestsPage() {
@@ -46,7 +51,8 @@ export default function RequestsPage() {
   if (isLoading) return <PageLoader />;
 
   const mappedMemberships = (memberships || []).map(m => ({
-    id: m.id, user_id: m.id, user_nome: m.nome, user_foto: m.foto, valor: m.saldo_base, status: m.status, ts: m.ts
+    id: m.id, user_id: m.id, user_nome: m.nome, user_foto: m.foto, valor: m.saldo_base, status: m.status, ts: m.ts,
+    telefone: m.telefone, nuit: m.nuit, endereco: m.endereco, profissao: m.profissao
   }));
   const pendingMems = mappedMemberships.filter(r => r.status === "Pendente");
   const historyMems = mappedMemberships.filter(r => r.status !== "Pendente");
@@ -155,6 +161,15 @@ export default function RequestsPage() {
                 <div className="mb-4 p-3 bg-black/20 rounded-lg text-sm text-gray-300">
                   <span className="block text-xs text-muted-foreground mb-1">Motivo:</span>
                   {(req as AnyRequest).motivo}
+                </div>
+              )}
+
+              {tab === "memberships" && (
+                <div className="mb-4 p-3 bg-black/20 rounded-lg text-sm border border-white/5 space-y-2">
+                   <div className="flex justify-between"><span className="text-muted-foreground mr-2">Profissão:</span> <span className="text-white text-right">{(req as AnyRequest).profissao || "—"}</span></div>
+                   <div className="flex justify-between"><span className="text-muted-foreground mr-2">Telefone:</span> <span className="text-white text-right">{(req as AnyRequest).telefone || "—"}</span></div>
+                   <div className="flex justify-between"><span className="text-muted-foreground mr-2">NUIT:</span> <span className="text-white font-mono text-right">{(req as AnyRequest).nuit || "—"}</span></div>
+                   <div className="flex justify-between"><span className="text-muted-foreground mr-2">Endereço:</span> <span className="text-white text-right">{(req as AnyRequest).endereco || "—"}</span></div>
                 </div>
               )}
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMockDataSync } from "@/hooks/use-mock-store";
-import { mockLoans, mockLoanDetails, mockUserDetails, mockDashboard, mockUsers } from "@/data/mock-data";
+import { dbStore } from "@/data/firebase-data";
 import { useToast } from "@/hooks/use-toast";
 import { ref, update } from "firebase/database";
 import { rtdb } from "@/lib/firebase";
@@ -8,7 +8,7 @@ import { rtdb } from "@/lib/firebase";
 export function useLoans() {
   useMockDataSync();
   return {
-    data: mockLoans,
+    data: dbStore.loans,
     isLoading: false,
     isError: false,
   };
@@ -17,7 +17,7 @@ export function useLoans() {
 export function useLoan(id: string) {
   useMockDataSync();
   return {
-    data: mockLoanDetails[id] || null,
+    data: dbStore.loanDetails[id] || null,
     isLoading: false,
     isError: false,
   };
@@ -42,7 +42,7 @@ export function useLiquidateLoan() {
     mutateAsync: async ({ loanId, data }: { loanId: string; data: { valor_pago: number } }) => {
       setIsPending(true);
       try {
-        const detail = mockLoanDetails[loanId];
+        const detail = dbStore.loanDetails[loanId];
         if (!detail || detail.loan.status === "Liquidado") {
           toast({ title: "Aviso", description: "Este empréstimo já foi liquidado.", variant: "destructive" });
           return { loan: detail?.loan };
@@ -62,12 +62,12 @@ export function useLiquidateLoan() {
           trace.juro = juroGanho;
           trace.total = trace.valor_contribuido + juroGanho;
 
-          const invUser = mockUserDetails[trace.owner_id];
+          const invUser = dbStore.userDetails[trace.owner_id];
           if (invUser) {
             const novaCaixa = invUser.emCaixa + trace.total;
             updates[`userDetails/${trace.owner_id}/emCaixa`] = novaCaixa;
             
-            const baseUser = mockUsers.find(u => u.id === trace.owner_id);
+            const baseUser = dbStore.users.find(u => u.id === trace.owner_id);
             if (baseUser) {
               updates[`users/${trace.owner_id}/lucro_acumulado`] = baseUser.lucro_acumulado + juroGanho;
               updates[`users/${trace.owner_id}/saldo_base`] = novaCaixa;
@@ -99,13 +99,13 @@ export function useLiquidateLoan() {
         updates[`loans/${loanId}/valor_pago`] = data.valor_pago;
 
         // Give borrower their 50% profit share
-        const tomadorUser = mockUserDetails[detail.loan.user_id];
+        const tomadorUser = dbStore.userDetails[detail.loan.user_id];
         if (tomadorUser) {
           const tomadorCaixa = tomadorUser.emCaixa + juroMutuario;
           updates[`userDetails/${detail.loan.user_id}/emCaixa`] = tomadorCaixa;
           updates[`userDetails/${detail.loan.user_id}/patrimonioTotal`] = tomadorCaixa + (tomadorUser.totalEmCirculacao || 0) + (tomadorUser.totalJuroEsperado || 0);
 
-          const baseTomador = mockUsers.find(u => u.id === detail.loan.user_id);
+          const baseTomador = dbStore.users.find(u => u.id === detail.loan.user_id);
           if (baseTomador) {
             updates[`users/${detail.loan.user_id}/lucro_acumulado`] = baseTomador.lucro_acumulado + juroMutuario;
             updates[`users/${detail.loan.user_id}/saldo_base`] = tomadorCaixa;
@@ -113,10 +113,10 @@ export function useLiquidateLoan() {
         }
 
         // Update dashboard
-        updates[`dashboard/caixa`] = mockDashboard.caixa + data.valor_pago;
-        updates[`dashboard/naRua`] = mockDashboard.naRua - base;
-        updates[`dashboard/lucros`] = mockDashboard.lucros + juros;
-        updates[`dashboard/emprestimos_ativos`] = Math.max(0, mockDashboard.emprestimos_ativos - 1);
+        updates[`dashboard/caixa`] = dbStore.dashboard.caixa + data.valor_pago;
+        updates[`dashboard/naRua`] = dbStore.dashboard.naRua - base;
+        updates[`dashboard/lucros`] = dbStore.dashboard.lucros + juros;
+        updates[`dashboard/emprestimos_ativos`] = Math.max(0, dbStore.dashboard.emprestimos_ativos - 1);
 
         const auditId = "a" + Date.now();
         updates[`audit/${auditId}`] = {

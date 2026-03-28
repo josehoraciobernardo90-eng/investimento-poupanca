@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMockDataSync } from "@/hooks/use-mock-store";
-import { mockUsers, mockUserDetails } from "@/data/mock-data";
+import { dbStore } from "@/data/firebase-data";
 import { useToast } from "@/hooks/use-toast";
 import { ref, update } from "firebase/database";
 import { rtdb } from "@/lib/firebase";
@@ -8,7 +8,7 @@ import { rtdb } from "@/lib/firebase";
 export function useUsers() {
   useMockDataSync();
   return {
-    data: mockUsers,
+    data: dbStore.users,
     isLoading: false,
     isError: false,
   };
@@ -17,13 +17,11 @@ export function useUsers() {
 export function useUser(id: string) {
   useMockDataSync();
   return {
-    data: mockUserDetails[id] || null,
+    data: dbStore.userDetails[id] || null,
     isLoading: false,
     isError: false,
   };
 }
-
-
 
 export function useUpdateUser() {
   const [isPending, setIsPending] = useState(false);
@@ -34,7 +32,7 @@ export function useUpdateUser() {
     mutateAsync: async ({ userId, data }: { userId: string; data: { status?: string; nome?: string; saldo_base?: number } }) => {
       setIsPending(true);
       try {
-        const user = mockUsers.find(u => u.id === userId);
+        const user = dbStore.users.find(u => u.id === userId);
         if (!user) throw new Error("Membro não encontrado");
 
         const updates: any = {};
