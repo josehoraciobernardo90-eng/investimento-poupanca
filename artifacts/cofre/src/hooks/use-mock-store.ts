@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { storeEmitter } from "@/data/mock-data";
+import { storeEmitter } from "@/data/firebase-data";
 
 export function useMockDataSync() {
   const [, setTick] = useState(0);

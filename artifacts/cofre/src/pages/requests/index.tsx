@@ -1,12 +1,28 @@
 import { useState, useRef } from "react";
-import { useRequests, useApproveLoanRequest, useRejectLoanRequest, useCreateDepositRequest, useApproveDepositRequest, useRejectDepositRequest, useCreateLoanRequest, useApproveMembershipRequest, useRejectMembershipRequest } from "@/hooks/use-requests";
+import { useRequests, useApproveLoanRequest, useRejectLoanRequest, useCreateDepositRequest, useApproveDepositRequest, useRejectDepositRequest, useCreateLoanRequest, useApproveMembershipRequest, useRejectMembershipRequest, useCreateDeletionRequest } from "@/hooks/use-requests";
 import { useUsers } from "@/hooks/use-users";
 import { formatMT, formatDateTime, parseInputMoney } from "@/lib/utils";
 import { PageLoader } from "@/components/ui/page-loader";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Check, X, ArrowDownToLine, ArrowUpFromLine, AlertTriangle, Loader2 } from "lucide-react";
+import { Check, X, ArrowDownToLine, ArrowUpFromLine, AlertTriangle, Loader2, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type AnyRequest = {
   id: string;
@@ -43,10 +59,16 @@ export default function RequestsPage() {
   const [valor, setValor] = useState("");
   const [motivo, setMotivo] = useState("");
 
+  const createDelReqMut = useCreateDeletionRequest();
+  const [confirmDelete, setConfirmDelete] = useState<{ req: AnyRequest; type: "loan" | "deposit" | "membership" } | null>(null);
+
   const [confirmApprove, setConfirmApprove] = useState<{ req: AnyRequest; type: "loan" | "deposit" | "membership" } | null>(null);
+  const [confirmReject, setConfirmReject] = useState<{ req: AnyRequest; type: "loan" | "deposit" | "membership" } | null>(null);
   // Snapshot ref so the modal always has data during Framer exit animation
   const displayApprove = useRef<{ req: AnyRequest; type: "loan" | "deposit" | "membership" } | null>(null);
+  const displayReject = useRef<{ req: AnyRequest; type: "loan" | "deposit" | "membership" } | null>(null);
   if (confirmApprove !== null) displayApprove.current = confirmApprove;
+  if (confirmReject !== null) displayReject.current = confirmReject;
 
   if (isLoading) return <PageLoader />;
 
@@ -96,6 +118,41 @@ export default function RequestsPage() {
     }
   };
 
+  const handleConfirmReject = async () => {
+    if (!confirmReject) return;
+    try {
+      if (confirmReject.type === "loan") {
+        await rejectLoanMut.mutate({ requestId: confirmReject.req.id });
+      } else if (confirmReject.type === "deposit") {
+        await rejectDepMut.mutate({ requestId: confirmReject.req.id });
+      } else if (confirmReject.type === "membership") {
+        await rejectMemMut.mutate({ requestId: confirmReject.req.id });
+      }
+    } catch {
+      // Error feedback is handled by onError toast in the hooks
+    } finally {
+      setConfirmReject(null);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete) return;
+    try {
+      await createDelReqMut.mutateAsync({
+        targetId: confirmDelete.req.id,
+        targetType: confirmDelete.type,
+        userId: confirmDelete.req.user_id,
+        userNome: confirmDelete.req.user_nome,
+        details: {
+          valor: confirmDelete.req.valor,
+          ts: confirmDelete.req.ts
+        }
+      });
+    } finally {
+      setConfirmDelete(null);
+    }
+  };
+
   const isApproving = approveLoanMut.isPending || approveDepMut.isPending || approveMemMut.isPending;
 
   return (
@@ -138,9 +195,17 @@ export default function RequestsPage() {
 
       <div className="space-y-4">
         <h2 className="text-xl font-bold text-white">Pendentes</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {(tab === "memberships" ? pendingMems : tab === "loans" ? pendingLoans : pendingDeps).map((req) => (
-            <motion.div key={req.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="glass-panel p-5 rounded-2xl border-l-4 border-l-warning">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[100px]">
+          <AnimatePresence mode="popLayout" initial={false}>
+            {(tab === "memberships" ? pendingMems : tab === "loans" ? pendingLoans : pendingDeps).map((req) => (
+              <motion.div 
+                key={`req-${tab}-${req.id}`} 
+                initial={{ opacity: 0, y: 10, scale: 0.98 }} 
+                animate={{ opacity: 1, y: 0, scale: 1 }} 
+                exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
+                layout="position"
+                className="glass-panel p-5 rounded-2xl border-l-4 border-l-warning origin-top shadow-xl"
+              >
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white text-sm">
@@ -188,7 +253,7 @@ export default function RequestsPage() {
                   <Check className="w-4 h-4" /> Aprovar
                 </button>
                 <button
-                  onClick={() => tab === "memberships" ? rejectMemMut.mutate({ requestId: req.id }) : tab === "loans" ? rejectLoanMut.mutate({ requestId: req.id }) : rejectDepMut.mutate({ requestId: req.id })}
+                  onClick={() => setConfirmReject({ req: req as AnyRequest, type: tab === "memberships" ? "membership" : tab === "loans" ? "loan" : "deposit" })}
                   disabled={rejectLoanMut.isPending || rejectDepMut.isPending || rejectMemMut.isPending || isApproving}
                   className="flex-1 bg-destructive/20 text-destructive hover:bg-destructive hover:text-white py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
@@ -198,6 +263,7 @@ export default function RequestsPage() {
               </div>
             </motion.div>
           ))}
+          </AnimatePresence>
           {(tab === "memberships" ? pendingMems : tab === "loans" ? pendingLoans : pendingDeps).length === 0 && (
             <div className="col-span-full py-12 text-center text-muted-foreground bg-white/5 rounded-2xl">
               <p className="text-lg font-medium">Nenhuma solicitação pendente</p>
@@ -217,6 +283,7 @@ export default function RequestsPage() {
                     <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Valor</th>
                     {tab === "loans" && <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Motivo</th>}
                     <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Estado</th>
+                    <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right">Acções</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
@@ -236,6 +303,15 @@ export default function RequestsPage() {
                       <td className="p-4 font-mono text-white font-semibold">{formatMT(req.valor)}</td>
                       {tab === "loans" && <td className="p-4 text-sm text-muted-foreground max-w-[200px] truncate">{"motivo" in req ? req.motivo || "—" : "—"}</td>}
                       <td className="p-4"><StatusBadge status={req.status} /></td>
+                      <td className="p-4 text-right">
+                        <button 
+                          onClick={() => setConfirmDelete({ req: req as AnyRequest, type: tab === "memberships" ? "membership" : tab === "loans" ? "loan" : "deposit" })}
+                          className="p-2 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-lg transition-colors"
+                          title="Solicitar Exclusão"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -245,146 +321,218 @@ export default function RequestsPage() {
         )}
       </div>
 
-      {/* Confirm Approve Dialog — CSS-only transition, no Framer Motion (avoids insertBefore crash) */}
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        style={{
-          pointerEvents: confirmApprove ? "auto" : "none",
-          opacity: confirmApprove ? 1 : 0,
-          transition: "opacity 0.2s ease",
-          background: confirmApprove ? "rgba(0,0,0,0.70)" : "transparent",
-          backdropFilter: confirmApprove ? "blur(4px)" : "none",
-        }}
-      >
-        <div
-          className="glass-panel w-full max-w-md rounded-2xl p-6 relative border border-white/10"
-          style={{
-            transform: confirmApprove ? "scale(1)" : "scale(0.93)",
-            opacity: confirmApprove ? 1 : 0,
-            transition: "transform 0.2s ease, opacity 0.2s ease",
-          }}
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-full bg-warning/20 flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-warning" />
+      {/* Confirm Approve Dialog - Robust Radix Portal */}
+      <AlertDialog open={!!confirmApprove} onOpenChange={(open) => !open && setConfirmApprove(null)}>
+        <AlertDialogContent className="glass-panel border-white/10 rounded-[2rem] max-w-md p-8 shadow-2xl">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-4 mb-2">
+              <div className="w-12 h-12 rounded-2xl bg-success/20 flex items-center justify-center text-success border border-success/20">
+                <Check className="w-6 h-6" />
+              </div>
+              <AlertDialogTitle className="text-2xl font-bold text-white">Confirmar Aprovação</AlertDialogTitle>
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">Confirmar Aprovação</h2>
-              <p className="text-sm text-muted-foreground">Esta acção é irreversível</p>
-            </div>
-          </div>
+            <AlertDialogDescription className="text-muted-foreground text-sm">
+              Esta acção processa a transação e atualiza os saldos em tempo real.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
 
-          <div className="space-y-3 mb-6">
-            <div className="p-4 bg-black/30 rounded-xl border border-white/5">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center font-bold text-white text-sm">
-                  {displayApprove.current?.req?.user_foto}
+          <div className="space-y-4 my-6">
+            <div className="p-5 bg-white/5 rounded-3xl border border-white/5 space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white text-xs">
+                    {displayApprove.current?.req?.user_foto}
+                  </div>
+                  <div>
+                    <p className="font-bold text-white text-sm">{displayApprove.current?.req?.user_nome}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                      {displayApprove.current?.type === "loan" ? "Pedido de Empréstimo" : 
+                       displayApprove.current?.type === "membership" ? "Adesão ao Cofre" : "Novo Aporte"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold text-white">{displayApprove.current?.req?.user_nome}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {displayApprove.current?.type === "loan" ? "Pedido de empréstimo" : 
-                     displayApprove.current?.type === "membership" ? "Adesão ao cofre" : "Pedido de aporte"}
-                  </p>
-                </div>
-                <div className="ml-auto text-right">
-                  <span className="text-xl font-mono font-bold text-primary">{formatMT(displayApprove.current?.req?.valor || 0)}</span>
+                <div className="text-right">
+                  <span className="text-xl font-mono font-black text-primary">{formatMT(displayApprove.current?.req?.valor || 0)}</span>
                 </div>
               </div>
 
               {displayApprove.current?.type === "loan" && (
-                <div className="mt-3 pt-3 border-t border-white/5 text-sm text-muted-foreground space-y-1">
-                  <p className="text-xs font-semibold text-white/60 uppercase tracking-wider mb-2">Regras de alocação</p>
-                  <p>• O membro com <span className="text-white">maior saldo</span> contribui primeiro (até esgotar)</p>
-                  <p>• O valor restante é <span className="text-white">dividido igualmente</span> pelos demais</p>
-                  <p>• Juro mês 1: <span className="text-primary">10%</span> · Mês 2: <span className="text-warning">20%</span> · Mês 3+: <span className="text-destructive">50%</span></p>
-                </div>
-              )}
-
-              {displayApprove.current?.type === "deposit" && (
-                <div className="mt-3 pt-3 border-t border-white/5 text-sm text-muted-foreground">
-                  <p>O saldo do membro será <span className="text-success font-semibold">creditado</span> com {formatMT(displayApprove.current?.req?.valor || 0)} imediatamente.</p>
-                </div>
-              )}
-
-              {displayApprove.current?.type === "membership" && (
-                <div className="mt-3 pt-3 border-t border-white/5 text-sm text-muted-foreground">
-                  <p>Um novo perfil será criado e <span className="text-success font-semibold">adicionado ao património do cofre</span> com {formatMT(displayApprove.current?.req?.valor || 0)}.</p>
+                <div className="pt-4 border-t border-white/5 text-[10px] text-muted-foreground space-y-2 leading-relaxed">
+                  <p className="font-bold text-primary uppercase tracking-widest mb-1">Algoritmo de Segurança:</p>
+                  <p>• O membro com <span className="text-white">maior saldo</span> contribui primeiro.</p>
+                  <p>• O juro escala de <span className="text-white">10% a 50%</span> conforme o tempo.</p>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <button
-              onClick={() => setConfirmApprove(null)}
-              disabled={isApproving}
-              className="flex-1 bg-white/5 text-muted-foreground hover:text-white hover:bg-white/10 py-3 rounded-xl font-semibold transition-colors"
-            >
+          <AlertDialogFooter className="gap-3">
+            <AlertDialogCancel className="bg-white/5 text-muted-foreground hover:text-white border-white/10 rounded-2xl px-6 h-12 font-bold transition-all">
               Cancelar
-            </button>
-            <button
-              onClick={handleConfirmApprove}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmApprove();
+              }}
               disabled={isApproving}
-              className="flex-1 bg-success text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-success/90 transition-colors disabled:opacity-60"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl px-8 h-12 font-bold transition-all shadow-lg shadow-primary/20 flex-1"
             >
-              {isApproving
-                ? <><Loader2 className="w-4 h-4 animate-spin" /> A processar...</>
-                : <><Check className="w-4 h-4" /> Confirmar</>
-              }
-            </button>
+              {isApproving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirmar Aprovação"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm Reject Dialog - Robust Radix Portal */}
+      <AlertDialog open={!!confirmReject} onOpenChange={(open) => !open && setConfirmReject(null)}>
+        <AlertDialogContent className="glass-panel border-white/10 rounded-[2rem] max-w-md p-8 shadow-2xl">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-4 mb-2">
+              <div className="w-12 h-12 rounded-2xl bg-destructive/20 flex items-center justify-center text-destructive border border-destructive/20">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <AlertDialogTitle className="text-2xl font-bold text-white">Rejeitar Pedido</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-muted-foreground text-sm">
+              O autor será informado e a solicitação movida para o histórico como "Rejeitada".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="p-5 bg-destructive/5 rounded-3xl border border-destructive/10 my-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white text-xs">
+                {displayReject.current?.req?.user_foto}
+              </div>
+              <div>
+                <p className="font-bold text-white text-sm">{displayReject.current?.req?.user_nome}</p>
+                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                  Rejeição de {formatMT(displayReject.current?.req?.valor || 0)}
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Create Request Dialog — CSS-only transition (same pattern as confirm dialog) */}
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        style={{
-          pointerEvents: createType ? "auto" : "none",
-          opacity: createType ? 1 : 0,
-          transition: "opacity 0.2s ease",
-          background: createType ? "rgba(0,0,0,0.60)" : "transparent",
-          backdropFilter: createType ? "blur(4px)" : "none",
-        }}
-      >
-        <div
-          className="glass-panel w-full max-w-md rounded-2xl p-6 relative"
-          style={{
-            transform: createType ? "scale(1)" : "scale(0.95)",
-            opacity: createType ? 1 : 0,
-            transition: "transform 0.2s ease, opacity 0.2s ease",
-          }}
-        >
-          <button onClick={() => setCreateType(null)} className="absolute top-4 right-4 text-muted-foreground hover:text-white transition-colors"><X className="w-5 h-5" /></button>
-          <h2 className="text-xl font-bold text-white mb-6">Nova Solicitação de {createType === 'loan' ? 'Empréstimo' : 'Aporte'}</h2>
+          <AlertDialogFooter className="gap-3">
+            <AlertDialogCancel className="bg-white/5 text-muted-foreground hover:text-white border-white/10 rounded-2xl px-6 h-12 font-bold transition-all">
+              Manter Pedido
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmReject();
+              }}
+              disabled={rejectLoanMut.isPending || rejectDepMut.isPending || rejectMemMut.isPending}
+              className="bg-destructive hover:bg-destructive/90 text-white rounded-2xl px-8 h-12 font-bold transition-all shadow-lg shadow-destructive/20 flex-1"
+            >
+              {(rejectLoanMut.isPending || rejectDepMut.isPending || rejectMemMut.isPending) 
+                ? <Loader2 className="w-5 h-5 animate-spin" /> 
+                : "Confirmar Rejeição"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-          <form onSubmit={handleCreate} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">Membro</label>
-              <select required value={userId} onChange={e => setUserId(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors">
-                <option value="">Selecione o membro...</option>
+      {/* Confirm History Deletion Dialog - Robust Radix Portal */}
+      <AlertDialog open={!!confirmDelete} onOpenChange={(open) => !open && setConfirmDelete(null)}>
+        <AlertDialogContent className="glass-panel border-white/10 rounded-[2rem] max-w-md p-8 shadow-2xl">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-4 mb-2">
+              <div className="w-12 h-12 rounded-2xl bg-destructive/20 flex items-center justify-center text-destructive border border-destructive/20">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <AlertDialogTitle className="text-2xl font-bold text-white">Solicitar Exclusão</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-muted-foreground text-sm">
+              Esta acção requer a aprovação do membro proprietário para que ele sirva como testemunha da exclusão no histórico.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="p-5 bg-white/5 rounded-3xl border border-white/5 my-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white text-xs">
+                {confirmDelete?.req?.user_foto}
+              </div>
+              <div>
+                <p className="font-bold text-white text-sm">{confirmDelete?.req?.user_nome}</p>
+                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                  Exclusão de {formatMT(confirmDelete?.req?.valor || 0)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <AlertDialogFooter className="gap-3">
+            <AlertDialogCancel className="bg-white/5 text-muted-foreground hover:text-white border-white/10 rounded-2xl px-6 h-12 font-bold transition-all">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleConfirmDelete();
+              }}
+              disabled={createDelReqMut.isPending}
+              className="bg-destructive hover:bg-destructive/90 text-white rounded-2xl px-8 h-12 font-bold transition-all shadow-lg shadow-destructive/20 flex-1"
+            >
+              {createDelReqMut.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Solicitar Aprovação"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Create Request Dialog - Robust Radix Portal */}
+      <Dialog open={!!createType} onOpenChange={(open) => !open && setCreateType(null)}>
+        <DialogContent className="glass-panel border-white/10 rounded-[2rem] max-w-md p-8 shadow-2xl overflow-hidden">
+          <DialogHeader>
+            <div className="flex items-center gap-4 mb-6">
+              <div className={cn(
+                "w-14 h-14 rounded-2xl flex items-center justify-center border",
+                createType === 'loan' ? "bg-primary/20 text-primary border-primary/20" : "bg-success/20 text-success border-success/20"
+              )}>
+                {createType === 'loan' ? <ArrowUpFromLine className="w-7 h-7" /> : <Plus className="w-7 h-7" />}
+              </div>
+              <div>
+                <DialogTitle className="text-2xl font-bold text-white">Nova Solicitação</DialogTitle>
+                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-[0.2em]">
+                  {createType === 'loan' ? "Registo de Empréstimo" : "Registo de Aporte"}
+                </p>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <form onSubmit={handleCreate} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Membro Beneficiário</label>
+              <select required value={userId} onChange={e => setUserId(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white font-medium focus:outline-none focus:border-primary transition-all">
+                <option value="" className="bg-black">Selecione o membro...</option>
                 {users?.filter(u => u.status === 'Ativo').map(u => (
-                  <option key={u.id} value={u.id}>{u.nome}</option>
+                  <option key={u.id} value={u.id} className="bg-black">{u.nome}</option>
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">Valor (MT)</label>
-              <input required type="text" value={valor} onChange={e => setValor(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors" placeholder="ex: 500.00" />
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Valor do Montante (MTn)</label>
+              <input required type="text" value={valor} onChange={e => setValor(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-xl font-black text-white focus:outline-none focus:border-primary placeholder:text-muted-foreground transition-all" placeholder="0.00 MT" />
             </div>
             {createType === "loan" && (
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1">Motivo</label>
-                <textarea value={motivo} onChange={e => setMotivo(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors min-h-[80px] resize-none" placeholder="Para que será usado o empréstimo..." />
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Finalidade do Crédito</label>
+                <textarea value={motivo} onChange={e => setMotivo(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-primary min-h-[100px] resize-none placeholder:text-muted-foreground transition-all" placeholder="Descreva brevemente o motivo..." />
               </div>
             )}
-            <button type="submit" disabled={createLoanMut.isPending || createDepMut.isPending} className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-bold mt-2 hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-              {(createLoanMut.isPending || createDepMut.isPending) ? <><Loader2 className="w-4 h-4 animate-spin" /> A criar...</> : "Criar Solicitação"}
+            <button 
+              type="submit" 
+              disabled={createLoanMut.isPending || createDepMut.isPending} 
+              className={cn(
+                "w-full py-5 rounded-[1.5rem] font-black text-lg shadow-xl transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3",
+                createType === 'loan' ? "bg-primary text-primary-foreground" : "bg-white text-black"
+              )}
+            >
+              {(createLoanMut.isPending || createDepMut.isPending) ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Check className="w-5 h-5" /> Criar Solicitação</>}
             </button>
           </form>
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

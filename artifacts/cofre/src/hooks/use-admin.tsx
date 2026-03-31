@@ -13,7 +13,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(() => sessionStorage.getItem("admin_unlocked") === "true");
 
   const login = (id: string, pass: string) => {
-    if (id === "199451" && pass === "josehor@c1o") {
+    if (id === "ID1122" && pass === "senhajose") {
       setIsAdmin(true);
       sessionStorage.setItem("admin_unlocked", "true");
       return true;

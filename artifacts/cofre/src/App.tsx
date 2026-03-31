@@ -4,6 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Component, ReactNode, useState } from "react";
 import { AdminProvider } from "@/hooks/use-admin";
+import { MemberProvider, useMember } from "@/hooks/use-member";
+import MemberDashboard from "@/pages/members/dashboard";
 
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SplashScreen } from "@/components/layout/SplashScreen";
@@ -15,6 +17,8 @@ import LoanDetailPage from "@/pages/loans/detail";
 import RequestsPage from "@/pages/requests/index";
 import AuditPage from "@/pages/audit/index";
 import NotFound from "@/pages/not-found";
+import { LandingPage } from "@/components/layout/LandingPage";
+import { useAdmin } from "@/hooks/use-admin";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +88,25 @@ function Router() {
   );
 }
 
+function AppContent() {
+  const { isAdmin } = useAdmin();
+  const { isMember } = useMember();
+  
+  if (isAdmin) {
+    return (
+      <WouterRouter>
+        <Router />
+      </WouterRouter>
+    );
+  }
+
+  if (isMember) {
+    return <MemberDashboard />;
+  }
+
+  return <LandingPage />;
+}
+
 function App() {
   const [showSplash, setShowSplash] = useState(true);
 
@@ -95,10 +118,10 @@ function App() {
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
             <AdminProvider>
-              <WouterRouter>
-                <Router />
-              </WouterRouter>
-              <Toaster />
+              <MemberProvider>
+                <AppContent />
+                <Toaster />
+              </MemberProvider>
             </AdminProvider>
           </TooltipProvider>
         </QueryClientProvider>

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useRoute } from "wouter";
 import { useUser, useUpdateUser } from "@/hooks/use-users";
 import { useLoans } from "@/hooks/use-loans";
@@ -14,6 +15,8 @@ export default function MemberDetailPage() {
   const { data, isLoading } = useUser(id);
   const updateMutation = useUpdateUser();
   const { data: allLoans } = useLoans();
+  
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   if (isLoading) return <PageLoader />;
   if (!data) return <div className="text-destructive p-8 bg-destructive/10 rounded-xl">Membro não encontrado.</div>;
@@ -25,6 +28,7 @@ export default function MemberDetailPage() {
         status: data.user.status === "Ativo" ? "Congelado" : "Ativo"
       }
     });
+    setIsConfirmOpen(false);
   };
 
   // Professional Limit Calculation
@@ -47,11 +51,11 @@ export default function MemberDetailPage() {
           <p className="text-muted-foreground">Mapa de Capital e Investimentos</p>
         </div>
         <button
-          onClick={toggleStatus}
+          onClick={() => setIsConfirmOpen(true)}
           disabled={updateMutation.isPending}
-          className="flex items-center gap-2 glass-panel px-4 py-2 rounded-xl text-sm font-medium hover:bg-white/5 transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 glass-panel px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-white/5 transition-colors disabled:opacity-50"
         >
-          {data.user.status === "Ativo" ? <><Lock className="w-4 h-4 text-warning" /> Congelar</> : <><Unlock className="w-4 h-4 text-success" /> Ativar</>}
+          {data.user.status === "Ativo" ? <><Lock className="w-4 h-4 text-warning" /> Congelar Conta</> : <><Unlock className="w-4 h-4 text-success" /> Ativar Conta</>}
         </button>
       </div>
 
@@ -106,13 +110,13 @@ export default function MemberDetailPage() {
             <TrendingUp className="w-5 h-5 text-primary" /> Capital em Circulação
           </h2>
 
-          {data.emCirculacao.length === 0 ? (
+          {(data.emCirculacao || []).length === 0 ? (
             <div className="glass-panel rounded-2xl p-10 text-center text-muted-foreground">
                Nenhum capital alocado em empréstimos no momento.
             </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {data.emCirculacao.map((item, i) => (
+          {(data.emCirculacao || []).map((item, i) => (
             <Link key={i} href={`/emprestimos/${item.loan_id}`}>
               <div className="glass-panel rounded-2xl p-5 hover:border-primary/30 transition-all group cursor-pointer h-full">
                 <div className="flex items-center gap-3 mb-4">
@@ -150,6 +154,43 @@ export default function MemberDetailPage() {
       )}
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      {isConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="glass-panel w-full max-w-sm rounded-[2rem] p-8 border border-white/10 relative overflow-hidden text-center">
+            <div className="w-16 h-16 rounded-full bg-warning/20 flex items-center justify-center mx-auto mb-4 text-warning">
+               <ShieldCheck className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              {data.user.status === "Ativo" ? "Congelar Conta?" : "Ativar Conta?"}
+            </h2>
+            <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
+              {data.user.status === "Ativo" 
+                ? "O membro ficará impedido de solicitar novos empréstimos ou realizar aportes até que a conta seja desbloqueada."
+                : "O membro voltará a ter acesso total a todas as funcionalidades do cofre."}
+            </p>
+            
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={toggleStatus}
+                disabled={updateMutation.isPending}
+                className={`w-full py-3.5 rounded-2xl font-bold transition-all shadow-lg ${
+                  data.user.status === "Ativo" ? "bg-warning text-black" : "bg-success text-white"
+                }`}
+              >
+                {updateMutation.isPending ? "Processando..." : "Confirmar Alteração"}
+              </button>
+              <button
+                onClick={() => setIsConfirmOpen(false)}
+                className="w-full py-3.5 rounded-2xl font-semibold text-muted-foreground hover:text-white bg-white/5 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

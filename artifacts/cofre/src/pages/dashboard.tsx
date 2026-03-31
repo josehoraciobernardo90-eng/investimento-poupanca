@@ -7,10 +7,14 @@ import { PageLoader } from "@/components/ui/page-loader";
 import { Wallet, TrendingUp, Users, AlertCircle, RefreshCw, Briefcase, ShieldAlert, Clock } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
+import { useAdmin } from "@/hooks/use-admin";
+import { ResetAppModal } from "@/components/admin/ResetAppModal";
+import { Settings } from "lucide-react";
 
 export default function DashboardPage() {
   const { data, isLoading, isError } = useDashboard();
   const { data: loans } = useLoans();
+  const { isAdmin } = useAdmin();
 
   if (isLoading) return <PageLoader />;
   if (isError || !data) return <div className="text-destructive p-8 bg-destructive/10 rounded-xl">Erro ao carregar dashboard.</div>;
@@ -195,6 +199,30 @@ export default function DashboardPage() {
           A base nunca muda — apenas o juro escala. Somente o Admin pode desbloquear uma conta congelada.
         </p>
       </div>
+
+      {/* --- ADMINISTRAÇÃO DO SISTEMA --- */}
+      {isAdmin && (
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="pt-10 border-t border-white/5"
+        >
+          <div className="glass-panel rounded-2xl p-6 border-destructive/20 bg-destructive/5">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+              <div className="flex items-center gap-4 text-center md:text-left">
+                <div className="w-12 h-12 rounded-full bg-destructive/20 flex items-center justify-center text-destructive">
+                  <Settings className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Zona de Perigo: Administração do Sistema</h3>
+                  <p className="text-sm text-muted-foreground">Ações críticas para manutenção do Cofre Capital.</p>
+                </div>
+              </div>
+              <ResetAppModal />
+            </div>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }

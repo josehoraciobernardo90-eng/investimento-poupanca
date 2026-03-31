@@ -1,0 +1,11 @@
+[build]
+  command = "cd artifacts/cofre && pnpm install && pnpm run build"
+  publish = "artifacts/cofre/dist/public"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

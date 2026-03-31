@@ -12,6 +12,7 @@ export function useRequests() {
     memberships: dbStore.membershipRequests,
     loans: dbStore.loanRequests,
     deposits: dbStore.depositRequests,
+    deletionRequests: dbStore.deletionRequests,
     isLoading: false,
     isError: false,
   };
@@ -345,7 +346,9 @@ export function useCreateMembershipRequest() {
         nome: string; foto: string; saldo_base: number;
         nacionalidade?: string; profissao?: string;
         telefone?: string; email?: string;
+        bairro?: string; cidade?: string;
         endereco?: string; nuit?: string;
+        pin?: string;
       } 
     }) => {
       setIsPending(true);
@@ -360,8 +363,11 @@ export function useCreateMembershipRequest() {
           profissao: data.profissao || "",
           telefone: data.telefone || "",
           email: data.email || "",
+          bairro: data.bairro || "",
+          cidade: data.cidade || "",
           endereco: data.endereco || "",
           nuit: data.nuit || "",
+          pin: data.pin || "",
           status: "Pendente" as const,
           ts: Math.floor(Date.now() / 1000)
         };
@@ -404,8 +410,11 @@ export function useApproveMembershipRequest() {
           profissao: req.profissao,
           telefone: req.telefone,
           email: req.email,
+          bairro: req.bairro,
+          cidade: req.cidade,
           endereco: req.endereco,
-          nuit: req.nuit
+          nuit: req.nuit,
+          pin: req.pin || ""
         };
         
         updates[`users/${newUserId}`] = newUser;
@@ -418,9 +427,9 @@ export function useApproveMembershipRequest() {
           patrimonioTotal: req.saldo_base
         };
         
-        updates[`dashboard/membros_ativos`] = mockDashboard.membros_ativos + 1;
-        updates[`dashboard/caixa`] = mockDashboard.caixa + req.saldo_base;
-        updates[`dashboard/total`] = mockDashboard.total + req.saldo_base;
+        updates[`dashboard/membros_ativos`] = (dbStore.dashboard.membros_ativos || 0) + 1;
+        updates[`dashboard/caixa`] = (dbStore.dashboard.caixa || 0) + req.saldo_base;
+        updates[`dashboard/total`] = (dbStore.dashboard.total || 0) + req.saldo_base;
         
         const auditId = "a" + Date.now();
         updates[`audit/${auditId}`] = {
@@ -459,4 +468,156 @@ export function useRejectMembershipRequest() {
         setIsPending(false);
      }
    }
+}
+
+export function useFactoryResetSystem() {
+  const [isPending, setIsPending] = useState(false);
+  const { toast } = useToast();
+  return {
+    isPending,
+    mutateAsync: async () => {
+      setIsPending(true);
+      try {
+        const updates: any = {};
+        // Nodes to wipe
+        const pathsToWipe = [
+          "users", "userDetails", "loans", "loanDetails", 
+          "loanRequests", "depositRequests", "membershipRequests", 
+          "deletionRequests", "audit"
+        ];
+        pathsToWipe.forEach(p => { updates[p] = null; });
+        
+        // Reset dashboard
+        updates["dashboard"] = { 
+          caixa: 0, 
+          lucros: 0, 
+          naRua: 0, 
+          total: 0, 
+          membros_ativos: 0, 
+          emprestimos_ativos: 0 
+        };
+        
+        await update(ref(rtdb), updates);
+        toast({ title: "Redefinição concluída", description: "O sistema foi limpo e está pronto para o uso." });
+      } catch (err) {
+        console.error("[useFactoryResetSystem] Erro:", err);
+        toast({ title: "Erro crítico", description: "Não foi possível resetar o sistema.", variant: "destructive" });
+      } finally {
+        setIsPending(false);
+      }
+    }
+  };
+}
+
+export function useCreateDeletionRequest() {
+  const [isPending, setIsPending] = useState(false);
+  const { toast } = useToast();
+  return {
+    isPending,
+    mutateAsync: async ({ targetId, targetType, userId, userNome, details }: { 
+      targetId: string; targetType: "membership" | "loan" | "deposit"; 
+      userId: string; userNome: string; details: any 
+    }) => {
+      setIsPending(true);
+      try {
+        const id = "drq" + Date.now();
+        const newReq = {
+          id,
+          target_id: targetId,
+          target_type: targetType,
+          user_id: userId,
+          user_nome: userNome,
+          admin_id: "Admin",
+          status: "Pendente",
+          ts: Math.floor(Date.now() / 1000),
+          details
+        };
+        const updates: any = {};
+        updates[`deletionRequests/${id}`] = newReq;
+        
+        const auditId = "a" + Date.now();
+        updates[`audit/${auditId}`] = {
+          id: auditId, ts: Math.floor(Date.now() / 1000), tipo: "EXCLUSAO", 
+          desc: `Solicitada exclusão de registro de ${userNome} pelo Administrador. Aguardando aprovação do membro.`, 
+          valor: details.valor || 0, user: "Admin"
+        };
+        
+        await update(ref(rtdb), updates);
+        toast({ title: "Solicitação enviada", description: "O membro foi notificado para aprovar a exclusão." });
+      } catch {
+        toast({ title: "Erro", description: "Não foi possível enviar o pedido de exclusão.", variant: "destructive" });
+      } finally {
+        setIsPending(false);
+      }
+    }
+  };
+}
+
+export function useApproveDeletionRequest() {
+  const [isPending, setIsPending] = useState(false);
+  const { toast } = useToast();
+  return {
+    isPending,
+    mutateAsync: async ({ requestId }: { requestId: string }) => {
+      setIsPending(true);
+      try {
+        const delReq = dbStore.deletionRequests.find(r => r.id === requestId);
+        if (!delReq) return;
+
+        const updates: any = {};
+        // Delete original request
+        const path = delReq.target_type === "membership" ? "membershipRequests" : 
+                     delReq.target_type === "loan" ? "loanRequests" : "depositRequests";
+        updates[`${path}/${delReq.target_id}`] = null;
+        // Delete deletion request
+        updates[`deletionRequests/${requestId}`] = null;
+
+        const auditId = "a" + Date.now();
+        updates[`audit/${auditId}`] = {
+          id: auditId, ts: Math.floor(Date.now() / 1000), tipo: "EXCLUSAO", 
+          desc: `Exclusão confirmada pelo membro ${delReq.user_nome}. Registro removido do histórico.`, 
+          valor: delReq.details.valor || 0, user: delReq.user_nome
+        };
+
+        await update(ref(rtdb), updates);
+        toast({ title: "Exclusão concluída", description: "O registro foi removido permanentemente." });
+      } catch {
+        toast({ title: "Erro", description: "Não foi possível processar a exclusão.", variant: "destructive" });
+      } finally {
+        setIsPending(false);
+      }
+    }
+  };
+}
+
+export function useRejectDeletionRequest() {
+  const [isPending, setIsPending] = useState(false);
+  const { toast } = useToast();
+  return {
+    isPending,
+    mutateAsync: async ({ requestId }: { requestId: string }) => {
+      setIsPending(true);
+      try {
+        const delReq = dbStore.deletionRequests.find(r => r.id === requestId);
+        if (!delReq) return;
+
+        const updates: any = {};
+        updates[`deletionRequests/${requestId}`] = null;
+
+        const auditId = "a" + Date.now();
+        updates[`audit/${auditId}`] = {
+          id: auditId, ts: Math.floor(Date.now() / 1000), tipo: "EXCLUSAO", 
+          desc: `Exclusão rejeitada pelo membro ${delReq.user_nome}. Registro mantido no histórico.`, 
+          valor: delReq.details.valor || 0, user: delReq.user_nome
+        };
+
+        await update(ref(rtdb), updates);
+        toast({ title: "Exclusão rejeitada", description: "O pedido de exclusão foi cancelado." });
+      } catch {
+        toast({ title: "Erro", description: "Não foi possível rejeitar o pedido.", variant: "destructive" });
+      } finally {
+        setIsPending(false);
+      }
+    }
+  };
 }
