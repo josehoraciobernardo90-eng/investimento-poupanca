@@ -47,3 +47,16 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Security - Environment Variables
+.env
+.env.local
+.env.*
+!.env.example
+*.log
+firebase-debug.log
+firestore-debug.log
+pubsub-debug.log
+ui-debug.log
+firebase-export*
+.firebase/
