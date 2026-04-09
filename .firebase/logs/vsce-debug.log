@@ -914,3 +914,4 @@ Generated sources: .guides/config.json [236B] esm\package.json [17B] index.cjs.j
  {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0330 22:03:15.836818   48016 load.go:109] Finished reloading\n"}}
 [debug] [2026-03-30T20:03:15.928Z] I0330 22:03:15.931756   48016 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:50001
  {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0330 22:03:15.931756   48016 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:50001\n"}}
+[info] [Firebase Plugin] Stopping Data Connect toolkit
