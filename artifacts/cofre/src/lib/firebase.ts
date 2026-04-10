@@ -5,15 +5,13 @@ import { getDatabase } from "firebase/database";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
-  databaseURL: `https://${import.meta.env.VITE_FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com` 
-  // Fallback seguro caso haja um URL Realtime customizado, mas normalmente é este o formato
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? "AIzaSyAUXSY7an0z_mbidx8y3DDDVVHaAGtS0Ak",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ?? "investimento-poupanca.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID ?? "investimento-poupanca",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ?? "investimento-poupanca.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ?? "673527529570",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID ?? "1:673527529570:web:6eb8027566e66b1592d13b",
+  databaseURL: "https://investimento-poupanca-default-rtdb.firebaseio.com",
 };
 
 // Validar configurações vitais

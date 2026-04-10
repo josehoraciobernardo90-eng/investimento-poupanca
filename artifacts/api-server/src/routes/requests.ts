@@ -106,7 +106,7 @@ router.post("/loan/:requestId/reject", async (req, res) => {
   const [updated] = await db.update(loanRequestsTable).set({ status: "Rejeitado" })
     .where(eq(loanRequestsTable.id, requestId)).returning();
   const user = await db.query.usersTable.findFirst({ where: eq(usersTable.id, updated.user_id) });
-  res.json({ ...updated, user_nome: user?.nome || "—", user_foto: user?.foto || "??" });
+  return res.json({ ...updated, user_nome: user?.nome || "—", user_foto: user?.foto || "??" });
 });
 
 router.get("/deposit", async (_req, res) => {

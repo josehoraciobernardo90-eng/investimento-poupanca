@@ -1,9 +1,10 @@
 [build]
-  command = "cd artifacts/cofre && pnpm install && pnpm run build"
+  command = "pnpm install && pnpm --filter cofre-capital build"
   publish = "artifacts/cofre/dist/public"
 
 [build.environment]
   NODE_VERSION = "20"
+  PNPM_FLAGS = "--no-frozen-lockfile"
 
 [[redirects]]
   from = "/*"

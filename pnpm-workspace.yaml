@@ -1,4 +1,3 @@
-
 packages:
   - artifacts/*
   - lib/*
@@ -85,6 +84,7 @@ overrides:
   "@expo/ngrok-bin>@expo/ngrok-bin-win32-ia32": "-"
   "@expo/ngrok-bin>@expo/ngrok-bin-win32-x64": "-"
   dataconnect-generated: link:../../AppData/Local/pnpm/global/5/node_modules/src/dataconnect-generated
+  # Removed local reference for dataconnect-generated
   esbuild: "0.27.3"
   "rollup>@rollup/rollup-android-arm-eabi": "-"
   "rollup>@rollup/rollup-android-arm64": "-"
