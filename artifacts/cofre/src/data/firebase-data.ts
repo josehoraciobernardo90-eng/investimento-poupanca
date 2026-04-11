@@ -21,6 +21,13 @@ export interface User {
   nuit?: string;
   endereco?: string;
   nacionalidade?: string;
+  conjuge_nome?: string;
+  conjuge_numero?: string;
+  irmao_nome?: string;
+  irmao_numero?: string;
+  parente_nome?: string;
+  parente_numero?: string;
+  zona?: string;
 }
 
 export interface UserDetails {
@@ -44,6 +51,7 @@ export const dbStore = {
   depositRequests: [] as any[],
   membershipRequests: [] as any[],
   deletionRequests: [] as any[],
+  profileEditRequests: [] as any[],
   audit: [] as any[]
 };
 
@@ -99,6 +107,11 @@ export function initFirebaseSync() {
     emitMockDataChange();
   });
 
+  onValue(ref(rtdb, 'profileEditRequests'), snap => {
+    dbStore.profileEditRequests = snap.val() ? Object.values(snap.val() as Record<string,any>).sort((a,b)=>b.ts - a.ts) : [];
+    emitMockDataChange();
+  });
+
   onValue(ref(rtdb, 'audit'), snap => { 
     dbStore.audit = snap.val() ? Object.values(snap.val() as Record<string,any>).sort((a,b)=>b.ts - a.ts) : []; 
     emitMockDataChange(); 
@@ -131,6 +144,7 @@ export async function factoryReset() {
       set(ref(rtdb, 'depositRequests'), null),
       set(ref(rtdb, 'membershipRequests'), null),
       set(ref(rtdb, 'deletionRequests'), null),
+      set(ref(rtdb, 'profileEditRequests'), null),
       set(ref(rtdb, 'audit'), null),
       set(ref(rtdb, 'dashboard'), resetDashboard)
     ]);

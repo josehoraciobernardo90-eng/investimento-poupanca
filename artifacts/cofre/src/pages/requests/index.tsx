@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useRequests, useApproveLoanRequest, useRejectLoanRequest, useCreateDepositRequest, useApproveDepositRequest, useRejectDepositRequest, useCreateLoanRequest, useApproveMembershipRequest, useRejectMembershipRequest, useCreateDeletionRequest } from "@/hooks/use-requests";
+import { useRequests, useApproveLoanRequest, useRejectLoanRequest, useCreateDepositRequest, useApproveDepositRequest, useRejectDepositRequest, useCreateLoanRequest, useApproveMembershipRequest, useRejectMembershipRequest, useCreateDeletionRequest, useApproveProfileEditRequest, useRejectProfileEditRequest } from "@/hooks/use-requests";
 import { useUsers } from "@/hooks/use-users";
 import { formatMT, formatDateTime, parseInputMoney } from "@/lib/utils";
 import { PageLoader } from "@/components/ui/page-loader";
@@ -41,9 +41,9 @@ type AnyRequest = {
 };
 
 export default function RequestsPage() {
-  const { loans, deposits, memberships, isLoading } = useRequests();
+  const { loans, deposits, memberships, profileEdits, isLoading } = useRequests();
   const { data: users } = useUsers();
-  const [tab, setTab] = useState<"memberships" | "loans" | "deposits">("memberships");
+  const [tab, setTab] = useState<"memberships" | "loans" | "deposits" | "profileEdits">("memberships");
 
   const approveLoanMut = useApproveLoanRequest();
   const rejectLoanMut = useRejectLoanRequest();
@@ -51,6 +51,8 @@ export default function RequestsPage() {
   const rejectDepMut = useRejectDepositRequest();
   const approveMemMut = useApproveMembershipRequest();
   const rejectMemMut = useRejectMembershipRequest();
+  const approveProfileMut = useApproveProfileEditRequest();
+  const rejectProfileMut = useRejectProfileEditRequest();
 
   const [createType, setCreateType] = useState<"loan" | "deposit" | null>(null);
   const createLoanMut = useCreateLoanRequest();
@@ -62,11 +64,11 @@ export default function RequestsPage() {
   const createDelReqMut = useCreateDeletionRequest();
   const [confirmDelete, setConfirmDelete] = useState<{ req: AnyRequest; type: "loan" | "deposit" | "membership" } | null>(null);
 
-  const [confirmApprove, setConfirmApprove] = useState<{ req: AnyRequest; type: "loan" | "deposit" | "membership" } | null>(null);
-  const [confirmReject, setConfirmReject] = useState<{ req: AnyRequest; type: "loan" | "deposit" | "membership" } | null>(null);
+  const [confirmApprove, setConfirmApprove] = useState<{ req: AnyRequest; type: "loan" | "deposit" | "membership" | "profileEdit" } | null>(null);
+  const [confirmReject, setConfirmReject] = useState<{ req: AnyRequest; type: "loan" | "deposit" | "membership" | "profileEdit" } | null>(null);
   // Snapshot ref so the modal always has data during Framer exit animation
-  const displayApprove = useRef<{ req: AnyRequest; type: "loan" | "deposit" | "membership" } | null>(null);
-  const displayReject = useRef<{ req: AnyRequest; type: "loan" | "deposit" | "membership" } | null>(null);
+  const displayApprove = useRef<{ req: AnyRequest; type: "loan" | "deposit" | "membership" | "profileEdit" } | null>(null);
+  const displayReject = useRef<{ req: AnyRequest; type: "loan" | "deposit" | "membership" | "profileEdit" } | null>(null);
   if (confirmApprove !== null) displayApprove.current = confirmApprove;
   if (confirmReject !== null) displayReject.current = confirmReject;
 
@@ -83,6 +85,9 @@ export default function RequestsPage() {
   const historyLoans = loans.filter(r => r.status !== "Pendente");
   const pendingDeps = deposits.filter(r => r.status === "Pendente");
   const historyDeps = deposits.filter(r => r.status !== "Pendente");
+
+  const pendingProfileEdits = (profileEdits || []).filter(r => r.status === "Pendente");
+  const historyProfileEdits = (profileEdits || []).filter(r => r.status !== "Pendente");
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,6 +115,8 @@ export default function RequestsPage() {
         await approveDepMut.mutateAsync({ requestId: confirmApprove.req.id });
       } else if (confirmApprove.type === "membership") {
         await approveMemMut.mutateAsync({ requestId: confirmApprove.req.id });
+      } else if (confirmApprove.type === "profileEdit") {
+        await approveProfileMut.mutateAsync({ requestId: confirmApprove.req.id });
       }
     } catch {
       // Error feedback is handled by onError toast in the hooks
@@ -127,6 +134,8 @@ export default function RequestsPage() {
         await rejectDepMut.mutate({ requestId: confirmReject.req.id });
       } else if (confirmReject.type === "membership") {
         await rejectMemMut.mutate({ requestId: confirmReject.req.id });
+      } else if (confirmReject.type === "profileEdit") {
+        await rejectProfileMut.mutate({ requestId: confirmReject.req.id });
       }
     } catch {
       // Error feedback is handled by onError toast in the hooks
@@ -153,7 +162,7 @@ export default function RequestsPage() {
     }
   };
 
-  const isApproving = approveLoanMut.isPending || approveDepMut.isPending || approveMemMut.isPending;
+  const isApproving = approveLoanMut.isPending || approveDepMut.isPending || approveMemMut.isPending || approveProfileMut.isPending;
 
   return (
     <div className="space-y-6">
@@ -191,13 +200,19 @@ export default function RequestsPage() {
         >
           Aportes ({pendingDeps.length})
         </button>
+        <button
+          onClick={() => setTab("profileEdits")}
+          className={cn("px-4 py-2 rounded-lg text-sm font-medium transition-all", tab === "profileEdits" ? "bg-card text-white shadow-sm" : "text-muted-foreground hover:text-white")}
+        >
+          Edições ({pendingProfileEdits.length})
+        </button>
       </div>
 
       <div className="space-y-4">
         <h2 className="text-xl font-bold text-white">Pendentes</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-h-[100px]">
           <AnimatePresence mode="popLayout" initial={false}>
-            {(tab === "memberships" ? pendingMems : tab === "loans" ? pendingLoans : pendingDeps).map((req) => (
+            {(tab === "memberships" ? pendingMems : tab === "loans" ? pendingLoans : tab === "profileEdits" ? pendingProfileEdits : pendingDeps).map((req) => (
               <motion.div 
                 key={`req-${tab}-${req.id}`} 
                 initial={{ opacity: 0, y: 10, scale: 0.98 }} 
@@ -217,7 +232,11 @@ export default function RequestsPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="block font-mono font-bold text-lg text-white">{formatMT(req.valor)}</span>
+                  {tab !== "profileEdits" ? (
+                    <span className="block font-mono font-bold text-lg text-white">{formatMT(req.valor)}</span>
+                  ) : (
+                    <span className="block font-bold text-sm text-primary uppercase tracking-widest">Edição</span>
+                  )}
                   <StatusBadge status={req.status} />
                 </div>
               </div>
@@ -238,6 +257,16 @@ export default function RequestsPage() {
                 </div>
               )}
 
+              {tab === "profileEdits" && (
+                <div className="mb-4 p-3 bg-black/20 rounded-lg text-sm border border-white/5 grid grid-cols-2 gap-x-4 gap-y-2">
+                   {(req as any).conjuge_nome && <div className="col-span-2 text-xs"><span className="text-muted-foreground mr-1">Cônjuge:</span><span className="text-white">{(req as any).conjuge_nome} ({(req as any).conjuge_numero || "—"})</span></div>}
+                   {(req as any).irmao_nome && <div className="col-span-2 text-xs"><span className="text-muted-foreground mr-1">Irmão:</span><span className="text-white">{(req as any).irmao_nome} ({(req as any).irmao_numero || "—"})</span></div>}
+                   {(req as any).parente_nome && <div className="col-span-2 text-xs"><span className="text-muted-foreground mr-1">Pai/Mãe:</span><span className="text-white">{(req as any).parente_nome} ({(req as any).parente_numero || "—"})</span></div>}
+                   {(req as any).bairro && <div className="col-span-1 text-xs"><span className="text-muted-foreground mr-1">Bairro:</span><span className="text-white">{(req as any).bairro}</span></div>}
+                   {(req as any).zona && <div className="col-span-1 text-xs"><span className="text-muted-foreground mr-1">Zona:</span><span className="text-white">{(req as any).zona}</span></div>}
+                </div>
+              )}
+
               {tab === "loans" && (
                 <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg text-xs text-muted-foreground">
                   <span className="text-primary font-semibold">Algoritmo de alocação:</span> O membro com maior saldo perde tudo primeiro; o restante divide-se igualmente pelos outros.
@@ -246,25 +275,25 @@ export default function RequestsPage() {
 
               <div className="flex gap-2 mt-4 pt-4 border-t border-white/5">
                 <button
-                  onClick={() => setConfirmApprove({ req: req as AnyRequest, type: tab === "memberships" ? "membership" : tab === "loans" ? "loan" : "deposit" })}
-                  disabled={isApproving || rejectLoanMut.isPending || rejectDepMut.isPending || rejectMemMut.isPending}
+                  onClick={() => setConfirmApprove({ req: req as AnyRequest, type: tab === "memberships" ? "membership" : tab === "loans" ? "loan" : tab === "profileEdits" ? "profileEdit" : "deposit" })}
+                  disabled={isApproving || rejectLoanMut.isPending || rejectDepMut.isPending || rejectMemMut.isPending || rejectProfileMut.isPending}
                   className="flex-1 bg-success/20 text-success hover:bg-success hover:text-white py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Check className="w-4 h-4" /> Aprovar
                 </button>
                 <button
-                  onClick={() => setConfirmReject({ req: req as AnyRequest, type: tab === "memberships" ? "membership" : tab === "loans" ? "loan" : "deposit" })}
-                  disabled={rejectLoanMut.isPending || rejectDepMut.isPending || rejectMemMut.isPending || isApproving}
+                  onClick={() => setConfirmReject({ req: req as AnyRequest, type: tab === "memberships" ? "membership" : tab === "loans" ? "loan" : tab === "profileEdits" ? "profileEdit" : "deposit" })}
+                  disabled={rejectLoanMut.isPending || rejectDepMut.isPending || rejectMemMut.isPending || rejectProfileMut.isPending || isApproving}
                   className="flex-1 bg-destructive/20 text-destructive hover:bg-destructive hover:text-white py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {(rejectLoanMut.isPending || rejectDepMut.isPending || rejectMemMut.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
+                  {(rejectLoanMut.isPending || rejectDepMut.isPending || rejectMemMut.isPending || rejectProfileMut.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
                   Rejeitar
                 </button>
               </div>
             </motion.div>
           ))}
           </AnimatePresence>
-          {(tab === "memberships" ? pendingMems : tab === "loans" ? pendingLoans : pendingDeps).length === 0 && (
+          {(tab === "memberships" ? pendingMems : tab === "loans" ? pendingLoans : tab === "profileEdits" ? pendingProfileEdits : pendingDeps).length === 0 && (
             <div className="col-span-full py-12 text-center text-muted-foreground bg-white/5 rounded-2xl">
               <p className="text-lg font-medium">Nenhuma solicitação pendente</p>
               <p className="text-sm mt-1 opacity-60">Todas as solicitações foram processadas.</p>
@@ -280,14 +309,15 @@ export default function RequestsPage() {
                 <thead>
                   <tr className="border-b border-white/5">
                     <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Membro</th>
-                    <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Valor</th>
+                    {tab !== "profileEdits" && <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Valor</th>}
                     {tab === "loans" && <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Motivo</th>}
+                    {tab === "profileEdits" && <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Alterações</th>}
                     <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Estado</th>
-                    <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right">Acções</th>
+                    {tab !== "profileEdits" && <th className="p-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right">Acções</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {(tab === "memberships" ? historyMems : tab === "loans" ? historyLoans : historyDeps).map((req) => (
+                  {(tab === "memberships" ? historyMems : tab === "loans" ? historyLoans : tab === "profileEdits" ? historyProfileEdits : historyDeps).map((req) => (
                     <tr key={req.id} className="hover:bg-white/5 transition-colors">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
@@ -300,10 +330,11 @@ export default function RequestsPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="p-4 font-mono text-white font-semibold">{formatMT(req.valor)}</td>
+                      {tab !== "profileEdits" && <td className="p-4 font-mono text-white font-semibold">{formatMT(req.valor)}</td>}
                       {tab === "loans" && <td className="p-4 text-sm text-muted-foreground max-w-[200px] truncate">{"motivo" in req ? req.motivo || "—" : "—"}</td>}
+                      {tab === "profileEdits" && <td className="p-4 text-xs text-muted-foreground max-w-[200px] truncate">Atualizou Informações Familiares/Endereço</td>}
                       <td className="p-4"><StatusBadge status={req.status} /></td>
-                      <td className="p-4 text-right">
+                      {tab !== "profileEdits" && <td className="p-4 text-right">
                         <button 
                           onClick={() => setConfirmDelete({ req: req as AnyRequest, type: tab === "memberships" ? "membership" : tab === "loans" ? "loan" : "deposit" })}
                           className="p-2 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-lg transition-colors"
@@ -311,7 +342,7 @@ export default function RequestsPage() {
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
-                      </td>
+                      </td>}
                     </tr>
                   ))}
                 </tbody>
@@ -347,12 +378,17 @@ export default function RequestsPage() {
                     <p className="font-bold text-white text-sm">{displayApprove.current?.req?.user_nome}</p>
                     <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
                       {displayApprove.current?.type === "loan" ? "Pedido de Empréstimo" : 
-                       displayApprove.current?.type === "membership" ? "Adesão ao Cofre" : "Novo Aporte"}
+                       displayApprove.current?.type === "membership" ? "Adesão ao Cofre" : 
+                       displayApprove.current?.type === "profileEdit" ? "Edição de Perfil" : "Novo Aporte"}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-xl font-mono font-black text-primary">{formatMT(displayApprove.current?.req?.valor || 0)}</span>
+                  {displayApprove.current?.type !== "profileEdit" ? (
+                    <span className="text-xl font-mono font-black text-primary">{formatMT(displayApprove.current?.req?.valor || 0)}</span>
+                  ) : (
+                    <span className="text-sm font-black text-primary uppercase">Edição</span>
+                  )}
                 </div>
               </div>
 
@@ -407,7 +443,10 @@ export default function RequestsPage() {
               <div>
                 <p className="font-bold text-white text-sm">{displayReject.current?.req?.user_nome}</p>
                 <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                  Rejeição de {formatMT(displayReject.current?.req?.valor || 0)}
+                  {displayReject.current?.type === "profileEdit" 
+                    ? "Rejeição de Edição de Perfil"
+                    : `Rejeição de ${formatMT(displayReject.current?.req?.valor || 0)}`
+                  }
                 </p>
               </div>
             </div>
@@ -422,10 +461,10 @@ export default function RequestsPage() {
                 e.preventDefault();
                 handleConfirmReject();
               }}
-              disabled={rejectLoanMut.isPending || rejectDepMut.isPending || rejectMemMut.isPending}
+              disabled={rejectLoanMut.isPending || rejectDepMut.isPending || rejectMemMut.isPending || rejectProfileMut.isPending}
               className="bg-destructive hover:bg-destructive/90 text-white rounded-2xl px-8 h-12 font-bold transition-all shadow-lg shadow-destructive/20 flex-1"
             >
-              {(rejectLoanMut.isPending || rejectDepMut.isPending || rejectMemMut.isPending) 
+              {(rejectLoanMut.isPending || rejectDepMut.isPending || rejectMemMut.isPending || rejectProfileMut.isPending) 
                 ? <Loader2 className="w-5 h-5 animate-spin" /> 
                 : "Confirmar Rejeição"}
             </AlertDialogAction>

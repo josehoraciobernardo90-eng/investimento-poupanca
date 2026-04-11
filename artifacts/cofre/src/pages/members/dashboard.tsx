@@ -21,7 +21,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { useNotifications } from "@/hooks/use-notifications";
 import { generateMemberReport } from "@/lib/pdf-utils";
-import { useCreateLoanRequest, useCreateDepositRequest, useApproveDeletionRequest, useRejectDeletionRequest, useRequests } from "@/hooks/use-requests";
+import { useCreateLoanRequest, useCreateDepositRequest, useApproveDeletionRequest, useRejectDeletionRequest, useRequests, useCreateProfileEditRequest } from "@/hooks/use-requests";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { dbStore } from "@/data/firebase-data";
 
@@ -101,6 +101,7 @@ export default function MemberDashboard() {
   const [isLoanOpen, setIsLoanOpen] = useState(false);
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
 
   const [loanAmount, setLoanAmount] = useState("");
   const [loanReason, setLoanReason] = useState("");
@@ -108,6 +109,18 @@ export default function MemberDashboard() {
 
   const createLoanMut = useCreateLoanRequest();
   const createDepositMut = useCreateDepositRequest();
+  const createProfileEditMut = useCreateProfileEditRequest();
+
+  const [profileForm, setProfileForm] = useState({
+    conjuge_nome: memberUser?.conjuge_nome || "",
+    conjuge_numero: memberUser?.conjuge_numero || "",
+    irmao_nome: memberUser?.irmao_nome || "",
+    irmao_numero: memberUser?.irmao_numero || "",
+    parente_nome: memberUser?.parente_nome || "",
+    parente_numero: memberUser?.parente_numero || "",
+    bairro: memberUser?.bairro || "",
+    zona: memberUser?.zona || ""
+  });
 
   const { deletionRequests } = useRequests();
   const approveDelMut = useApproveDeletionRequest();
@@ -158,6 +171,21 @@ export default function MemberDashboard() {
     } catch {}
   };
 
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await createProfileEditMut.mutateAsync({
+         data: {
+           user_id: memberUser.id,
+           user_nome: memberUser.nome,
+           user_foto: memberUser.foto,
+           ...profileForm
+         }
+      });
+      setIsProfileEditOpen(false);
+    } catch {}
+  };
+
   const handleDepositSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const val = parseFloat(depositAmount.replace(/[^0-9.]/g, '')) * 100;
@@ -169,7 +197,8 @@ export default function MemberDashboard() {
     } catch {}
   };
 
-  const loanLimit = (memberDetails.emCaixa * 1.30);
+  // Limite = saldo + 50% do saldo (= 150% do saldo em caixa)
+  const loanLimit = (memberDetails.emCaixa * 1.50);
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
@@ -331,10 +360,7 @@ export default function MemberDashboard() {
               { label: "Pendentes", val: globalStats?.solicitacoes_pendentes || 0, icon: Clock, color: "text-warning" }
             ].map((stat, idx) => (
               <div key={idx} className="p-3 rounded-xl bg-white/5 border border-white/5 flex flex-col gap-1">
-                <div className="flex items-center gap-1.5 opacity-60">
-                  <stat.icon className={`w-3 h-3 ${stat.color}`} />
-                  <span className="text-[8px] sm:text-[9px] text-muted-foreground font-bold uppercase tracking-wider">{stat.label}</span>
-                </div>
+                <span className="text-[8px] sm:text-[9px] text-muted-foreground font-bold uppercase tracking-wider opacity-60">{stat.label}</span>
                 <div className="text-sm sm:text-base font-bold truncate">{stat.val}</div>
               </div>
             ))}
@@ -492,16 +518,24 @@ export default function MemberDashboard() {
                </div>
             </div>
 
-            <div className="pt-6 border-t border-white/5 flex flex-col gap-4">
-               <p className="text-[11px] text-muted-foreground leading-relaxed text-center sm:text-left opacity-70">
-                  Relatório oficial certificado pela cloud para verificação de créditos e extrato.
-               </p>
+            <div className="pt-6 border-t border-white/5 flex flex-col sm:flex-row gap-4">
                <button 
-                 onClick={() => generateMemberReport(memberUser, memberDetails)}
-                 className="w-full flex items-center justify-center gap-2 bg-primary/10 text-primary border border-primary/20 px-8 py-4 rounded-2xl font-bold hover:bg-primary/20 transition-all active:scale-95 text-sm"
+                 onClick={() => setIsProfileEditOpen(true)}
+                 className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 px-8 py-4 rounded-2xl font-bold transition-all active:scale-95 text-sm"
                >
-                 <FileText className="w-5 h-5" /> Baixar Extrato Oficial
+                 <Settings className="w-5 h-5" /> Editar Perfil
                </button>
+               <div className="flex-1">
+                 <p className="text-[11px] text-muted-foreground leading-relaxed text-center sm:text-left opacity-70 mb-2">
+                    Relatório oficial certificado pela cloud para verificação de créditos e extrato.
+                 </p>
+                 <button 
+                   onClick={() => generateMemberReport(memberUser, memberDetails)}
+                   className="w-full flex items-center justify-center gap-2 bg-primary/10 text-primary border border-primary/20 px-8 py-4 rounded-2xl font-bold hover:bg-primary/20 transition-all active:scale-95 text-sm"
+                 >
+                   <FileText className="w-5 h-5" /> Baixar Extrato Oficial
+                 </button>
+               </div>
             </div>
           </div>
         </DashboardSection>
@@ -574,6 +608,75 @@ export default function MemberDashboard() {
                   className="w-full bg-white text-black py-5 rounded-3xl font-bold text-lg hover:bg-gray-200 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {createDepositMut.isPending ? <Loader2 className="w-6 h-6 animate-spin" /> : <><CheckCircle2 className="w-5 h-5 text-success" /> Confirmar Pedido</>}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {isProfileEditOpen && (
+          <div key="profile-modal-container" className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div key="profile-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsProfileEditOpen(false)} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+            <motion.div key="profile-content" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="glass-panel w-full max-w-lg rounded-[2.5rem] p-8 border-white/10 relative z-10 shadow-2xl max-h-[90vh] overflow-y-auto">
+              <button onClick={() => setIsProfileEditOpen(false)} className="absolute top-6 right-6 text-muted-foreground hover:text-white"><X className="w-6 h-6" /></button>
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-white border border-white/10"><Settings className="w-7 h-7" /></div>
+                <div>
+                  <h2 className="text-2xl font-bold">Editar Perfil</h2>
+                  <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Solicitar Alteração</p>
+                </div>
+              </div>
+
+              <form onSubmit={handleProfileSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 px-1">Cônjuge (Nome)</label>
+                    <input value={profileForm.conjuge_nome} onChange={e => setProfileForm(p => ({...p, conjuge_nome: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30" />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 px-1">Cônjuge (Tel)</label>
+                    <input value={profileForm.conjuge_numero} onChange={e => setProfileForm(p => ({...p, conjuge_numero: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 px-1">Irmão/Irmã (Nome)</label>
+                    <input value={profileForm.irmao_nome} onChange={e => setProfileForm(p => ({...p, irmao_nome: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30" />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 px-1">Irmão/Irmã (Tel)</label>
+                    <input value={profileForm.irmao_numero} onChange={e => setProfileForm(p => ({...p, irmao_numero: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 px-1">Pai/Mãe (Nome)</label>
+                    <input value={profileForm.parente_nome} onChange={e => setProfileForm(p => ({...p, parente_nome: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30" />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 px-1">Pai/Mãe (Tel)</label>
+                    <input value={profileForm.parente_numero} onChange={e => setProfileForm(p => ({...p, parente_numero: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 px-1">Bairro</label>
+                    <input value={profileForm.bairro} onChange={e => setProfileForm(p => ({...p, bairro: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30" />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 px-1">Zona</label>
+                    <input value={profileForm.zona} onChange={e => setProfileForm(p => ({...p, zona: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30" />
+                  </div>
+                </div>
+
+                <button 
+                  disabled={createProfileEditMut.isPending}
+                  className="w-full mt-4 bg-white text-black py-4 rounded-2xl font-bold hover:bg-gray-200 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {createProfileEditMut.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Enviar para Aprovação"}
                 </button>
               </form>
             </motion.div>

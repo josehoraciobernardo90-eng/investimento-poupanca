@@ -52,8 +52,8 @@ export function useLiquidateLoan() {
         const base = detail.loan.valor_original;
         const juros = Math.max(0, data.valor_pago - base);
 
-        const juroMutuario = juros * 0.5;
-        const juroInvestidores = juros * 0.5;
+        const juroMutuario = juros * 0.2;
+        const juroInvestidores = juros * 0.8;
 
         // Distribute profits to investors
         const updatedTraces = [...detail.traces];
@@ -98,7 +98,7 @@ export function useLiquidateLoan() {
         updates[`loans/${loanId}/status`] = "Liquidado";
         updates[`loans/${loanId}/valor_pago`] = data.valor_pago;
 
-        // Give borrower their 50% profit share
+        // Give borrower their 20% profit share
         const tomadorUser = dbStore.userDetails[detail.loan.user_id];
         if (tomadorUser) {
           const tomadorCaixa = tomadorUser.emCaixa + juroMutuario;
@@ -123,7 +123,7 @@ export function useLiquidateLoan() {
           id: auditId,
           ts: Math.floor(Date.now() / 1000),
           tipo: "LIQUIDACAO",
-          desc: `Empréstimo #${loanId.slice(0, 6)} liquidado por ${detail.loan.tomador_nome}. Base: ${base / 100} MTn, Juros: ${juros / 100} MTn — distribuídos 50/50.`,
+          desc: `Empréstimo #${loanId.slice(0, 6)} liquidado por ${detail.loan.tomador_nome}. Base: ${base / 100} MTn, Juros: ${juros / 100} MTn — distribuídos 20/80.`,
           valor: data.valor_pago,
           user: detail.loan.tomador_nome
         };

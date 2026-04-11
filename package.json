@@ -16,5 +16,6 @@
     "typescript": "~5.9.2"
   },
   "dependencies": {
+    "dataconnect-generated": "link:../../AppData/Local/pnpm/global/5/node_modules/src/dataconnect-generated"
   }
 }

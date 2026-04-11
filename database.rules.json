@@ -4,53 +4,55 @@
     ".write": true,
     "users": {
       "$uid": {
-        "nome": {
-          ".validate": "newData.isString()"
-        },
-        "status": {
-          ".validate": "newData.val() === 'Ativo' || newData.val() === 'Congelado'"
-        },
-        "saldo_base": {
-          ".validate": "newData.isNumber() && newData.val() >= 0"
-        },
-        "lucro_acumulado": {
-          ".validate": "newData.isNumber() && newData.val() >= 0"
-        }
+        ".validate": true
+      }
+    },
+    "userDetails": {
+      "$uid": {
+        ".validate": true
       }
     },
     "dashboard": {
-      "caixa": {
-        ".validate": "newData.isNumber() && newData.val() >= 0"
-      },
-      "lucros": {
-        ".validate": "newData.isNumber() && newData.val() >= 0"
-      },
-      "naRua": {
-        ".validate": "newData.isNumber() && newData.val() >= 0"
-      },
-      "total": {
-        ".validate": "newData.isNumber() && newData.val() >= 0"
+      ".validate": true
+    },
+    "loans": {
+      "$loan_id": {
+        ".validate": true
+      }
+    },
+    "loanDetails": {
+      "$loan_id": {
+        ".validate": true
       }
     },
     "loanRequests": {
       "$req_id": {
-        "valor": {
-          ".validate": "newData.isNumber() && newData.val() > 0"
-        }
+        ".validate": true
       }
     },
     "depositRequests": {
       "$req_id": {
-        "valor": {
-          ".validate": "newData.isNumber() && newData.val() > 0"
-        }
+        ".validate": true
+      }
+    },
+    "membershipRequests": {
+      "$req_id": {
+        ".validate": true
+      }
+    },
+    "profileEditRequests": {
+      "$req_id": {
+        ".validate": true
+      }
+    },
+    "deletionRequests": {
+      "$req_id": {
+        ".validate": true
       }
     },
     "audit": {
       "$log_id": {
-        "valor": {
-          ".validate": "!newData.hasChild('valor') || (newData.isNumber() && newData.val() >= 0)"
-        }
+        ".validate": true
       }
     }
   }

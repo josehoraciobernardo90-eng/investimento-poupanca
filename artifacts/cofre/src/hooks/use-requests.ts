@@ -12,6 +12,7 @@ export function useRequests() {
     memberships: dbStore.membershipRequests,
     loans: dbStore.loanRequests,
     deposits: dbStore.depositRequests,
+    profileEdits: dbStore.profileEditRequests,
     deletionRequests: dbStore.deletionRequests,
     isLoading: false,
     isError: false,
@@ -29,13 +30,17 @@ export function useCreateLoanRequest() {
         const userDetail = dbStore.userDetails[data.user_id];
         if (!userDetail) throw new Error("Membro não encontrado");
 
-        const limiteTotal = userDetail.emCaixa * 1.30;
+        // Regra: o membro pode pedir até 150% do seu saldo em caixa
+        // (ou seja, saldo + 50% do saldo). Exemplo: 10.000 MT → limite 15.000 MT
+        const limiteTotal = userDetail.emCaixa * 1.50;
         const emprestimosAtivos = dbStore.loans.filter(l => l.user_id === data.user_id && l.status !== "Liquidado");
         const dividaAtiva = emprestimosAtivos.reduce((acc, l) => acc + l.total_devido, 0);
         const limiteDisponivel = Math.max(0, limiteTotal - dividaAtiva);
 
+        console.debug(`[useCreateLoanRequest] emCaixa=${userDetail.emCaixa} | limiteTotal(150%)=${limiteTotal} | dividaAtiva=${dividaAtiva} | limiteDisponivel=${limiteDisponivel} | valorPedido=${data.valor}`);
+
         if (data.valor > limiteDisponivel) {
-          toast({ title: "Limite Excedido", description: `O valor excede o limite disponível de ${formatMT(limiteDisponivel)}.`, variant: "destructive" });
+          toast({ title: "Limite Excedido", description: `O valor máximo permitido é o seu saldo + 50% (${formatMT(limiteTotal)}). Limite disponível: ${formatMT(limiteDisponivel)}.`, variant: "destructive" });
           throw new Error("Limite excedido");
         }
 
@@ -615,6 +620,119 @@ export function useRejectDeletionRequest() {
         toast({ title: "Exclusão rejeitada", description: "O pedido de exclusão foi cancelado." });
       } catch {
         toast({ title: "Erro", description: "Não foi possível rejeitar o pedido.", variant: "destructive" });
+      } finally {
+        setIsPending(false);
+      }
+    }
+  };
+}
+
+export function useCreateProfileEditRequest() {
+  const [isPending, setIsPending] = useState(false);
+  const { toast } = useToast();
+  return {
+    isPending,
+    mutateAsync: async ({ data }: { 
+      data: { 
+        user_id: string; user_nome: string; user_foto: string;
+        conjuge_nome?: string; conjuge_numero?: string;
+        irmao_nome?: string; irmao_numero?: string;
+        parente_nome?: string; parente_numero?: string;
+        bairro?: string; zona?: string; 
+      } 
+    }) => {
+      setIsPending(true);
+      try {
+        const id = "pe" + Date.now();
+        const newReq = {
+          ...data,
+          id,
+          status: "Pendente",
+          ts: Math.floor(Date.now() / 1000)
+        };
+        const updates: any = {};
+        updates[`profileEditRequests/${id}`] = newReq;
+        
+        await update(ref(rtdb), updates);
+        toast({ title: "Pedido Submetido", description: "O seu pedido de edição de perfil foi enviado para o Administrador." });
+      } catch {
+        toast({ title: "Erro", description: "Não foi possível enviar o pedido de edição.", variant: "destructive" });
+      } finally {
+        setIsPending(false);
+      }
+    }
+  };
+}
+
+export function useApproveProfileEditRequest() {
+  const [isPending, setIsPending] = useState(false);
+  const { toast } = useToast();
+  return {
+    isPending,
+    mutateAsync: async ({ requestId }: { requestId: string }) => {
+      setIsPending(true);
+      try {
+        const req = dbStore.profileEditRequests.find(r => r.id === requestId);
+        if (!req || req.status !== "Pendente") return;
+
+        const updates: any = {};
+        updates[`profileEditRequests/${requestId}/status`] = "Aprovado";
+        
+        const uid = req.user_id;
+        const userNode = dbStore.userDetails[uid]?.user;
+        if(userNode) {
+          const fields = ["conjuge_nome", "conjuge_numero", "irmao_nome", "irmao_numero", "parente_nome", "parente_numero", "bairro", "zona"];
+          fields.forEach(f => {
+            if (req[f] !== undefined) {
+               updates[`users/${uid}/${f}`] = req[f];
+               updates[`userDetails/${uid}/user/${f}`] = req[f];
+            }
+          });
+        }
+
+        const auditId = "a" + Date.now();
+        updates[`audit/${auditId}`] = {
+          id: auditId, ts: Math.floor(Date.now() / 1000), tipo: "MEMBRO", 
+          desc: `Edição de Perfil aprovada para ${req.user_nome}.`, 
+          valor: 0, user: "Admin"
+        };
+
+        await update(ref(rtdb), updates);
+        toast({ title: "Aprovado", description: `O perfil de ${req.user_nome} foi atualizado com sucesso.` });
+      } catch {
+        toast({ title: "Erro", description: "Falha ao aprovar edição.", variant: "destructive" });
+      } finally {
+        setIsPending(false);
+      }
+    }
+  };
+}
+
+export function useRejectProfileEditRequest() {
+  const [isPending, setIsPending] = useState(false);
+  const { toast } = useToast();
+  return {
+    isPending,
+    mutateAsync: async ({ requestId }: { requestId: string }) => {
+      setIsPending(true);
+      try {
+        const req = dbStore.profileEditRequests.find(r => r.id === requestId);
+        if (!req || req.status !== "Pendente") return;
+
+        const updates: any = {};
+        updates[`profileEditRequests/${requestId}/status`] = "Rejeitado";
+
+        const auditId = "a" + Date.now();
+        updates[`audit/${auditId}`] = {
+          id: auditId, ts: Math.floor(Date.now() / 1000), tipo: "MEMBRO", 
+          desc: `Pedido de edição de perfil de ${req.user_nome} rejeitado.`, 
+          valor: 0, user: "Admin"
+        };
+
+        await update(ref(rtdb), updates);
+        toast({ title: "Rejeitado", description: "O pedido de edição foi rejeitado." });
+      } catch {
+        toast({ title: "Erro", description: "Falha ao rejeitar edição.", variant: "destructive" });
       } finally {
         setIsPending(false);
       }
