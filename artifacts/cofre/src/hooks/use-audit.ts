@@ -2,7 +2,23 @@ import { useState } from "react";
 import { ref, update, get } from "firebase/database";
 import { rtdb } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { dbStore } from "@/data/firebase-data";
+import { useMockDataSync } from "@/hooks/use-mock-store";
 
+// Hook para BUSCAR os logs de auditoria
+export function useAudit() {
+  useMockDataSync();
+  const rawAudit = dbStore.audit || {};
+  const auditArray = Object.values(rawAudit).sort((a: any, b: any) => b.ts - a.ts);
+  
+  return {
+    data: auditArray,
+    isLoading: false,
+    isError: false
+  };
+}
+
+// Hook para EXECUTAR a auditoria fiscal (Blindado)
 export function useSystemAudit() {
   const [isAuditing, setIsAuditing] = useState(false);
   const { toast } = useToast();
@@ -10,46 +26,49 @@ export function useSystemAudit() {
   const runAudit = async () => {
     setIsAuditing(true);
     try {
-      // 1. Puxar todos os dados brutos do Firebase (Real e nada fictício)
-      const usersSnap = await get(ref(rtdb, "userDetails"));
-      const loansSnap = await get(ref(rtdb, "loans"));
-      const dashboardSnap = await get(ref(rtdb, "dashboard"));
+      // 1. Puxar dados com segurança
+      const [usersSnap, loansSnap, dashboardSnap] = await Promise.all([
+        get(ref(rtdb, "userDetails")),
+        get(ref(rtdb, "loans")),
+        get(ref(rtdb, "dashboard"))
+      ]);
 
-      if (!usersSnap.exists()) throw new Error("Falha ao ler usuários.");
-
-      const users = usersSnap.val();
+      const users = usersSnap.exists() ? usersSnap.val() : {};
       const loans = loansSnap.exists() ? loansSnap.val() : {};
-      const dashboard = dashboardSnap.val();
+      const dashboard = dashboardSnap.exists() ? dashboardSnap.val() : { caixa: 0, naRua: 0, total: 0, membros_ativos: 0, emprestimos_ativos: 0 };
 
       let realCaixa = 0;
       let realNaRua = 0;
       let realMembros = 0;
       let realLoansAtivos = 0;
 
-      // 2. Somar saldos reais de todos os membros
+      // 2. Loop Seguro pelos Membros
       Object.keys(users).forEach(uid => {
-        realCaixa += users[uid].emCaixa || 0;
-        realMembros++;
+        if (users[uid]) {
+          realCaixa += (users[uid].emCaixa || 0);
+          realMembros++;
+        }
       });
 
-      // 3. Somar dívidas reais na rua
+      // 3. Loop Seguro pelos Empréstimos
       Object.keys(loans).forEach(lid => {
-        if (loans[lid].status === "Ativo") {
-          realNaRua += loans[lid].total_devido || 0;
+        if (loans[lid] && loans[lid].status === "Ativo") {
+          realNaRua += (loans[lid].total_devido || 0);
           realLoansAtivos++;
         }
       });
 
       const totalHistorico = realCaixa + realNaRua;
 
-      // 4. Verificar divergências
-      const diffCaixa = realCaixa - dashboard.caixa;
-      const diffNaRua = realNaRua - dashboard.naRua;
+      // 4. Cálculo de Divergência com proteção contra Nulos
+      const dashCaixa = dashboard.caixa || 0;
+      const dashNaRua = dashboard.naRua || 0;
 
-      if (Math.abs(diffCaixa) > 0 || Math.abs(diffNaRua) > 0) {
-        console.warn(`[AUDITORIA] Divergência detectada! Caixa: ${diffCaixa}, NaRua: ${diffNaRua}`);
-        
-        // 5. CORREÇÃO REAL: Sincronizar painel com a realidade dos membros
+      const diffCaixa = realCaixa - dashCaixa;
+      const diffNaRua = realNaRua - dashNaRua;
+
+      // 5. Sincronização se houver diferença (Mesmo que seja de 1 centavo)
+      if (Math.abs(diffCaixa) > 0.01 || Math.abs(diffNaRua) > 0.01) {
         const updates: any = {};
         updates["dashboard/caixa"] = realCaixa;
         updates["dashboard/naRua"] = realNaRua;
@@ -62,37 +81,22 @@ export function useSystemAudit() {
           id: auditId,
           ts: Math.floor(Date.now() / 1000),
           tipo: "AUDITORIA",
-          desc: `AUDITORIA REALIZADA: Sincronização forçada aplicada. Membros: ${realMembros}, Ativos: ${realLoansAtivos}.`,
+          desc: "AUDITORIA DE ELITE: Divergências corrigidas. O sistema agora está síncrono.",
           valor: totalHistorico,
           user: "Sistema (Auto)"
         };
 
         await update(ref(rtdb), updates);
-        
-        toast({ 
-          title: "Auditoria: Erros Corrigidos", 
-          description: `Foram detectadas e corrigidas divergências nos totais. O sistema agora reflete 100% da realidade.`,
-          variant: "default"
-        });
+        toast({ title: "Auditoria Concluída", description: "Valores do painel foram corrigidos conforme a realidade." });
       } else {
-        toast({ 
-          title: "Sistema Íntegro", 
-          description: "A auditoria confirmou que todos os saldos e dívidas batem 100% com o painel central.",
-          variant: "default"
-        });
+        toast({ title: "Sistema Íntegro", description: "Auditória finalizada. Não foram encontradas falhas nos cálculos." });
       }
 
-      return {
-        membros: realMembros,
-        emprestimos: realLoansAtivos,
-        total: totalHistorico,
-        integridade: 100
-      };
-
+      return { membros: realMembros, emprestimos: realLoansAtivos, total: totalHistorico };
     } catch (err) {
-      console.error("[runAudit] Erro Crítico:", err);
-      toast({ title: "Erro na Auditoria", description: "Não foi possível validar os dados do Firebase.", variant: "destructive" });
-      return null; // Garante que a função sempre retorna algo, mesmo em caso de erro
+      console.error("[runAudit] Falha Crítica:", err);
+      toast({ title: "Erro na Auditoria", description: "Falha ao conectar com o banco de dados principal.", variant: "destructive" });
+      return null;
     } finally {
       setIsAuditing(false);
     }
