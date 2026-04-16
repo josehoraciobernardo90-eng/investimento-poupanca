@@ -119,7 +119,8 @@ export default function MemberDashboard() {
     parente_nome: memberUser?.parente_nome || "",
     parente_numero: memberUser?.parente_numero || "",
     bairro: memberUser?.bairro || "",
-    zona: memberUser?.zona || ""
+    zona: memberUser?.zona || "",
+    email: memberUser?.email || ""
   });
 
   const { deletionRequests } = useRequests();
@@ -615,70 +616,136 @@ export default function MemberDashboard() {
         )}
 
         {isProfileEditOpen && (
-          <div key="profile-modal-container" className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div key="profile-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsProfileEditOpen(false)} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-            <motion.div key="profile-content" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="glass-panel w-full max-w-lg rounded-[2.5rem] p-8 border-white/10 relative z-10 shadow-2xl max-h-[90vh] overflow-y-auto">
-              <button onClick={() => setIsProfileEditOpen(false)} className="absolute top-6 right-6 text-muted-foreground hover:text-white"><X className="w-6 h-6" /></button>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center text-white border border-white/10"><Settings className="w-7 h-7" /></div>
-                <div>
-                  <h2 className="text-2xl font-bold">Editar Perfil</h2>
-                  <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Solicitar Alteração</p>
+          <div key="profile-modal-container" className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div key="profile-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsProfileEditOpen(false)} className="absolute inset-0 bg-black/90 backdrop-blur-xl" />
+            <motion.div 
+              key="profile-content" 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} 
+              animate={{ scale: 1, opacity: 1, y: 0 }} 
+              exit={{ scale: 0.9, opacity: 0, y: 20 }} 
+              className="glass-panel w-full max-w-xl rounded-[3rem] p-0 border-white/10 relative z-10 shadow-[0_0_100px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col max-h-[92vh]"
+            >
+              {/* Header Elite */}
+              <div className="bg-gradient-to-b from-primary/10 to-transparent p-8 pb-4 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+                <button onClick={() => setIsProfileEditOpen(false)} className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors text-muted-foreground hover:text-white"><X className="w-5 h-5" /></button>
+                
+                <div className="flex items-center gap-5 relative z-10">
+                   <div className="w-16 h-16 rounded-[1.5rem] bg-black/40 border border-primary/30 flex items-center justify-center text-primary shadow-2xl">
+                      <Shield className="w-9 h-9 text-glow" />
+                   </div>
+                   <div>
+                      <h2 className="text-2xl font-black text-white italic tracking-tighter uppercase">Gestão de Identidade</h2>
+                      <p className="text-[10px] text-primary font-black uppercase tracking-[0.3em] flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                        Protocolo de Segurança na Nuvem • Chimoio
+                      </p>
+                   </div>
                 </div>
               </div>
 
-              <form onSubmit={handleProfileSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={handleProfileSubmit} className="flex-1 overflow-y-auto p-8 pt-4 space-y-6 scrollbar-hide">
+                <p className="text-[11px] text-muted-foreground font-medium leading-relaxed bg-white/5 p-4 rounded-2xl border border-white/5">
+                  Preencha os dados abaixo com precisão. Após a solicitação, o Administrador revisará as informações para garantir a integridade do sistema. A atualização será síncrona e instantânea após aprovação.
+                </p>
+
+                <div className="space-y-6">
+                  {/* Contato Principal */}
                   <div>
-                    <label className="block text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 px-1">Cônjuge (Nome)</label>
-                    <input value={profileForm.conjuge_nome} onChange={e => setProfileForm(p => ({...p, conjuge_nome: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30" />
+                    <h3 className="text-[10px] font-black text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <span className="h-px w-4 bg-primary/40" /> Informações do Titular
+                    </h3>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="relative group">
+                        <label className="absolute -top-2 left-4 text-[9px] font-black text-primary bg-[#050505] px-2 z-10 uppercase tracking-widest">Endereço de E-mail</label>
+                        <input 
+                           value={profileForm.email} 
+                           onChange={e => setProfileForm(p => ({...p, email: e.target.value}))} 
+                           type="email" 
+                           placeholder="exemplo@cofre.co.mz"
+                           className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all" 
+                        />
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Núcleo Familiar */}
                   <div>
-                    <label className="block text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 px-1">Cônjuge (Tel)</label>
-                    <input value={profileForm.conjuge_numero} onChange={e => setProfileForm(p => ({...p, conjuge_numero: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30" />
+                    <h3 className="text-[10px] font-black text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <span className="h-px w-4 bg-primary/40" /> Contatos de Emergência
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-3">
+                        <div className="relative group">
+                          <label className="absolute -top-2 left-4 text-[9px] font-black text-muted-foreground bg-[#050505] px-2 z-10 uppercase tracking-widest">Cônjuge (Nome)</label>
+                          <input value={profileForm.conjuge_nome} onChange={e => setProfileForm(p => ({...p, conjuge_nome: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-white/20 transition-all" />
+                        </div>
+                        <div className="relative group">
+                          <label className="absolute -top-2 left-4 text-[9px] font-black text-muted-foreground bg-[#050505] px-2 z-10 uppercase tracking-widest">Cônjuge (Telefone)</label>
+                          <input value={profileForm.conjuge_numero} onChange={e => setProfileForm(p => ({...p, conjuge_numero: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-white/20 transition-all" />
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="relative group">
+                          <label className="absolute -top-2 left-4 text-[9px] font-black text-muted-foreground bg-[#050505] px-2 z-10 uppercase tracking-widest">Irmão/Irmã (Nome)</label>
+                          <input value={profileForm.irmao_nome} onChange={e => setProfileForm(p => ({...p, irmao_nome: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-white/20 transition-all" />
+                        </div>
+                        <div className="relative group">
+                          <label className="absolute -top-2 left-4 text-[9px] font-black text-muted-foreground bg-[#050505] px-2 z-10 uppercase tracking-widest">Irmão/Irmã (Telefone)</label>
+                          <input value={profileForm.irmao_numero} onChange={e => setProfileForm(p => ({...p, irmao_numero: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-white/20 transition-all" />
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 md:col-span-2">
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="relative group">
+                              <label className="absolute -top-2 left-4 text-[9px] font-black text-muted-foreground bg-[#050505] px-2 z-10 uppercase tracking-widest">Pai/Mãe (Nome)</label>
+                              <input value={profileForm.parente_nome} onChange={e => setProfileForm(p => ({...p, parente_nome: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-white/20 transition-all" />
+                            </div>
+                            <div className="relative group">
+                              <label className="absolute -top-2 left-4 text-[9px] font-black text-muted-foreground bg-[#050505] px-2 z-10 uppercase tracking-widest">Pai/Mãe (Telefone)</label>
+                              <input value={profileForm.parente_numero} onChange={e => setProfileForm(p => ({...p, parente_numero: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-white/20 transition-all" />
+                            </div>
+                         </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Localização */}
+                  <div>
+                    <h3 className="text-[10px] font-black text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <span className="h-px w-4 bg-primary/40" /> Vetor de Localização
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="relative group">
+                        <label className="absolute -top-2 left-4 text-[9px] font-black text-muted-foreground bg-[#050505] px-2 z-10 uppercase tracking-widest">Bairro</label>
+                        <input value={profileForm.bairro} onChange={e => setProfileForm(p => ({...p, bairro: e.target.value}))} type="text" placeholder="Ex: 25 de Setembro" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-white/20 transition-all" />
+                      </div>
+                      <div className="relative group">
+                        <label className="absolute -top-2 left-4 text-[9px] font-black text-muted-foreground bg-[#050505] px-2 z-10 uppercase tracking-widest">Zona</label>
+                        <input value={profileForm.zona} onChange={e => setProfileForm(p => ({...p, zona: e.target.value}))} type="text" placeholder="Zona Urbana/Rural" className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-white/20 transition-all" />
+                      </div>
+                    </div>
                   </div>
                 </div>
+              </form>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 px-1">Irmão/Irmã (Nome)</label>
-                    <input value={profileForm.irmao_nome} onChange={e => setProfileForm(p => ({...p, irmao_nome: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30" />
-                  </div>
-                  <div>
-                    <label className="block text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 px-1">Irmão/Irmã (Tel)</label>
-                    <input value={profileForm.irmao_numero} onChange={e => setProfileForm(p => ({...p, irmao_numero: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 px-1">Pai/Mãe (Nome)</label>
-                    <input value={profileForm.parente_nome} onChange={e => setProfileForm(p => ({...p, parente_nome: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30" />
-                  </div>
-                  <div>
-                    <label className="block text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 px-1">Pai/Mãe (Tel)</label>
-                    <input value={profileForm.parente_numero} onChange={e => setProfileForm(p => ({...p, parente_numero: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 px-1">Bairro</label>
-                    <input value={profileForm.bairro} onChange={e => setProfileForm(p => ({...p, bairro: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30" />
-                  </div>
-                  <div>
-                    <label className="block text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1 px-1">Zona</label>
-                    <input value={profileForm.zona} onChange={e => setProfileForm(p => ({...p, zona: e.target.value}))} type="text" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-white/30" />
-                  </div>
-                </div>
-
+              <div className="p-8 bg-black/40 border-t border-white/5">
                 <button 
                   disabled={createProfileEditMut.isPending}
-                  className="w-full mt-4 bg-white text-black py-4 rounded-2xl font-bold hover:bg-gray-200 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full bg-white text-black py-5 rounded-[1.5rem] font-black text-lg hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 group"
                 >
-                  {createProfileEditMut.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Enviar para Aprovação"}
+                  {createProfileEditMut.isPending ? (
+                    <Loader2 className="w-6 h-6 animate-spin text-black" />
+                  ) : (
+                    <>
+                      Solicitar Atualização Segura
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
                 </button>
-              </form>
+              </div>
             </motion.div>
           </div>
         )}

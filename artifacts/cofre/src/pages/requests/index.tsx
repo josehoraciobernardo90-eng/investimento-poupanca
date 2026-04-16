@@ -129,13 +129,13 @@ export default function RequestsPage() {
     if (!confirmReject) return;
     try {
       if (confirmReject.type === "loan") {
-        await rejectLoanMut.mutate({ requestId: confirmReject.req.id });
+        await rejectLoanMut.mutateAsync({ requestId: confirmReject.req.id });
       } else if (confirmReject.type === "deposit") {
-        await rejectDepMut.mutate({ requestId: confirmReject.req.id });
+        await rejectDepMut.mutateAsync({ requestId: confirmReject.req.id });
       } else if (confirmReject.type === "membership") {
-        await rejectMemMut.mutate({ requestId: confirmReject.req.id });
+        await rejectMemMut.mutateAsync({ requestId: confirmReject.req.id });
       } else if (confirmReject.type === "profileEdit") {
-        await rejectProfileMut.mutate({ requestId: confirmReject.req.id });
+        await rejectProfileMut.mutateAsync({ requestId: confirmReject.req.id });
       }
     } catch {
       // Error feedback is handled by onError toast in the hooks
@@ -258,12 +258,19 @@ export default function RequestsPage() {
               )}
 
               {tab === "profileEdits" && (
-                <div className="mb-4 p-3 bg-black/20 rounded-lg text-sm border border-white/5 grid grid-cols-2 gap-x-4 gap-y-2">
-                   {(req as any).conjuge_nome && <div className="col-span-2 text-xs"><span className="text-muted-foreground mr-1">Cônjuge:</span><span className="text-white">{(req as any).conjuge_nome} ({(req as any).conjuge_numero || "—"})</span></div>}
-                   {(req as any).irmao_nome && <div className="col-span-2 text-xs"><span className="text-muted-foreground mr-1">Irmão:</span><span className="text-white">{(req as any).irmao_nome} ({(req as any).irmao_numero || "—"})</span></div>}
-                   {(req as any).parente_nome && <div className="col-span-2 text-xs"><span className="text-muted-foreground mr-1">Pai/Mãe:</span><span className="text-white">{(req as any).parente_nome} ({(req as any).parente_numero || "—"})</span></div>}
-                   {(req as any).bairro && <div className="col-span-1 text-xs"><span className="text-muted-foreground mr-1">Bairro:</span><span className="text-white">{(req as any).bairro}</span></div>}
-                   {(req as any).zona && <div className="col-span-1 text-xs"><span className="text-muted-foreground mr-1">Zona:</span><span className="text-white">{(req as any).zona}</span></div>}
+                <div className="mb-4 p-4 bg-black/40 rounded-2xl text-sm border border-white/5 space-y-3">
+                   <div className="flex items-center gap-2 pb-2 border-b border-white/5">
+                      <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                      <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Protocolo de Sincronização</span>
+                   </div>
+                   {(req as any).email && <div className="text-xs flex justify-between"><span className="text-muted-foreground">E-mail:</span><span className="text-white font-bold">{(req as any).email}</span></div>}
+                   {(req as any).conjuge_nome && <div className="text-xs flex justify-between"><span className="text-muted-foreground">Cônjuge:</span><span className="text-white font-medium">{(req as any).conjuge_nome} ({(req as any).conjuge_numero || "—"})</span></div>}
+                   {(req as any).irmao_nome && <div className="text-xs flex justify-between"><span className="text-muted-foreground">Irmão/S:</span><span className="text-white font-medium">{(req as any).irmao_nome} ({(req as any).irmao_numero || "—"})</span></div>}
+                   {(req as any).parente_nome && <div className="text-xs flex justify-between"><span className="text-muted-foreground">Pai/Mãe:</span><span className="text-white font-medium">{(req as any).parente_nome} ({(req as any).parente_numero || "—"})</span></div>}
+                   <div className="grid grid-cols-2 gap-4 pt-2 mt-2 border-t border-white/5">
+                      {(req as any).bairro && <div><p className="text-[8px] text-muted-foreground uppercase font-black">Bairro</p><p className="text-xs text-white">{(req as any).bairro}</p></div>}
+                      {(req as any).zona && <div><p className="text-[8px] text-muted-foreground uppercase font-black">Zona</p><p className="text-xs text-white">{(req as any).zona}</p></div>}
+                   </div>
                 </div>
               )}
 

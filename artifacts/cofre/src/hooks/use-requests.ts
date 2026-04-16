@@ -219,7 +219,7 @@ export function useRejectLoanRequest() {
   const { toast } = useToast();
   return {
     isPending,
-    mutate: async ({ requestId }: { requestId: string }) => {
+    mutateAsync: async ({ requestId }: { requestId: string }) => {
       setIsPending(true);
       const req = dbStore.loanRequests.find(r => r.id === requestId);
       if (req && req.status === "Pendente") {
@@ -323,7 +323,7 @@ export function useRejectDepositRequest() {
   const { toast } = useToast();
   return {
     isPending,
-    mutate: async ({ requestId }: { requestId: string }) => {
+    mutateAsync: async ({ requestId }: { requestId: string }) => {
       setIsPending(true);
       const req = dbStore.depositRequests.find(r => r.id === requestId);
       if (req && req.status === "Pendente") {
@@ -457,7 +457,7 @@ export function useRejectMembershipRequest() {
    const { toast } = useToast();
    return {
      isPending,
-     mutate: async ({ requestId }: { requestId: string }) => {
+     mutateAsync: async ({ requestId }: { requestId: string }) => {
         setIsPending(true);
         const req = dbStore.membershipRequests.find(r => r.id === requestId);
         if (req && req.status === "Pendente") {
@@ -638,7 +638,7 @@ export function useCreateProfileEditRequest() {
         conjuge_nome?: string; conjuge_numero?: string;
         irmao_nome?: string; irmao_numero?: string;
         parente_nome?: string; parente_numero?: string;
-        bairro?: string; zona?: string; 
+        bairro?: string; zona?: string; email?: string;
       } 
     }) => {
       setIsPending(true);
@@ -681,7 +681,7 @@ export function useApproveProfileEditRequest() {
         const uid = req.user_id;
         const userNode = dbStore.userDetails[uid]?.user;
         if(userNode) {
-          const fields = ["conjuge_nome", "conjuge_numero", "irmao_nome", "irmao_numero", "parente_nome", "parente_numero", "bairro", "zona"];
+          const fields = ["conjuge_nome", "conjuge_numero", "irmao_nome", "irmao_numero", "parente_nome", "parente_numero", "bairro", "zona", "email"];
           fields.forEach(f => {
             if (req[f] !== undefined) {
                updates[`users/${uid}/${f}`] = req[f];
