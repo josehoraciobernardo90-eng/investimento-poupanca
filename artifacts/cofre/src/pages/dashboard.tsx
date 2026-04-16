@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import { useAdmin } from "@/hooks/use-admin";
 import { ResetAppModal } from "@/components/admin/ResetAppModal";
 import { BankingCharts } from "@/components/dashboard/BankingCharts";
+import { TechSlideshow } from "@/components/dashboard/TechSlideshow";
 
 export default function DashboardPage() {
   const { data, isLoading, isError } = useDashboard();
@@ -98,6 +99,9 @@ export default function DashboardPage() {
           className={cn(data.solicitacoes_pendentes > 0 ? "border-secondary/40 bg-secondary/5" : "opacity-60")}
         />
       </div>
+
+      {/* Quantum Slide Hero Selection */}
+      <TechSlideshow />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 glass-card-elite rounded-[2rem] p-8 tech-grid-bg relative border-primary/10">
