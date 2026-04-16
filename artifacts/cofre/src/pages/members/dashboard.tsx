@@ -23,6 +23,7 @@ import { useNotifications } from "@/hooks/use-notifications";
 import { generateMemberReport } from "@/lib/pdf-utils";
 import { useCreateLoanRequest, useCreateDepositRequest, useApproveDeletionRequest, useRejectDeletionRequest, useRequests, useCreateProfileEditRequest } from "@/hooks/use-requests";
 import { useDashboard } from "@/hooks/use-dashboard";
+import { MemberTechSlides } from "@/components/dashboard/MemberTechSlides";
 import { dbStore } from "@/data/firebase-data";
 
 // Componente Robusto para Seções Expansíveis
@@ -233,6 +234,9 @@ export default function MemberDashboard() {
           </button>
         </div>
       </header>
+
+      {/* Quantum Slide Area para Membro */}
+      <MemberTechSlides userData={memberUser} loans={myActiveLoans || []} />
 
       {/* Main Card - Balance */}
       <motion.div 
