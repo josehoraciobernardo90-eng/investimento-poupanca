@@ -29,15 +29,15 @@ export async function generateMemberReport(memberUser: any, memberDetails: any) 
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(26);
-  doc.text("CYBER VAULT", 15, 22);
+  doc.text("COFRE ELITE", 15, 22);
   
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...blue);
-  doc.text("CORE PROTOCOL: ELITE BANKING TERMINAL", 15, 30);
+  doc.text("SISTEMA CENTRAL: TERMINAL DE INVESTIMENTOS", 15, 30);
   
   doc.setTextColor(150, 150, 150);
-  doc.text(`CERTIFICADO DIGITAL DE ATIVOS • CHIMOIO NODE 01`, 15, 36);
+  doc.text(`CERTIFICADO DIGITAL DE ATIVOS • CHIMOIO BASE 01`, 15, 36);
 
   // Timestamp Right
   doc.setFontSize(8);
@@ -108,7 +108,7 @@ export async function generateMemberReport(memberUser: any, memberDetails: any) 
   doc.text(footer2, 105, 280, { align: "center" });
   
   doc.setTextColor(...crimson);
-  doc.text("CHIMOIO BANKING NODE • STATUS: SECURE_VERIFIED", 105, 288, { align: "center" });
+  doc.text("CHIMOIO BASE BANCÁRIA • ESTADO: SEGURO E VERIFICADO", 105, 288, { align: "center" });
 
   // Save
   doc.save(`Extrato_Cyber_${memberUser.nome.replace(/\s+/g, '_')}.pdf`);

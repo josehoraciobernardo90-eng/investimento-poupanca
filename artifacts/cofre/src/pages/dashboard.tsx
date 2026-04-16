@@ -18,9 +18,7 @@ export default function DashboardPage() {
   const { isAdmin } = useAdmin();
 
   if (isLoading) return <PageLoader />;
-  if (isError || !data) return <div className="text-destructive p-8 bg-destructive/10 rounded-xl">Erro ao carregar terminal de dados.</div>;
-
-  const membrosBloqueados = loans ? verificarCongelamentos(loans) : [];
+  if (isError || !data) return <div className="text-destructive p-8 bg-destructive/10 rounded-xl">Erro ao carregar o painel de controle.</div>;
 
   const emprestimosStatus = (loans || [])
     .filter(l => l.status !== "Liquidado")
@@ -31,18 +29,18 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-10 pb-20 selection:bg-primary/30">
-      {/* Top Tech Header */}
+      {/* Cabeçalho do Painel */}
       <header className="flex flex-col md:flex-row md:items-start justify-between gap-8 relative">
         <div className="relative">
           <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-md bg-primary/5 border border-primary/20 text-primary text-[9px] font-black uppercase tracking-[0.3em] mb-6">
             <Activity className="w-3 h-3 animate-pulse" />
-             Core Network: Active • Chimoio Node 01
+             Rede em Chimoio: Ativa e Segura
           </div>
           <h1 className="text-5xl md:text-7xl font-display font-black text-white tracking-tighter leading-none text-glow-blue uppercase italic">
-            Cyber<span className="text-secondary not-italic">Vault</span>
+            Cofre<span className="text-secondary not-italic">Elite</span>
           </h1>
           <p className="text-white/40 mt-4 max-w-md font-mono text-[10px] uppercase tracking-widest leading-relaxed">
-             [Protocolo Quantum Banking] • Terminal de Gestão de Ativos em Tempo Real. Integridade do Capital: 100%.
+             [Controle de Patrimônio] • Monitoramento de Capital em Tempo Real. Totalmente Criptografado.
           </p>
         </div>
         
@@ -52,55 +50,55 @@ export default function DashboardPage() {
               <Cpu className="w-7 h-7" />
             </div>
             <div className="pr-4">
-              <p className="text-[9px] text-primary font-black uppercase tracking-widest">Master Controller</p>
+              <p className="text-[9px] text-primary font-black uppercase tracking-widest">Gestor do Sistema</p>
               <h4 className="text-sm font-bold text-white font-mono tracking-tighter">ID: ADMIN_JH_026</h4>
             </div>
           </div>
           <div className="flex gap-2">
-             <div className="neo-badge text-success">Uptime: 99.9%</div>
-             <div className="neo-badge text-primary">Latency: 14ms</div>
+             <div className="neo-badge text-success">Online: 100%</div>
+             <div className="neo-badge text-primary">Velocidade: 14ms</div>
           </div>
         </div>
       </header>
 
-      {/* Main Stats Grid Cyber */}
+      {/* Grid de Estatísticas Principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
-          title="Liquidez em Rede" 
+          title="Dinheiro em Caixa" 
           value={formatMT(data.caixa)} 
-          description="Fundo de Saque Ativo"
+          description="Fundo pronto para uso"
           icon={<Globe className="w-6 h-6" />}
           delay={0.1}
           className="border-primary/20"
         />
         <StatCard 
-          title="Capital em Operação" 
+          title="Capital Investido" 
           value={formatMT(data.naRua)} 
-          description="Ativos Externos"
+          description="Dinheiro em circulação"
           icon={<Zap className="w-6 h-6" />}
           delay={0.2}
           className="border-primary/10"
         />
         <StatCard 
-          title="ROI Total" 
+          title="Lucro Acumulado" 
           value={formatMT(data.lucros)} 
-          description="Rendimento de Rede"
+          description="Rendimento do sistema"
           icon={<TrendingUp className="w-6 h-6" />}
           delay={0.3}
           trend={{ value: 14.2, isPositive: true }}
           className="border-secondary/20 shadow-[0_10px_40px_rgba(255,0,85,0.1)]"
         />
         <StatCard 
-          title="Alertas de Sistema" 
+          title="Avisos do Sistema" 
           value={data.solicitacoes_pendentes.toString()} 
-          description={data.solicitacoes_pendentes > 0 ? "Requisições em Fila" : "Status Nominal"}
+          description={data.solicitacoes_pendentes > 0 ? "Pedidos aguardando" : "Nenhum alerta"}
           icon={<AlertCircle className={cn("w-6 h-6", data.solicitacoes_pendentes > 0 ? "text-secondary animate-pulse" : "text-white/20")} />}
           delay={0.4}
           className={cn(data.solicitacoes_pendentes > 0 ? "border-secondary/40 bg-secondary/5" : "opacity-60")}
         />
       </div>
 
-      {/* Quantum Slide Hero Selection */}
+      {/* Slides com Notícias/Destaques */}
       <TechSlideshow />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -110,10 +108,10 @@ export default function DashboardPage() {
                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                     <Activity className="w-6 h-6" />
                  </div>
-                 <h3 className="text-xl font-black text-white italic uppercase tracking-tighter">Fluxo Dinâmico de Capital</h3>
+                 <h3 className="text-xl font-black text-white italic uppercase tracking-tighter">Gráfico de Crescimento</h3>
               </div>
               <div className="flex gap-2">
-                 <span className="neo-badge">REAL-TIME FEED</span>
+                 <span className="neo-badge">DADOS AO VIVO</span>
               </div>
            </div>
            <BankingCharts />
@@ -121,17 +119,15 @@ export default function DashboardPage() {
 
         <div className="space-y-8">
           <div className="glass-card-elite rounded-[2rem] p-8 border-secondary/10 relative group">
-             {/* 3D Scanline Animation Pulse */}
-             <div className="scanline-overlay group-hover:opacity-60 transition-opacity" />
              <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-20 transition-all">
                 <Shield className="w-32 h-32" />
              </div>
-             <h3 className="text-lg font-black text-white italic tracking-tighter mb-6 uppercase">Escudo de Auditoria</h3>
+             <h3 className="text-lg font-black text-white italic tracking-tighter mb-6 uppercase">Proteção de Dados</h3>
              
              <div className="space-y-6">
                 <div className="flex justify-between items-center p-4 bg-black/40 rounded-xl border border-white/5">
                    <div>
-                      <p className="text-[9px] text-white/40 font-black uppercase tracking-widest mb-1">Health Score</p>
+                      <p className="text-[9px] text-white/40 font-black uppercase tracking-widest mb-1">Saúde do Sistema</p>
                       <p className="text-2xl font-black text-white font-mono">98.4<span className="text-xs text-primary">%</span></p>
                    </div>
                    <div className="w-12 h-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" style={{ animationDuration: '3s' }} />
@@ -139,8 +135,8 @@ export default function DashboardPage() {
                 
                 <div className="space-y-3">
                    <div className="flex justify-between text-[9px] font-black uppercase tracking-widest">
-                      <span>Network Load</span>
-                      <span className="text-primary">Safe State</span>
+                      <span>Carga da Rede</span>
+                      <span className="text-primary">Estatus Normal</span>
                    </div>
                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                       <motion.div 
@@ -155,7 +151,7 @@ export default function DashboardPage() {
              <div className="mt-8">
                 <button className="btn-elite w-full group">
                    <ShieldAlert className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                   Protocolo Auditoria
+                   Iniciar Auditoria
                 </button>
              </div>
           </div>
@@ -165,8 +161,8 @@ export default function DashboardPage() {
                 <Globe className="w-5 h-5" />
              </div>
              <div>
-                <p className="text-[9px] font-black text-secondary uppercase tracking-[.2em]">Sede Operacional</p>
-                <p className="text-xs font-bold text-white uppercase italic tracking-tighter">CHIMOIO HUB • NOD_A</p>
+                <p className="text-[9px] font-black text-secondary uppercase tracking-[.2em]">Base de Operação</p>
+                <p className="text-xs font-bold text-white uppercase italic tracking-tighter">CHIMOIO • SETOR_A</p>
              </div>
           </div>
         </div>
@@ -203,7 +199,7 @@ export default function DashboardPage() {
                       </div>
                       <div>
                         <h4 className="font-black text-white uppercase italic tracking-tighter">{emp.tomador_nome}</h4>
-                        <span className="text-[9px] text-white/40 font-black tracking-widest uppercase">ID_TX: {emp.id.slice(0, 8)}</span>
+                        <span className="text-[9px] text-white/40 font-black tracking-widest uppercase">ID_DADO: {emp.id.slice(0, 8)}</span>
                       </div>
                     </div>
                     <div className={cn("neo-badge font-mono", isCritical ? "text-secondary border-secondary/30" : "text-primary border-primary/30")}>
@@ -213,15 +209,15 @@ export default function DashboardPage() {
 
                   <div className="bg-black/40 p-4 rounded-xl border border-white/5 space-y-3 mb-4 font-mono">
                      <div className="flex justify-between items-center text-[10px]">
-                        <span className="text-white/40 uppercase font-black">Montante Principal</span>
+                        <span className="text-white/40 uppercase font-black">Dinheiro Pedido</span>
                         <span className="text-white font-bold">{formatMT(emp.valor_original)}</span>
                      </div>
                      <div className="flex justify-between items-center text-[10px]">
-                        <span className="text-white/40 uppercase font-black">Juro Acumulado</span>
+                        <span className="text-white/40 uppercase font-black">Juros Acumulados</span>
                         <span className="text-primary font-bold text-glow-blue">{formatMT(s.juro)}</span>
                      </div>
                      <div className="pt-2 border-t border-white/5 flex justify-between items-center">
-                        <span className="text-[9px] text-white/60 uppercase font-black">Débito Total</span>
+                        <span className="text-[9px] text-white/60 uppercase font-black">Dívida Total</span>
                         <span className="text-lg font-black text-white">{formatMT(s.totalDevido)}</span>
                      </div>
                   </div>
@@ -229,7 +225,7 @@ export default function DashboardPage() {
                   <div className="flex justify-between items-center">
                      <div className="flex items-center gap-2">
                         <Clock className="w-3 h-3 text-white/20" />
-                        <span className="text-[9px] font-black text-white/40 uppercase uppercase tracking-widest">{s.diasRestantes}D RESTANTES</span>
+                        <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">{s.diasRestantes} DIAS PARA PAGAR</span>
                      </div>
                      <button className="text-[9px] font-black text-primary hover:text-white transition-colors uppercase tracking-widest underline underline-offset-4">Ver Detalhes</button>
                   </div>
@@ -250,8 +246,8 @@ export default function DashboardPage() {
                       <Settings className="w-10 h-10 animate-spin-slow" />
                    </div>
                    <div>
-                      <h3 className="text-3xl font-black text-white tracking-tighter uppercase italic">Terminal Root</h3>
-                      <p className="text-[10px] text-white/40 font-black uppercase tracking-[0.3em] mt-1">Acesso Restrito • Gestão de Segurança Cloud</p>
+                      <h3 className="text-3xl font-black text-white tracking-tighter uppercase italic">Configuração do Sistema</h3>
+                      <p className="text-[10px] text-white/40 font-black uppercase tracking-[0.3em] mt-1">Acesso Restrito • Gestão de Dados</p>
                    </div>
                 </div>
                 <ResetAppModal />

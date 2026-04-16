@@ -462,13 +462,18 @@ export function useRejectMembershipRequest() {
         const req = dbStore.membershipRequests.find(r => r.id === requestId);
         if (req && req.status === "Pendente") {
            const updates: any = {};
-           updates[`membershipRequests/${requestId}/status`] = "Rejeitado";
+           // Apagar o pedido de uma única vez, sem deixar rastros
+           updates[`membershipRequests/${requestId}`] = null;
+           
            const auditId = "a" + Date.now();
            updates[`audit/${auditId}`] = {
-             id: auditId, ts: Math.floor(Date.now() / 1000), tipo: "MEMBRO", desc: `Pedido de adesão de ${req.nome} foi rejeitado.`, valor: req.saldo_base, user: "Admin"
+             id: auditId, ts: Math.floor(Date.now() / 1000), 
+             tipo: "MEMBRO", 
+             desc: `Pedido de adesão de ${req.nome} foi removido pelo Administrador.`, 
+             valor: req.saldo_base, user: "Admin"
            };
            await update(ref(rtdb), updates);
-           toast({ title: "Adesão rejeitada", description: "O pedido de adesão foi rejeitado." });
+           toast({ title: "Pedido Removido", description: "O cadastro foi apagado permanentemente." });
         }
         setIsPending(false);
      }

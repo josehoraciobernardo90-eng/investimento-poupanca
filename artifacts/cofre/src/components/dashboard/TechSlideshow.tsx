@@ -6,30 +6,30 @@ import { cn } from "@/lib/utils";
 const slides = [
   {
     id: 1,
-    title: "PROTOCOL: LIQUIDITY_MAX",
+    title: "DINHEIRO SEMPRE DISPONÍVEL",
     subtitle: "Gestão Ativa de Capital",
-    description: "Algoritmos de alta performance monitorando o fluxo de caixa 24/7 para garantir liquidez imediata.",
+    description: "Nossos sistemas monitoram o fluxo de caixa 24 horas por dia para garantir que você possa sacar seus fundos sempre que precisar.",
     icon: <Cpu className="w-8 h-8" />,
     color: "primary",
-    stats: "UPTIME: 99.99%"
+    stats: "SISTEMA ONLINE: 100%"
   },
   {
     id: 2,
-    title: "CRYSTAL_AUDIT_V2",
-    subtitle: "Transparência Absoluta",
-    description: "Cada transação é verificada por tripla camada de segurança digital. Risco mitigado em 98%.",
+    title: "TRANSPARÊNCIA TOTAL",
+    subtitle: "Segurança de Elite",
+    description: "Cada transação é verificada por três camadas de proteção digital. Seus ativos estão protegidos contra qualquer falha.",
     icon: <ShieldCheck className="w-8 h-8" />,
     color: "secondary",
-    stats: "BLOCK_SEC: ACTIVE"
+    stats: "PROTEÇÃO ATIVA"
   },
   {
     id: 3,
-    title: "NEURAL_ROI_PULSE",
-    subtitle: "Maximização de Lucros",
-    description: "Inteligência preditiva para identificar as melhores oportunidades de investimento em Chimoio.",
+    title: "LUCRO MÁXIMO GARANTIDO",
+    subtitle: "Oportunidades Reais",
+    description: "Usamos inteligência para identificar os melhores negócios em Chimoio, garantindo o maior retorno para o seu investimento.",
     icon: <Zap className="w-8 h-8" />,
     color: "primary",
-    stats: "ROI: +14.2% AVG"
+    stats: "MÉDIA DE LUCRO: +14.2%"
   }
 ];
 

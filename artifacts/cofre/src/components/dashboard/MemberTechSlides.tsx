@@ -11,39 +11,39 @@ interface MemberTechSlidesProps {
 export function MemberTechSlides({ userData, loans }: MemberTechSlidesProps) {
   const [current, setCurrent] = useState(0);
 
-  // Lógica contextuai baseada nos dados do membro
+  // Lógica contextual baseada nos dados do membro
   const hasActiveLoan = (loans || []).some(l => l.user_id === userData?.user?.id && l.status === "Ativo");
   const isHighEarner = (userData?.lucro_acumulado || 0) > 500000; // > 5000 MT (valor base 100)
   
   const memberSlides = [
     {
       id: "status",
-      title: "CONTA: STATUS_OPERACIONAL",
-      subtitle: "Integridade de Rede",
-      description: `Seu patrimônio total de ${formatMT(userData?.patrimonioTotal || 0)} está protegido por criptografia de ponta a ponta. Sessão segura ativa.`,
+      title: "CONTA SEGURA E ATIVA",
+      subtitle: "Proteção de Dados",
+      description: `Seu patrimônio total de ${formatMT(userData?.patrimonioTotal || 0)} está protegido com segurança máxima. Seu acesso é 100% privado.`,
       icon: <ShieldCheck className="w-8 h-8" />,
       color: "primary",
-      stats: "SEC_LEVEL: ALPHA"
+      stats: "SEGURANÇA: MÁXIMA"
     },
     ...(hasActiveLoan ? [{
       id: "loan_alert",
-      title: "ALERTA: ATIVO_CIRCULANTE",
-      subtitle: "Monitoramento de Prazo",
-      description: "Detectamos um empréstimo ativo. Mantenha os pagamentos em dia para evitar o congelamento automático da conta.",
+      title: "ALERTA DE PAGAMENTO",
+      subtitle: "Monitoramento de Dívida",
+      description: "Você tem um empréstimo ativo. Fique atento aos prazos para manter sua conta liberada e com boa reputação.",
       icon: <ShieldAlert className="w-8 h-8 text-secondary" />,
       color: "secondary",
-      stats: "RISK_LOCK: ENABLED"
+      stats: "PROTEÇÃO ATIVA"
     }] : []),
     {
       id: "growth",
-      title: isHighEarner ? "STATUS: INVESTIDOR_ELITE" : "OPORTUNIDADE: APORTE_CLOUD",
-      subtitle: isHighEarner ? "Performance de Alta Performance" : "Rentabilidade Garantida",
+      title: isHighEarner ? "MEMBRO INVESTIDOR ELITE" : "OPORTUNIDADE DE CRESCER",
+      subtitle: isHighEarner ? "Parabéns pelos Resultados" : "Rentabilidade Garantida",
       description: isHighEarner 
-        ? "Seu histórico de lucros superou a meta trimestral. Você tem prioridade máxima em novos fundos."
-        : "Aumente seu saldo base para capturar uma fatia maior dos juros do próximo ciclo de empréstimos.",
+        ? "Seu lucro superou a meta esperada. Você agora tem prioridade em novos investimentos no sistema."
+        : "Aumente seu saldo agora para ganhar mais juros no próximo ciclo de investimentos do Cofre.",
       icon: <TrendingUp className="w-8 h-8" />,
       color: isHighEarner ? "primary" : "primary",
-      stats: `ROI_EST: +10% MO`
+      stats: `LUCRO ESTIMADO: +10% AO MÊS`
     }
   ];
 
@@ -69,11 +69,9 @@ export function MemberTechSlides({ userData, loans }: MemberTechSlidesProps) {
         >
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-sm bg-black/60 border border-white/10 mb-5">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-sm bg-black/60 border border-white/10 mb-5 text-[8px] font-black uppercase tracking-[0.3em] text-white/40">
                  <Activity className={cn("w-3 h-3 animate-pulse", memberSlides[current].color === 'primary' ? "text-primary" : "text-secondary")} />
-                 <span className="text-[8px] font-black uppercase tracking-[0.3em] text-white/40 font-mono">
-                    {memberSlides[current].stats}
-                 </span>
+                 {memberSlides[current].stats}
               </div>
               
               <h4 className="text-[10px] font-bold text-primary/60 uppercase tracking-[0.5em] mb-1 font-mono">
@@ -109,7 +107,7 @@ export function MemberTechSlides({ userData, loans }: MemberTechSlidesProps) {
         </motion.div>
       </AnimatePresence>
 
-      {/* Slide Indicators Cyber */}
+      {/* Indicadores de Slide */}
       <div className="absolute bottom-6 left-8 flex gap-2">
         {memberSlides.map((_, i) => (
           <div 
@@ -122,10 +120,10 @@ export function MemberTechSlides({ userData, loans }: MemberTechSlidesProps) {
         ))}
       </div>
 
-      {/* Security Info Tag */}
+      {/* Info de Segurança */}
       <div className="absolute bottom-6 right-8 flex items-center gap-2 opacity-40">
         <Info className="w-3 h-3" />
-        <span className="text-[8px] font-bold uppercase tracking-widest">Quantum Data Encryption Active</span>
+        <span className="text-[8px] font-bold uppercase tracking-widest text-white">Dados Protegidos por Criptografia</span>
       </div>
     </div>
   );

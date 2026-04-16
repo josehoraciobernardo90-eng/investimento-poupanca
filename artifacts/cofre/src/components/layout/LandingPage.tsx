@@ -29,17 +29,17 @@ export function LandingPage() {
   const handleAdminSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (adminLogin(adminId, password)) {
-      toast({ title: "Acesso Concedido", description: "Terminal Administrativo Liberado." });
+      toast({ title: "Acesso Liberado", description: "Bem-vindo ao Controle Geral." });
     } else {
       setError(true);
-      toast({ title: "Erro de Autenticação", description: "Credenciais Master Inválidas.", variant: "destructive" });
+      toast({ title: "Erro de Acesso", description: "Código ou Senha não conferem.", variant: "destructive" });
     }
   };
 
   const handleMemberSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (memberLogin(memberPhone, memberPin)) {
-      // Toast is handled inside useMember
+      // Toast handles in useMember
     } else {
       setError(true);
     }
@@ -48,7 +48,7 @@ export function LandingPage() {
   return (
     <div className="fixed inset-0 z-50 bg-[#050505] overflow-y-auto selection:bg-primary/30 selection:text-white font-sans">
       
-      {/* Background 3D Depth Elements Cyber */}
+      {/* Elementos de Brilho ao Fundo */}
       <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-primary/10 rounded-full blur-[160px] -z-10 animate-pulse" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-secondary/5 rounded-full blur-[160px] -z-10" />
       
@@ -65,7 +65,7 @@ export function LandingPage() {
               transition={{ duration: 0.8, ease: "circOut" }}
               className="w-full max-w-5xl space-y-16 text-center py-12"
             >
-              {/* Header / Logo Section Elite */}
+              {/* Cabeçalho de Elite */}
               <div className="space-y-8 relative">
                 <motion.div 
                    animate={{ y: [0, -10, 0], rotateY: [0, 10, -10, 0] }}
@@ -79,26 +79,26 @@ export function LandingPage() {
                 <div className="space-y-4">
                   <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/40 text-[9px] font-black uppercase tracking-[0.3em]">
                     <Activity className="w-3 h-3 text-primary animate-pulse" />
-                    STATUS: SECURE • NODE: CHIMOIO_01
+                    SISTEMA SEGURO • BASE: CHIMOIO_01
                   </div>
                   <h1 className="text-6xl md:text-9xl font-display font-black text-white tracking-tighter leading-none text-glow-blue uppercase italic">
-                    Cyber<span className="text-secondary not-italic">Vault</span>
+                    Cofre<span className="text-secondary not-italic">Elite</span>
                   </h1>
                 </div>
                 
                 <p className="text-white/30 text-[10px] max-w-md mx-auto font-black italic uppercase tracking-[0.4em] leading-relaxed">
-                   [Protocolo de Gestão de Ativos Cloud] • Alta Performance & Segurança Militar
+                   [Gestão de Poupança e Investimento] • Rapidez & Segurança Máxima
                 </p>
               </div>
 
-              {/* Central Action Buttons High-End */}
+              {/* Botões Centrais */}
               <div className="flex flex-col md:flex-row justify-center items-center gap-6">
                  <button 
                   onClick={() => setView("member-login")}
                   className="btn-elite min-w-[280px]"
                  >
                     <Wallet className="w-5 h-5 group-hover:rotate-12 transition-transform" /> 
-                    Terminal do Membro
+                    Entrar como Membro
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                  </button>
                  
@@ -107,27 +107,27 @@ export function LandingPage() {
                   className="min-w-[280px] px-10 py-5 rounded-xl bg-white/5 border border-white/10 text-white/60 font-black uppercase tracking-[0.2em] text-[10px] hover:bg-white/10 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-3"
                  >
                     <UserPlus className="w-5 h-5" /> 
-                    Nova Adesão
+                    Quero ser Membro
                  </button>
               </div>
 
-              {/* Admin Access Anchor */}
+              {/* Acesso Administrativo */}
               <div className="pt-8">
                 <button 
                   onClick={() => setView("admin-login")}
                   className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] hover:text-primary transition-colors flex items-center gap-3 mx-auto"
                 >
                   <Lock className="w-3 h-3" />
-                  ACESSO ADMINISTRATIVO RESTRITO
+                  ÁREA RESTRITA: ADMINISTRADOR
                 </button>
               </div>
 
-              {/* Info Badges */}
+              {/* Selos de Informação */}
               <div className="pt-12 flex flex-wrap justify-center gap-12 opacity-30">
                 {[
-                  { icon: <Globe className="w-3 h-3"/>, text: "GLOBAL SYNC" },
-                  { icon: <Cpu className="w-3 h-3"/>, text: "CLOUD V4 INFRA" },
-                  { icon: <Shield className="w-3 h-3"/>, text: "100% AUDITABLE" }
+                  { icon: <Globe className="w-3 h-3"/>, text: "DADOS SINCRONIZADOS" },
+                  { icon: <Cpu className="w-3 h-3"/>, text: "TECNOLOGIA CLOUD" },
+                  { icon: <Shield className="w-3 h-3"/>, text: "100% AUDITADO" }
                 ].map((item, idx) => (
                   <div key={idx} className="flex items-center gap-3 text-[8px] font-black uppercase tracking-[0.4em] text-white">
                     {item.icon}
@@ -155,7 +155,7 @@ export function LandingPage() {
                   className="mb-10 text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white flex items-center gap-3 transition-colors group"
                 >
                   <ArrowRight className="w-3 h-3 rotate-180 group-hover:-translate-x-1 transition-transform" /> 
-                  VOLTAR AO HUB
+                  VOLTAR AO INÍCIO
                 </button>
 
                 <div className="text-center mb-10">
@@ -166,10 +166,10 @@ export function LandingPage() {
                     {view === 'admin-login' ? <Lock className="w-10 h-10" /> : <Users className="w-10 h-10" />}
                   </div>
                   <h2 className="text-2xl font-black text-white italic tracking-tighter uppercase">
-                    {view === 'admin-login' ? 'Master Auth' : 'Member Auth'}
+                    {view === 'admin-login' ? 'Identificação ADM' : 'Identificação MEMBRO'}
                   </h2>
                   <p className="text-white/40 text-[9px] font-bold uppercase tracking-[0.25em] mt-2">
-                    {view === 'admin-login' ? 'ACESSO NÍVEL ADMINISTRADOR' : 'MAPA FINANCEIRO EM REAL-TIME'}
+                    {view === 'admin-login' ? 'ACESSO PARA O GESTOR' : 'ÁREA DE INVESTIDORES'}
                   </p>
                 </div>
 
@@ -181,8 +181,8 @@ export function LandingPage() {
                       required 
                       value={view === 'admin-login' ? adminId : memberPhone}
                       onChange={e => { view === 'admin-login' ? setAdminId(e.target.value) : setMemberPhone(e.target.value); setError(false); }}
-                      className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold text-white focus:outline-none focus:border-primary/40 transition-all placeholder:text-white/10"
-                      placeholder={view === 'admin-login' ? "ID DE ACESSO" : "TELEFONE OU ID"}
+                      className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold text-white focus:outline-none focus:border-primary/40 transition-all placeholder:text-white/20"
+                      placeholder={view === 'admin-login' ? "CÓDIGO DE ACESSO" : "TELEFONE OU CÓDIGO"}
                     />
                   </div>
                   <div className="space-y-2">
@@ -193,8 +193,8 @@ export function LandingPage() {
                         maxLength={view === 'member-login' ? 6 : 20}
                         value={view === 'admin-login' ? password : memberPin}
                         onChange={e => { view === 'admin-login' ? setPassword(e.target.value) : setMemberPin(e.target.value); setError(false); }}
-                        className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold text-white focus:outline-none focus:border-primary/40 transition-all placeholder:text-white/10 tracking-[0.2em]"
-                        placeholder={view === 'admin-login' ? "SENHA MASTER" : "CERT PIN (6 DÍGITOS)"}
+                        className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold text-white focus:outline-none focus:border-primary/40 transition-all placeholder:text-white/20 tracking-[0.2em]"
+                        placeholder={view === 'admin-login' ? "SUA SENHA" : "PIN (6 NÚMEROS)"}
                       />
                       {view === 'member-login' && (
                         <button 
@@ -215,7 +215,7 @@ export function LandingPage() {
                       view === 'admin-login' ? "bg-gradient-to-r from-secondary/80 to-black border-secondary/20" : ""
                     )}
                   >
-                    {view === 'admin-login' ? 'Desbloquear Terminal' : 'Aceder Investimentos'}
+                    {view === 'admin-login' ? 'Entrar no Sistema' : 'Aceder Minha Conta'}
                   </button>
                 </form>
               </div>
