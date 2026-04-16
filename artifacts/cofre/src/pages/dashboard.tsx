@@ -11,11 +11,14 @@ import { useAdmin } from "@/hooks/use-admin";
 import { ResetAppModal } from "@/components/admin/ResetAppModal";
 import { BankingCharts } from "@/components/dashboard/BankingCharts";
 import { TechSlideshow } from "@/components/dashboard/TechSlideshow";
+import { useSystemAudit } from "@/hooks/use-audit";
+import { Loader2 } from "lucide-react";
 
 export default function DashboardPage() {
   const { data, isLoading, isError } = useDashboard();
   const { data: loans } = useLoans();
   const { isAdmin } = useAdmin();
+  const { runAudit, isAuditing } = useSystemAudit();
 
   if (isLoading) return <PageLoader />;
   if (isError || !data) return <div className="text-destructive p-8 bg-destructive/10 rounded-xl">Erro ao carregar o painel de controle.</div>;
@@ -149,9 +152,22 @@ export default function DashboardPage() {
              </div>
 
              <div className="mt-8">
-                <button className="btn-elite w-full group">
-                   <ShieldAlert className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                   Iniciar Auditoria
+                <button 
+                  onClick={runAudit}
+                  disabled={isAuditing}
+                  className="btn-elite w-full group flex items-center justify-center gap-3"
+                >
+                   {isAuditing ? (
+                     <>
+                       <Loader2 className="w-5 h-5 animate-spin" />
+                       Auditando Banco de Dados...
+                     </>
+                   ) : (
+                     <>
+                       <ShieldAlert className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                       Iniciar Auditoria Fiscal
+                     </>
+                   )}
                 </button>
              </div>
           </div>
