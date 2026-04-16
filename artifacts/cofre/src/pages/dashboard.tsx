@@ -4,12 +4,11 @@ import { StatCard } from "@/components/ui/stat-card";
 import { cn, formatMT } from "@/lib/utils";
 import { calcularStatusEmprestimo, verificarCongelamentos } from "@/lib/auto-freeze";
 import { PageLoader } from "@/components/ui/page-loader";
-import { Wallet, TrendingUp, Users, AlertCircle, RefreshCw, Briefcase, ShieldAlert, Clock, Settings, Award, Shield } from "lucide-react";
+import { Wallet, TrendingUp, AlertCircle, RefreshCw, ShieldAlert, Clock, Settings, Award, Shield } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { useAdmin } from "@/hooks/use-admin";
 import { ResetAppModal } from "@/components/admin/ResetAppModal";
-// Removed redundant lucide import
 import { BankingCharts } from "@/components/dashboard/BankingCharts";
 
 export default function DashboardPage() {
@@ -39,10 +38,10 @@ export default function DashboardPage() {
             <span className="w-2 h-2 rounded-full bg-primary" />
             Sistema de Alta Performance • Chimoio 
           </div>
-          <h1 className="text-4xl md:text-6xl font-display font-black text-white tracking-tighter leading-none hero-glow">
-            Elite<span className="text-primary">Banking</span>
+          <h1 className="text-4xl md:text-6xl font-display font-black text-white tracking-tighter leading-none hero-glow italic">
+            ELITE<span className="text-primary not-italic">BANKING</span>
           </h1>
-          <p className="text-muted-foreground mt-4 max-w-md font-medium">Bem-vindo ao centro de comando. Gerencie seu capital com precisão de elite.</p>
+          <p className="text-muted-foreground mt-4 max-w-md font-medium">Gestão de capital de alto escalão. Controle total em tempo real.</p>
         </div>
         
         <div className="flex items-center gap-4 bg-white/5 p-3 rounded-3xl border border-white/5 backdrop-blur-md">
@@ -56,47 +55,40 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Grid de Estatísticas 3D Elite */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <StatCard 
-          title="Patrimônio Total" 
-          value={formatMT(data.total)} 
-          description="Capital Global no Sistema"
-          icon={<Briefcase />}
-          delay={0.1}
-          className="lg:col-span-2 md:row-span-2 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent border-primary/30"
-        />
-        <StatCard 
-          title="Em Caixa" 
+          title="Capital em Caixa" 
           value={formatMT(data.caixa)} 
-          description="Disponível para saque"
-          icon={<Wallet />}
-          delay={0.2}
+          description="Liquidez Instantânea"
+          icon={<Wallet className="w-8 h-8" />}
+          delay={0.1}
           className="bg-success/5 border-success/10"
         />
         <StatCard 
-          title="Na Rua (Ativo)" 
+          title="Capital Ativo" 
           value={formatMT(data.naRua)} 
-          description="Empréstimos circulantes"
-          icon={<RefreshCw />}
-          delay={0.3}
+          description="Ativos no Mercado"
+          icon={<RefreshCw className="w-8 h-8" />}
+          delay={0.2}
           className="bg-warning/5 border-warning/10"
         />
         <StatCard 
-          title="Lucros Reais" 
+          title="Lucros Brutos" 
           value={formatMT(data.lucros)} 
-          description="Rendimento do Chitique"
-          icon={<TrendingUp className="text-success" />}
-          delay={0.4}
+          description="Rendimento Elite"
+          icon={<TrendingUp className="w-8 h-8" />}
+          delay={0.3}
           trend={{ value: 12.5, isPositive: true }}
-          className="bg-primary/5 border-primary/10"
+          className="bg-primary/10 border-primary/20 shadow-[0_0_30px_rgba(212,175,55,0.15)]"
         />
         <StatCard 
           title="Solicitações" 
           value={data.solicitacoes_pendentes.toString()} 
-          description={data.solicitacoes_pendentes > 0 ? "Aguardando aprovação" : "Fluxo normal"}
-          icon={<AlertCircle className={data.solicitacoes_pendentes > 0 ? "text-warning" : ""} />}
-          delay={0.5}
-          className={data.solicitacoes_pendentes > 0 ? "bg-warning/10 border-warning/40 animate-pulse-subtle" : "opacity-60"}
+          description={data.solicitacoes_pendentes > 0 ? "Aguardando Aprovação" : "Fluxo Estabilizado"}
+          icon={<AlertCircle className={cn("w-8 h-8", data.solicitacoes_pendentes > 0 ? "text-warning animate-pulse" : "text-muted-foreground")} />}
+          delay={0.4}
+          className={cn(data.solicitacoes_pendentes > 0 ? "border-warning/40 bg-warning/5" : "opacity-60")}
         />
       </div>
 

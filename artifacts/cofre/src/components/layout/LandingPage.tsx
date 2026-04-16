@@ -45,215 +45,213 @@ export function LandingPage() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#050505] overflow-y-auto">
-      {/* Background visual elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px] -z-10 animate-pulse"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px] -z-10"></div>
+    <div className="fixed inset-0 z-50 bg-[#020202] overflow-y-auto selection:bg-primary/30 selection:text-white">
+      {/* Background 3D Depth Elements */}
+      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-primary/10 rounded-full blur-[160px] -z-10 animate-pulse-subtle"></div>
+      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-primary/5 rounded-full blur-[160px] -z-10"></div>
+      
+      {/* Animated Mesh Grid */}
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none -z-10" />
 
-      <div className="min-h-screen flex flex-col items-center justify-center p-6">
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 perspective-[2000px]">
         <AnimatePresence mode="wait">
           {view === "landing" ? (
             <motion.div 
               key="landing-view"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-4xl space-y-12 text-center"
+              initial={{ opacity: 0, rotateX: 20, y: 50 }}
+              animate={{ opacity: 1, rotateX: 0, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, rotateX: -10, transition: { duration: 0.4 } }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="w-full max-w-5xl space-y-16 text-center py-12"
             >
-              {/* Header / Logo Section */}
-              <div className="space-y-4">
+              {/* Header / Logo Section Elite */}
+              <div className="space-y-6 relative">
                 <motion.div 
-                  initial={{ scale: 0.8 }}
-                  animate={{ scale: 1 }}
-                  className="w-20 h-20 bg-gradient-to-br from-primary to-primary/60 rounded-3xl mx-auto flex items-center justify-center shadow-2xl shadow-primary/20"
+                   animate={{ y: [0, -10, 0] }}
+                   transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                   className="w-24 h-24 bg-gradient-to-br from-primary to-primary/40 rounded-[2rem] mx-auto flex items-center justify-center shadow-[0_20px_50px_rgba(212,175,55,0.3)] relative group"
                 >
-                  <Shield className="w-10 h-10 text-primary-foreground" />
+                  <Shield className="w-12 h-12 text-black drop-shadow-lg" />
+                  <div className="absolute -inset-1 bg-primary/20 rounded-[2.2rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
                 </motion.div>
-                <h1 className="text-5xl md:text-7xl font-display font-extrabold text-white tracking-tight">
-                  Cofre <span className="text-primary italic">Capital</span>
+                
+                <h1 className="text-6xl md:text-9xl font-display font-black text-white tracking-tighter leading-none hero-glow italic">
+                  COFRE <span className="text-primary not-italic">CAPITAL</span>
                 </h1>
-                <p className="text-muted-foreground text-sm max-w-sm mx-auto font-medium opacity-80 uppercase tracking-widest">
-                  Investimento Seguro & Crescimento Coletivo
+                
+                <p className="text-muted-foreground text-sm max-w-md mx-auto font-black italic uppercase tracking-[0.5em] opacity-60">
+                  Próxima Geração em Investimentos • Chimoio 2026
                 </p>
               </div>
 
-              <div className="flex justify-center gap-4">
+              {/* Central Action Button High-End */}
+              <div className="flex justify-center items-center gap-6">
                  <button 
                   onClick={() => setView("member-login")}
-                  className="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-2xl font-bold flex items-center gap-2 transition-all border border-white/5 active:scale-95"
+                  className="btn-elite px-12 py-6 rounded-3xl text-sm italic group"
                  >
-                    <Wallet className="w-5 h-5 text-primary" /> Entrar como Membro
+                    <Wallet className="w-5 h-5 group-hover:rotate-12 transition-transform" /> 
+                    Área do Investidor
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                  </button>
               </div>
 
-              {/* Action Cards */}
-              <div className="grid md:grid-cols-2 gap-6 mt-8">
-                {/* Member Card */}
+              {/* Action Grid 3D Depth */}
+              <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                 <motion.button
-                  whileHover={{ scale: 1.02, y: -5 }}
+                  whileHover={{ y: -10, scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setIsRegisterOpen(true)}
-                  className="glass-panel p-8 rounded-[2.5rem] text-left group relative overflow-hidden transition-all border-white/5 hover:border-primary/30"
+                  className="glass-card-elite p-10 rounded-[3rem] text-left group relative overflow-hidden"
                 >
-                  <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <UserPlus className="w-24 h-24" />
+                  <div className="absolute -top-10 -right-10 p-6 opacity-5 group-hover:opacity-20 transition-all duration-700">
+                    <UserPlus className="w-48 h-48 rotate-12" />
                   </div>
-                  <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 text-primary border border-primary/20">
-                    <Users className="w-7 h-7" />
+                  <div className="w-16 h-16 bg-primary/10 rounded-[1.5rem] flex items-center justify-center mb-8 text-primary border border-primary/20 shadow-inner group-hover:bg-primary group-hover:text-black transition-all">
+                    <Users className="w-8 h-8" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">Quero ser Membro</h3>
-                  <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-                    Junte-se ao cofre, faça seus aportes e acompanhe o crescimento do seu capital em tempo real.
+                  <h3 className="text-3xl font-black text-white mb-3 italic">Nova Adesão</h3>
+                  <p className="text-muted-foreground text-sm mb-8 leading-relaxed font-medium">
+                    Junte-se ao cofre exclusivo e faça seu capital crescer com segurança e transparência total.
                   </p>
-                  <div className="flex items-center gap-2 text-primary font-bold">
+                  <div className="inline-flex items-center gap-3 text-primary font-black uppercase tracking-widest text-[10px] group-hover:gap-5 transition-all">
                     Começar Cadastro <ArrowRight className="w-4 h-4" />
                   </div>
                 </motion.button>
 
-                {/* Admin Card */}
                 <motion.button
-                  whileHover={{ scale: 1.02, y: -5 }}
+                  whileHover={{ y: -10, scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setView("admin-login")}
-                  className="glass-panel p-8 rounded-[2.5rem] text-left group relative overflow-hidden transition-all border-white/5 hover:border-blue-500/30"
+                  className="glass-card-elite p-10 rounded-[3rem] text-left group relative overflow-hidden"
                 >
-                  <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <Lock className="w-24 h-24" />
+                  <div className="absolute -top-10 -right-10 p-6 opacity-5 group-hover:opacity-20 transition-all duration-700">
+                    <Lock className="w-48 h-48 -rotate-12" />
                   </div>
-                  <div className="w-14 h-14 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6 text-blue-400 border border-blue-500/20">
-                    <Shield className="w-7 h-7" />
+                  <div className="w-16 h-16 bg-white/5 rounded-[1.5rem] flex items-center justify-center mb-8 text-white/40 border border-white/10 shadow-inner group-hover:bg-white group-hover:text-black transition-all">
+                    <Shield className="w-8 h-8" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">Administração</h3>
-                  <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-                    Acesso restrito para gestores do cofre. Controle de fluxos, aprovações e auditoria.
+                  <h3 className="text-3xl font-black text-white mb-3 italic">Gestão Central</h3>
+                  <p className="text-muted-foreground text-sm mb-8 leading-relaxed font-medium">
+                    Acesso restrito para auditores e administradores do sistema de alto escalão.
                   </p>
-                  <div className="flex items-center gap-2 text-blue-400 font-bold">
+                  <div className="inline-flex items-center gap-3 text-white/40 font-black uppercase tracking-widest text-[10px] group-hover:text-white transition-all">
                     Entrar no Painel <ArrowRight className="w-4 h-4" />
                   </div>
                 </motion.button>
               </div>
 
-              {/* Stats / Proof */}
-              <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto pt-8 border-t border-white/5">
-                <div className="text-center">
-                  <div className="text-xl font-bold text-white">100%</div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Seguro</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xl font-bold text-white">Chimoio</div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Sede Local</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xl font-bold text-white">24/7</div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Acompanhamento</div>
-                </div>
+              <div className="pt-12 flex flex-wrap justify-center gap-12 opacity-40">
+                {["100% SEGURO", "CHIMOIO HEADQUARTERS", "CLOUD SECURITY V4"].map(text => (
+                  <span key={text} className="text-[9px] font-black uppercase tracking-[0.4em] text-white">
+                    {text}
+                  </span>
+                ))}
               </div>
             </motion.div>
           ) : view === "admin-login" ? (
             <motion.div
               key="admin-view"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="w-full max-w-md"
+              initial={{ opacity: 0, scale: 0.9, rotateY: -30 }}
+              animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+              exit={{ opacity: 0, scale: 0.9, rotateY: 30 }}
+              className="w-full max-w-sm"
             >
-              <div className="glass-panel p-8 rounded-[2.5rem] border-white/10 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-primary"></div>
+              <div className="glass-card-elite p-10 rounded-[3rem] relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-transparent opacity-50"></div>
                 
                 <button 
                   onClick={() => setView("landing")}
-                  className="mb-8 text-muted-foreground hover:text-white flex items-center gap-2 text-sm font-medium transition-colors"
+                  className="mb-10 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white flex items-center gap-3 transition-colors group"
                 >
-                  <ArrowRight className="w-4 h-4 rotate-180" /> Voltar ao Início
+                  <div className="w-6 h-6 rounded-full border border-white/10 flex items-center justify-center group-hover:border-primary transition-colors">
+                    <ArrowRight className="w-3 h-3 rotate-180" /> 
+                  </div>
+                  Voltar
                 </button>
 
-                <div className="text-center mb-8">
-                  <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 text-blue-400">
-                    <Lock className="w-8 h-8" />
+                <div className="text-center mb-10">
+                  <div className="w-20 h-20 bg-primary/5 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-primary border border-primary/20 shadow-2xl animate-pulse-subtle">
+                    <Lock className="w-10 h-10" />
                   </div>
-                  <h2 className="text-2xl font-bold text-white">Login Administrativo</h2>
-                  <p className="text-muted-foreground text-sm mt-1">Apenas gestores autorizados com credenciais mestras.</p>
+                  <h2 className="text-2xl font-black text-white italic tracking-tight uppercase">Autenticação Master</h2>
+                  <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mt-2">Acesso Nível Administrador</p>
                 </div>
 
-                <form onSubmit={handleAdminSubmit} className="space-y-5">
+                <form onSubmit={handleAdminSubmit} className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground px-1">ID do Gestor</label>
                     <input 
                       autoFocus
                       type="text" 
                       required 
                       value={adminId}
                       onChange={e => { setAdminId(e.target.value); setError(false); }}
-                      className={`w-full bg-black/60 border ${error ? 'border-destructive' : 'border-white/10'} rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all font-mono`}
-                      placeholder="Ex: 123456"
+                      className="input-elite"
+                      placeholder="ID DE ACESSO"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground px-1">Senha de Acesso</label>
                     <input 
                       type="password" 
                       required 
                       value={password}
                       onChange={e => { setPassword(e.target.value); setError(false); }}
-                      className={`w-full bg-black/60 border ${error ? 'border-destructive' : 'border-white/10'} rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all font-mono`}
-                      placeholder="••••••••"
+                      className="input-elite"
+                      placeholder="PALAVRA-PASSE"
                     />
                   </div>
 
                   <button 
                     type="submit"
-                    className="w-full bg-primary text-primary-foreground py-4 rounded-2xl font-bold text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all mt-4"
+                    className="btn-elite w-full py-5 text-sm"
                   >
-                    Desbloquear Sistema
+                    Desbloquear Cofre
                   </button>
                 </form>
-
-                <p className="text-center text-[10px] text-muted-foreground mt-8 uppercase tracking-[0.2em]">
-                  Painel de Controle Cloud
-                </p>
               </div>
             </motion.div>
           ) : (
-            <motion.div
+             <motion.div
               key="member-view"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="w-full max-w-md"
+              initial={{ opacity: 0, scale: 0.9, rotateY: 30 }}
+              animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+              exit={{ opacity: 0, scale: 0.9, rotateY: -30 }}
+              className="w-full max-w-sm"
             >
-              <div className="glass-panel p-8 rounded-[2.5rem] border-white/10 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-success"></div>
+              <div className="glass-card-elite p-10 rounded-[3rem] relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-success to-transparent opacity-50"></div>
                 
                 <button 
                   onClick={() => setView("landing")}
-                  className="mb-8 text-muted-foreground hover:text-white flex items-center gap-2 text-sm font-medium transition-colors"
+                  className="mb-10 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white flex items-center gap-3 transition-colors group"
                 >
-                  <ArrowRight className="w-4 h-4 rotate-180" /> Voltar ao Início
+                  <div className="w-6 h-6 rounded-full border border-white/10 flex items-center justify-center group-hover:border-primary transition-colors">
+                    <ArrowRight className="w-3 h-3 rotate-180" /> 
+                  </div>
+                  Voltar
                 </button>
 
-                <div className="text-center mb-8">
-                  <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary">
-                    <Wallet className="w-8 h-8" />
+                <div className="text-center mb-10">
+                  <div className="w-20 h-20 bg-primary/5 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-primary border border-primary/20 shadow-2xl animate-pulse-subtle">
+                    <Wallet className="w-10 h-10" />
                   </div>
-                  <h2 className="text-2xl font-bold text-white">Área do Membro</h2>
-                  <p className="text-muted-foreground text-sm mt-1">Aceda ao seu mapa de capital e investimentos.</p>
+                  <h2 className="text-2xl font-black text-white italic tracking-tight uppercase">Portal do Membro</h2>
+                  <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mt-2">Mapa Financeiro em Real-Time</p>
                 </div>
 
-                <form onSubmit={handleMemberSubmit} className="space-y-5">
+                <form onSubmit={handleMemberSubmit} className="space-y-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground px-1">Telefone / ID</label>
                     <input 
                       autoFocus
                       type="text" 
                       required 
                       value={memberPhone}
                       onChange={e => { setMemberPhone(e.target.value); setError(false); }}
-                      className={`w-full bg-black/60 border ${error ? 'border-destructive' : 'border-white/10'} rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all font-mono`}
-                      placeholder="+258..."
+                      className="input-elite"
+                      placeholder="TEL / IDENTIFICADOR"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground px-1">PIN de Segurança (6 dígitos)</label>
                     <div className="relative">
                       <input 
                         type={showMemberPin ? "text" : "password"} 
@@ -262,13 +260,13 @@ export function LandingPage() {
                         inputMode="numeric"
                         value={memberPin}
                         onChange={e => { setMemberPin(e.target.value); setError(false); }}
-                        className={`w-full bg-black/60 border ${error ? 'border-destructive' : 'border-white/10'} rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all font-mono text-center tracking-[0.5em] text-xl`}
+                        className="input-elite text-center tracking-[0.6em] text-xl pl-12"
                         placeholder="••••••"
                       />
                       <button 
                         type="button"
                         onClick={() => setShowMemberPin(!showMemberPin)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white transition-colors"
+                        className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white transition-colors"
                       >
                         {showMemberPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
@@ -277,15 +275,11 @@ export function LandingPage() {
 
                   <button 
                     type="submit"
-                    className="w-full bg-primary text-primary-foreground py-4 rounded-2xl font-bold text-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all mt-4"
+                    className="btn-elite w-full py-5 text-sm"
                   >
-                    Entrar no Cofre
+                    Aceder Investimentos
                   </button>
                 </form>
-
-                <p className="text-center text-[10px] text-muted-foreground mt-8 uppercase tracking-[0.2em]">
-                  Protegido por PIN Individual
-                </p>
               </div>
             </motion.div>
           )}
