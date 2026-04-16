@@ -5,6 +5,7 @@ import { useMember } from "@/hooks/use-member";
 import { useToast } from "@/hooks/use-toast";
 import { MembershipRegistrationModal } from "@/components/members/MembershipRegistrationModal";
 import { Shield, Wallet, UserPlus, Users, ArrowRight, Lock, Eye, EyeOff, Activity, Globe, Cpu } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function LandingPage() {
   const { login: adminLogin } = useAdmin();
