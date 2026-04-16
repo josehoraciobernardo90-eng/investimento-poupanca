@@ -4,7 +4,7 @@ import { useAdmin } from "@/hooks/use-admin";
 import { useMember } from "@/hooks/use-member";
 import { useToast } from "@/hooks/use-toast";
 import { MembershipRegistrationModal } from "@/components/members/MembershipRegistrationModal";
-import { Shield, Wallet, UserPlus, Users, ArrowRight, Lock, Eye, EyeOff } from "lucide-react";
+import { Shield, Wallet, UserPlus, Users, ArrowRight, Lock, Eye, EyeOff, Activity, Globe, Cpu } from "lucide-react";
 
 export function LandingPage() {
   const { login: adminLogin } = useAdmin();
@@ -28,10 +28,10 @@ export function LandingPage() {
   const handleAdminSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (adminLogin(adminId, password)) {
-      toast({ title: "Acesso Concedido", description: "Bem-vindo ao Painel Administrativo." });
+      toast({ title: "Acesso Concedido", description: "Terminal Administrativo Liberado." });
     } else {
       setError(true);
-      toast({ title: "Erro de Autenticação", description: "ID ou Senha incorretos.", variant: "destructive" });
+      toast({ title: "Erro de Autenticação", description: "Credenciais Master Inválidas.", variant: "destructive" });
     }
   };
 
@@ -45,13 +45,13 @@ export function LandingPage() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#020202] overflow-y-auto selection:bg-primary/30 selection:text-white">
-      {/* Background 3D Depth Elements */}
-      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-primary/10 rounded-full blur-[160px] -z-10 animate-pulse-subtle"></div>
-      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-primary/5 rounded-full blur-[160px] -z-10"></div>
+    <div className="fixed inset-0 z-50 bg-[#050505] overflow-y-auto selection:bg-primary/30 selection:text-white font-sans">
       
-      {/* Animated Mesh Grid */}
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none -z-10" />
+      {/* Background 3D Depth Elements Cyber */}
+      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-primary/10 rounded-full blur-[160px] -z-10 animate-pulse" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-secondary/5 rounded-full blur-[160px] -z-10" />
+      
+      <div className="scanline-overlay opacity-30 -z-5" />
 
       <div className="min-h-screen flex flex-col items-center justify-center p-6 perspective-[2000px]">
         <AnimatePresence mode="wait">
@@ -61,194 +61,127 @@ export function LandingPage() {
               initial={{ opacity: 0, rotateX: 20, y: 50 }}
               animate={{ opacity: 1, rotateX: 0, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, rotateX: -10, transition: { duration: 0.4 } }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
+              transition={{ duration: 0.8, ease: "circOut" }}
               className="w-full max-w-5xl space-y-16 text-center py-12"
             >
               {/* Header / Logo Section Elite */}
-              <div className="space-y-6 relative">
+              <div className="space-y-8 relative">
                 <motion.div 
-                   animate={{ y: [0, -10, 0] }}
-                   transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                   className="w-24 h-24 bg-gradient-to-br from-primary to-primary/40 rounded-[2rem] mx-auto flex items-center justify-center shadow-[0_20px_50px_rgba(212,175,55,0.3)] relative group"
+                   animate={{ y: [0, -10, 0], rotateY: [0, 10, -10, 0] }}
+                   transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+                   className="w-24 h-24 bg-gradient-to-br from-primary/20 to-primary/5 rounded-[2.5rem] mx-auto flex items-center justify-center border border-primary/20 shadow-[0_0_50px_rgba(0,212,255,0.2)] relative group"
                 >
-                  <Shield className="w-12 h-12 text-black drop-shadow-lg" />
-                  <div className="absolute -inset-1 bg-primary/20 rounded-[2.2rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <Shield className="w-12 h-12 text-primary text-glow-blue" />
+                  <div className="absolute -inset-1 bg-primary/20 rounded-[2.6rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                 </motion.div>
                 
-                <h1 className="text-6xl md:text-9xl font-display font-black text-white tracking-tighter leading-none hero-glow italic">
-                  COFRE <span className="text-primary not-italic">CAPITAL</span>
-                </h1>
+                <div className="space-y-4">
+                  <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/40 text-[9px] font-black uppercase tracking-[0.3em]">
+                    <Activity className="w-3 h-3 text-primary animate-pulse" />
+                    STATUS: SECURE • NODE: CHIMOIO_01
+                  </div>
+                  <h1 className="text-6xl md:text-9xl font-display font-black text-white tracking-tighter leading-none text-glow-blue uppercase italic">
+                    Cyber<span className="text-secondary not-italic">Vault</span>
+                  </h1>
+                </div>
                 
-                <p className="text-muted-foreground text-sm max-w-md mx-auto font-black italic uppercase tracking-[0.5em] opacity-60">
-                  Próxima Geração em Investimentos • Chimoio 2026
+                <p className="text-white/30 text-[10px] max-w-md mx-auto font-black italic uppercase tracking-[0.4em] leading-relaxed">
+                   [Protocolo de Gestão de Ativos Cloud] • Alta Performance & Segurança Militar
                 </p>
               </div>
 
-              {/* Central Action Button High-End */}
-              <div className="flex justify-center items-center gap-6">
+              {/* Central Action Buttons High-End */}
+              <div className="flex flex-col md:flex-row justify-center items-center gap-6">
                  <button 
                   onClick={() => setView("member-login")}
-                  className="btn-elite px-12 py-6 rounded-3xl text-sm italic group"
+                  className="btn-elite min-w-[280px]"
                  >
                     <Wallet className="w-5 h-5 group-hover:rotate-12 transition-transform" /> 
-                    Área do Investidor
+                    Terminal do Membro
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                 </button>
+                 
+                 <button 
+                  onClick={() => setIsRegisterOpen(true)}
+                  className="min-w-[280px] px-10 py-5 rounded-xl bg-white/5 border border-white/10 text-white/60 font-black uppercase tracking-[0.2em] text-[10px] hover:bg-white/10 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-3"
+                 >
+                    <UserPlus className="w-5 h-5" /> 
+                    Nova Adesão
                  </button>
               </div>
 
-              {/* Action Grid 3D Depth */}
-              <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                <motion.button
-                  whileHover={{ y: -10, scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setIsRegisterOpen(true)}
-                  className="glass-card-elite p-10 rounded-[3rem] text-left group relative overflow-hidden"
-                >
-                  <div className="absolute -top-10 -right-10 p-6 opacity-5 group-hover:opacity-20 transition-all duration-700">
-                    <UserPlus className="w-48 h-48 rotate-12" />
-                  </div>
-                  <div className="w-16 h-16 bg-primary/10 rounded-[1.5rem] flex items-center justify-center mb-8 text-primary border border-primary/20 shadow-inner group-hover:bg-primary group-hover:text-black transition-all">
-                    <Users className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-3xl font-black text-white mb-3 italic">Nova Adesão</h3>
-                  <p className="text-muted-foreground text-sm mb-8 leading-relaxed font-medium">
-                    Junte-se ao cofre exclusivo e faça seu capital crescer com segurança e transparência total.
-                  </p>
-                  <div className="inline-flex items-center gap-3 text-primary font-black uppercase tracking-widest text-[10px] group-hover:gap-5 transition-all">
-                    Começar Cadastro <ArrowRight className="w-4 h-4" />
-                  </div>
-                </motion.button>
-
-                <motion.button
-                  whileHover={{ y: -10, scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+              {/* Admin Access Anchor */}
+              <div className="pt-8">
+                <button 
                   onClick={() => setView("admin-login")}
-                  className="glass-card-elite p-10 rounded-[3rem] text-left group relative overflow-hidden"
+                  className="text-[9px] font-black text-white/20 uppercase tracking-[0.3em] hover:text-primary transition-colors flex items-center gap-3 mx-auto"
                 >
-                  <div className="absolute -top-10 -right-10 p-6 opacity-5 group-hover:opacity-20 transition-all duration-700">
-                    <Lock className="w-48 h-48 -rotate-12" />
-                  </div>
-                  <div className="w-16 h-16 bg-white/5 rounded-[1.5rem] flex items-center justify-center mb-8 text-white/40 border border-white/10 shadow-inner group-hover:bg-white group-hover:text-black transition-all">
-                    <Shield className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-3xl font-black text-white mb-3 italic">Gestão Central</h3>
-                  <p className="text-muted-foreground text-sm mb-8 leading-relaxed font-medium">
-                    Acesso restrito para auditores e administradores do sistema de alto escalão.
-                  </p>
-                  <div className="inline-flex items-center gap-3 text-white/40 font-black uppercase tracking-widest text-[10px] group-hover:text-white transition-all">
-                    Entrar no Painel <ArrowRight className="w-4 h-4" />
-                  </div>
-                </motion.button>
+                  <Lock className="w-3 h-3" />
+                  ACESSO ADMINISTRATIVO RESTRITO
+                </button>
               </div>
 
-              <div className="pt-12 flex flex-wrap justify-center gap-12 opacity-40">
-                {["100% SEGURO", "CHIMOIO HEADQUARTERS", "CLOUD SECURITY V4"].map(text => (
-                  <span key={text} className="text-[9px] font-black uppercase tracking-[0.4em] text-white">
-                    {text}
-                  </span>
+              {/* Info Badges */}
+              <div className="pt-12 flex flex-wrap justify-center gap-12 opacity-30">
+                {[
+                  { icon: <Globe className="w-3 h-3"/>, text: "GLOBAL SYNC" },
+                  { icon: <Cpu className="w-3 h-3"/>, text: "CLOUD V4 INFRA" },
+                  { icon: <Shield className="w-3 h-3"/>, text: "100% AUDITABLE" }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-3 text-[8px] font-black uppercase tracking-[0.4em] text-white">
+                    {item.icon}
+                    {item.text}
+                  </div>
                 ))}
               </div>
             </motion.div>
-          ) : view === "admin-login" ? (
-            <motion.div
-              key="admin-view"
-              initial={{ opacity: 0, scale: 0.9, rotateY: -30 }}
-              animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-              exit={{ opacity: 0, scale: 0.9, rotateY: 30 }}
-              className="w-full max-w-sm"
-            >
-              <div className="glass-card-elite p-10 rounded-[3rem] relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-transparent opacity-50"></div>
-                
-                <button 
-                  onClick={() => setView("landing")}
-                  className="mb-10 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white flex items-center gap-3 transition-colors group"
-                >
-                  <div className="w-6 h-6 rounded-full border border-white/10 flex items-center justify-center group-hover:border-primary transition-colors">
-                    <ArrowRight className="w-3 h-3 rotate-180" /> 
-                  </div>
-                  Voltar
-                </button>
-
-                <div className="text-center mb-10">
-                  <div className="w-20 h-20 bg-primary/5 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-primary border border-primary/20 shadow-2xl animate-pulse-subtle">
-                    <Lock className="w-10 h-10" />
-                  </div>
-                  <h2 className="text-2xl font-black text-white italic tracking-tight uppercase">Autenticação Master</h2>
-                  <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mt-2">Acesso Nível Administrador</p>
-                </div>
-
-                <form onSubmit={handleAdminSubmit} className="space-y-6">
-                  <div className="space-y-2">
-                    <input 
-                      autoFocus
-                      type="text" 
-                      required 
-                      value={adminId}
-                      onChange={e => { setAdminId(e.target.value); setError(false); }}
-                      className="input-elite"
-                      placeholder="ID DE ACESSO"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <input 
-                      type="password" 
-                      required 
-                      value={password}
-                      onChange={e => { setPassword(e.target.value); setError(false); }}
-                      className="input-elite"
-                      placeholder="PALAVRA-PASSE"
-                    />
-                  </div>
-
-                  <button 
-                    type="submit"
-                    className="btn-elite w-full py-5 text-sm"
-                  >
-                    Desbloquear Cofre
-                  </button>
-                </form>
-              </div>
-            </motion.div>
           ) : (
-             <motion.div
-              key="member-view"
-              initial={{ opacity: 0, scale: 0.9, rotateY: 30 }}
-              animate={{ opacity: 1, scale: 1, rotateY: 0 }}
-              exit={{ opacity: 0, scale: 0.9, rotateY: -30 }}
+            <motion.div
+              key={view}
+              initial={{ opacity: 0, scale: 0.9, rotateX: -20 }}
+              animate={{ opacity: 1, scale: 1, rotateX: 0 }}
+              exit={{ opacity: 0, scale: 0.9, rotateX: 20 }}
               className="w-full max-w-sm"
             >
               <div className="glass-card-elite p-10 rounded-[3rem] relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-success to-transparent opacity-50"></div>
+                <div className={cn(
+                  "absolute top-0 left-0 w-full h-1 bg-gradient-to-r opacity-50",
+                  view === 'admin-login' ? "from-secondary to-transparent" : "from-primary to-transparent"
+                )} />
                 
                 <button 
                   onClick={() => setView("landing")}
-                  className="mb-10 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white flex items-center gap-3 transition-colors group"
+                  className="mb-10 text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white flex items-center gap-3 transition-colors group"
                 >
-                  <div className="w-6 h-6 rounded-full border border-white/10 flex items-center justify-center group-hover:border-primary transition-colors">
-                    <ArrowRight className="w-3 h-3 rotate-180" /> 
-                  </div>
-                  Voltar
+                  <ArrowRight className="w-3 h-3 rotate-180 group-hover:-translate-x-1 transition-transform" /> 
+                  VOLTAR AO HUB
                 </button>
 
                 <div className="text-center mb-10">
-                  <div className="w-20 h-20 bg-primary/5 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-primary border border-primary/20 shadow-2xl animate-pulse-subtle">
-                    <Wallet className="w-10 h-10" />
+                  <div className={cn(
+                    "w-20 h-20 bg-black/40 rounded-[2rem] flex items-center justify-center mx-auto mb-6 border transition-shadow",
+                    view === 'admin-login' ? "text-secondary border-secondary/20 shadow-[0_0_30px_rgba(255,0,85,0.1)]" : "text-primary border-primary/20 shadow-[0_0_30px_rgba(0,212,255,0.1)]"
+                  )}>
+                    {view === 'admin-login' ? <Lock className="w-10 h-10" /> : <Users className="w-10 h-10" />}
                   </div>
-                  <h2 className="text-2xl font-black text-white italic tracking-tight uppercase">Portal do Membro</h2>
-                  <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mt-2">Mapa Financeiro em Real-Time</p>
+                  <h2 className="text-2xl font-black text-white italic tracking-tighter uppercase">
+                    {view === 'admin-login' ? 'Master Auth' : 'Member Auth'}
+                  </h2>
+                  <p className="text-white/40 text-[9px] font-bold uppercase tracking-[0.25em] mt-2">
+                    {view === 'admin-login' ? 'ACESSO NÍVEL ADMINISTRADOR' : 'MAPA FINANCEIRO EM REAL-TIME'}
+                  </p>
                 </div>
 
-                <form onSubmit={handleMemberSubmit} className="space-y-6">
+                <form onSubmit={view === 'admin-login' ? handleAdminSubmit : handleMemberSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <input 
                       autoFocus
                       type="text" 
                       required 
-                      value={memberPhone}
-                      onChange={e => { setMemberPhone(e.target.value); setError(false); }}
-                      className="input-elite"
-                      placeholder="TEL / IDENTIFICADOR"
+                      value={view === 'admin-login' ? adminId : memberPhone}
+                      onChange={e => { view === 'admin-login' ? setAdminId(e.target.value) : setMemberPhone(e.target.value); setError(false); }}
+                      className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold text-white focus:outline-none focus:border-primary/40 transition-all placeholder:text-white/10"
+                      placeholder={view === 'admin-login' ? "ID DE ACESSO" : "TELEFONE OU ID"}
                     />
                   </div>
                   <div className="space-y-2">
@@ -256,28 +189,32 @@ export function LandingPage() {
                       <input 
                         type={showMemberPin ? "text" : "password"} 
                         required 
-                        maxLength={6}
-                        inputMode="numeric"
-                        value={memberPin}
-                        onChange={e => { setMemberPin(e.target.value); setError(false); }}
-                        className="input-elite text-center tracking-[0.6em] text-xl pl-12"
-                        placeholder="••••••"
+                        maxLength={view === 'member-login' ? 6 : 20}
+                        value={view === 'admin-login' ? password : memberPin}
+                        onChange={e => { view === 'admin-login' ? setPassword(e.target.value) : setMemberPin(e.target.value); setError(false); }}
+                        className="w-full bg-black/40 border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold text-white focus:outline-none focus:border-primary/40 transition-all placeholder:text-white/10 tracking-[0.2em]"
+                        placeholder={view === 'admin-login' ? "SENHA MASTER" : "CERT PIN (6 DÍGITOS)"}
                       />
-                      <button 
-                        type="button"
-                        onClick={() => setShowMemberPin(!showMemberPin)}
-                        className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white transition-colors"
-                      >
-                        {showMemberPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
+                      {view === 'member-login' && (
+                        <button 
+                          type="button"
+                          onClick={() => setShowMemberPin(!showMemberPin)}
+                          className="absolute right-5 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-colors"
+                        >
+                          {showMemberPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      )}
                     </div>
                   </div>
 
                   <button 
                     type="submit"
-                    className="btn-elite w-full py-5 text-sm"
+                    className={cn(
+                      "btn-elite w-full py-5 text-sm",
+                      view === 'admin-login' ? "bg-gradient-to-r from-secondary/80 to-black border-secondary/20" : ""
+                    )}
                   >
-                    Aceder Investimentos
+                    {view === 'admin-login' ? 'Desbloquear Terminal' : 'Aceder Investimentos'}
                   </button>
                 </form>
               </div>
