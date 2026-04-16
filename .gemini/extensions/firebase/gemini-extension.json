@@ -4,7 +4,7 @@
   "mcpServers": {
     "firebase": {
       "command": "npx",
-      "args": ["-y", "firebase-tools", "mcp", "--dir", "c:\\Users\\DELL\\Downloads\\Investimento poupanca"]
+      "args": ["-y", "firebase-tools", "mcp", "--dir", "c:\\Users\\DELL\\investimento-poupanca"]
     }
   },
   "contextFileName": "FIREBASE.md"

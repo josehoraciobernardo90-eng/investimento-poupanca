@@ -140,12 +140,18 @@ export default function AuditPage() {
               {getIcon(entry.tipo)}
             </div>
             
-            <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] glass-panel p-4 rounded-xl shadow-lg">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium px-2 py-0.5 rounded bg-white/5 text-muted-foreground">{entry.tipo}</span>
-                <time className="text-xs text-muted-foreground font-mono">{formatDateTime(entry.ts)}</time>
+            <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] glass-panel p-5 rounded-2xl shadow-lg border-white/5 group-hover:border-primary/20 transition-all">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 uppercase tracking-tighter">{entry.tipo}</span>
+                  <span className="text-[10px] font-bold text-success flex items-center gap-1">
+                    <div className="w-1 h-1 rounded-full bg-success animate-pulse" />
+                    STATUS: EFETUADO
+                  </span>
+                </div>
+                <time className="text-[10px] text-muted-foreground font-mono font-bold tracking-widest">{formatDateTime(entry.ts)}</time>
               </div>
-              <p className="text-sm text-white font-medium my-2">{entry.desc}</p>
+              <p className="text-sm text-white font-medium my-3 leading-relaxed">{entry.desc}</p>
               <div className="flex justify-between items-end mt-3 pt-3 border-t border-white/5">
                 <span className="text-xs text-muted-foreground">Responsável: {entry.user}</span>
                 {entry.valor > 0 && (

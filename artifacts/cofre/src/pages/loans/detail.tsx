@@ -124,21 +124,21 @@ export default function LoanDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
         <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-xl font-bold text-white border-b border-white/10 pb-2">Distribuição de Lucro (Regra 50/50)</h2>
+          <h2 className="text-xl font-bold text-white border-b border-white/10 pb-2">Distribuição de Lucro (Regra 80/20)</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* 50% Mutuário */}
+            {/* 20% Produtor */}
             <div className="glass-panel p-5 rounded-2xl border-l-4 border-l-primary bg-primary/5">
-              <h3 className="text-sm font-medium text-muted-foreground mb-1">50% para o Mutuário (Produtor)</h3>
-              <p className="text-2xl font-bold text-white mb-2">{formatMT(s.juro * 0.5)}</p>
-              <p className="text-xs text-muted-foreground">Remuneração por criar o juro ativo devolvido.</p>
+              <h3 className="text-sm font-medium text-muted-foreground mb-1">20% para o Produtor (Mutuário)</h3>
+              <p className="text-2xl font-bold text-white mb-2">{formatMT(s.juro * 0.2)}</p>
+              <p className="text-xs text-muted-foreground">Bonificação por girar o capital no cofre.</p>
             </div>
             
-            {/* 50% Investidores */}
+            {/* 80% Investidores */}
             <div className="glass-panel p-5 rounded-2xl border-l-4 border-l-success bg-success/5">
-              <h3 className="text-sm font-medium text-muted-foreground mb-1">50% para os Investidores</h3>
-              <p className="text-2xl font-bold text-success mb-2">{formatMT(s.juro * 0.5)}</p>
-              <p className="text-xs text-muted-foreground">Distribuído proporcionalmente ao capital base investido.</p>
+              <h3 className="text-sm font-medium text-muted-foreground mb-1">80% para os Investidores</h3>
+              <p className="text-2xl font-bold text-success mb-2">{formatMT(s.juro * 0.8)}</p>
+              <p className="text-xs text-muted-foreground">Distribuído proporcionalmente ao capital investido.</p>
             </div>
           </div>
 
@@ -161,12 +161,12 @@ export default function LoanDetailPage() {
                   <td className="p-4 font-medium text-white">{data.loan.tomador_nome}</td>
                   <td className="p-4"><span className="text-xs px-2 py-1 bg-primary/20 text-primary rounded-full">Produtor</span></td>
                   <td className="p-4 font-mono text-muted-foreground">—</td>
-                  <td className="p-4 text-right font-mono text-primary font-bold">+{formatMT(s.juro * 0.5)}</td>
+                  <td className="p-4 text-right font-mono text-primary font-bold">+{formatMT(s.juro * 0.2)}</td>
                 </tr>
 
                 {/* Linhas dos Investidores */}
                 {data.traces.map((trace, i) => {
-                  const juroInvestidor = (s.juro * 0.5) * (trace.pctReal / 100);
+                  const juroInvestidor = (s.juro * 0.8) * (trace.pctReal / 100);
                   const isMutuario = trace.owner_id === data.loan.user_id;
                   
                   return (
@@ -185,7 +185,7 @@ export default function LoanDetailPage() {
                         <span className="font-mono text-success font-bold">+{formatMT(juroInvestidor)}</span>
                         {isMutuario && (
                           <div className="text-[10px] text-primary mt-1">
-                            Ganho Total: {formatMT(juroInvestidor + (s.juro * 0.5))}
+                            Ganho Total: {formatMT(juroInvestidor + (s.juro * 0.2))}
                           </div>
                         )}
                       </td>
@@ -240,7 +240,7 @@ export default function LoanDetailPage() {
               <X className="w-5 h-5" />
             </button>
             <h2 className="text-xl font-bold text-white mb-2">Liquidar Empréstimo</h2>
-            <p className="text-sm text-muted-foreground mb-6">Confirme o valor exacto recebido. O lucro será distribuído de acordo com a regra 50/50.</p>
+            <p className="text-sm text-muted-foreground mb-6">Confirme o valor exacto recebido. O lucro será distribuído de acordo com a regra 80/20.</p>
             
             <form onSubmit={handleLiquidate} className="space-y-4">
               <div>

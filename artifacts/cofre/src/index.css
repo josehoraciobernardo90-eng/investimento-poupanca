@@ -104,9 +104,25 @@
     @apply bg-card/60 backdrop-blur-xl border border-white/5 shadow-2xl shadow-black/40;
   }
   
+  .glass-card-elite {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
   .text-glow {
     text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
   }
+
+  .animate-pulse-subtle {
+    animation: pulse-subtle 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  50% { opacity: 0.8; filter: brightness(1.2); }
+}
 
   /* Custom scrollbar for webkit */
   ::-webkit-scrollbar {

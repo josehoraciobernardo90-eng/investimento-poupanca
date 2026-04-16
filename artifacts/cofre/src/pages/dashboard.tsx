@@ -9,7 +9,8 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { useAdmin } from "@/hooks/use-admin";
 import { ResetAppModal } from "@/components/admin/ResetAppModal";
-import { Settings } from "lucide-react";
+import { Settings, Award } from "lucide-react";
+import { BankingCharts } from "@/components/dashboard/BankingCharts";
 
 export default function DashboardPage() {
   const { data, isLoading, isError } = useDashboard();
@@ -82,6 +83,49 @@ export default function DashboardPage() {
           delay={0.7}
           className={data.solicitacoes_pendentes > 0 ? "border-warning/30" : ""}
         />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <BankingCharts />
+        </div>
+        <div className="glass-panel rounded-2xl p-6 border-white/10 flex flex-col justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-white mb-2 tracking-tight">Status de Elite</h3>
+            <p className="text-xs text-muted-foreground mb-6">Média de confiabilidade dos membros ativos.</p>
+            
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary border border-primary/20">
+                    <Award className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-white uppercase tracking-tighter">Índice Pagador</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Compromisso Real</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-black text-primary">84%</p>
+                  <p className="text-[10px] text-success font-bold uppercase tracking-widest">+2.4% este mês</p>
+                </div>
+              </div>
+
+              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: '84%' }}
+                  className="h-full bg-gradient-to-r from-primary/50 to-primary"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 p-4 rounded-xl bg-white/5 border border-white/10">
+            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-1 text-center">Recomendação Bancária</p>
+            <p className="text-xs text-center text-white font-medium">Capacidade de expansão de crédito: <span className="text-success font-bold">ALTA</span></p>
+          </div>
+        </div>
       </div>
 
       {/* --- ALERTA DE CONGELAMENTO AUTOMÁTICO --- */}
