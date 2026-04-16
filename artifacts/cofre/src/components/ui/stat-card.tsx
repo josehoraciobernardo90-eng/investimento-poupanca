@@ -28,7 +28,7 @@ export function StatCard({ title, value, icon, description, trend, delay = 0, cl
       )}
     >
       {/* 3D Scanline Animation Pulse */}
-      <div className="animate-scanline opacity-40 group-hover:opacity-100 transition-opacity" />
+      <div className="scanline-overlay group-hover:opacity-60 transition-opacity" />
       
       {/* Cyber Corner Accents */}
       <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-primary/40 rounded-tl-xl" />

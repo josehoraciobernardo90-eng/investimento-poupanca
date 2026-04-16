@@ -117,6 +117,8 @@ export default function DashboardPage() {
 
         <div className="space-y-8">
           <div className="glass-card-elite rounded-[2rem] p-8 border-secondary/10 relative group">
+             {/* 3D Scanline Animation Pulse */}
+             <div className="scanline-overlay group-hover:opacity-60 transition-opacity" />
              <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-20 transition-all">
                 <Shield className="w-32 h-32" />
              </div>
