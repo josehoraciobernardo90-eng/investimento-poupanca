@@ -18,55 +18,64 @@ interface StatCardProps {
 export function StatCard({ title, value, icon, description, trend, delay = 0, className }: StatCardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02, rotateX: -2, rotateY: 3, perspective: 1000 }}
-      transition={{ duration: 0.5, delay, ease: "easeOut" }}
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      whileHover={{ scale: 1.02, rotateX: 2, perspective: 1000 }}
+      transition={{ duration: 0.6, delay, ease: "easeOut" }}
       className={cn(
-        "relative overflow-hidden glass-card-elite rounded-[2.5rem] p-8 group select-none cursor-default",
+        "relative overflow-hidden glass-card-elite rounded-[1.5rem] p-6 group select-none cursor-crosshair tech-grid-bg",
         className
       )}
     >
-      {/* 3D Inner Shadow Effect */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/5 to-transparent" />
+      {/* 3D Scanline Animation Pulse */}
+      <div className="animate-scanline opacity-40 group-hover:opacity-100 transition-opacity" />
       
-      {/* Decorative Gradient Blob */}
-      <div className="absolute -top-12 -right-12 w-40 h-40 bg-primary/10 rounded-full blur-[80px] group-hover:bg-primary/20 transition-all duration-1000 opacity-40" />
+      {/* Cyber Corner Accents */}
+      <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-primary/40 rounded-tl-xl" />
+      <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-secondary/40 rounded-br-xl" />
       
-      <div className="flex justify-between items-start mb-8 relative z-10">
+      {/* Decorative Cyber Pulse Blur */}
+      <div className="absolute -top-16 -right-16 w-32 h-32 bg-primary/20 rounded-full blur-[80px] group-hover:bg-primary/40 transition-all duration-1000 opacity-30" />
+      
+      <div className="flex justify-between items-start mb-6 relative z-10">
         <div className="flex flex-col">
-          <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.4em] mb-2">{title}</h3>
-          <div className="h-1 w-6 bg-primary/60 rounded-full group-hover:w-16 transition-all duration-700" />
+          <div className="inline-flex items-center gap-2 mb-1">
+             <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse shadow-[0_0_5px_rgba(0,212,255,1)]" />
+             <h3 className="text-[9px] font-black text-white/40 uppercase tracking-[0.4em] font-mono">{title}</h3>
+          </div>
+          <div className="h-[2px] w-4 bg-primary/40 rounded-full group-hover:w-12 transition-all duration-700" />
         </div>
         {icon && (
-          <div className="w-14 h-14 flex items-center justify-center bg-black/40 rounded-2xl text-primary border border-white/5 shadow-2xl group-hover:bg-primary/10 group-hover:border-primary/20 transition-all duration-500">
+          <div className="w-12 h-12 flex items-center justify-center bg-black/60 rounded-xl text-primary border border-white/5 shadow-2xl group-hover:bg-primary/10 group-hover:border-primary/20 transition-all duration-500">
             {icon}
           </div>
         )}
       </div>
       
       <div className="relative z-10">
-        <div className="text-4xl md:text-5xl font-display font-black text-white tracking-tighter text-glow drop-shadow-2xl mb-4 group-hover:translate-x-1 transition-transform">
+        <div className="text-3xl md:text-4xl font-mono font-black text-white tracking-tighter text-glow-blue drop-shadow-2xl mb-3 group-hover:translate-x-1 transition-transform flex items-baseline gap-2">
           {value}
+          <span className="text-[10px] text-primary/40 font-bold tracking-widest uppercase">DAT.LINK</span>
         </div>
         
         {(description || trend) && (
-          <div className="flex items-center gap-3 mt-4 p-3 bg-black/30 rounded-2xl border border-white/5 backdrop-blur-md">
+          <div className="flex items-center gap-2 mt-4 p-2 bg-black/60 rounded-xl border border-white/5 border-l-primary/40 border-l-2">
             {trend && (
-              <span className={cn("text-[10px] font-black px-2.5 py-1 rounded-lg border flex items-center gap-1", 
-                trend.isPositive ? "bg-success/20 text-success border-success/30" : "bg-destructive/20 text-destructive border-destructive/30"
+              <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-sm border flex items-center gap-1 font-mono", 
+                trend.isPositive ? "bg-primary/10 text-primary border-primary/30" : "bg-destructive/10 text-destructive border-destructive/30"
               )}>
                 {trend.isPositive ? "▲" : "▼"} {trend.value}%
               </span>
             )}
-            {description && <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest leading-none opacity-60 group-hover:opacity-100 transition-opacity">{description}</p>}
+            {description && <p className="text-[9px] text-white/50 font-black uppercase tracking-widest leading-none font-mono">{description}</p>}
           </div>
         )}
       </div>
       
-      {/* Background Accent 3D */}
-      <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+      {/* Bottom Data Stream line */}
+      <div className="absolute bottom-0 left-0 h-[3px] w-full bg-black">
+         <div className="h-full w-0 bg-gradient-to-r from-transparent via-primary to-transparent group-hover:w-full transition-all duration-1000" />
+      </div>
     </motion.div>
   );
 }

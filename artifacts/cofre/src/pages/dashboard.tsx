@@ -4,7 +4,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { cn, formatMT } from "@/lib/utils";
 import { calcularStatusEmprestimo, verificarCongelamentos } from "@/lib/auto-freeze";
 import { PageLoader } from "@/components/ui/page-loader";
-import { Wallet, TrendingUp, AlertCircle, RefreshCw, ShieldAlert, Clock, Settings, Award, Shield } from "lucide-react";
+import { Wallet, TrendingUp, AlertCircle, RefreshCw, ShieldAlert, Clock, Settings, Award, Shield, Cpu, Activity, Zap, Globe } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { useAdmin } from "@/hooks/use-admin";
@@ -17,12 +17,10 @@ export default function DashboardPage() {
   const { isAdmin } = useAdmin();
 
   if (isLoading) return <PageLoader />;
-  if (isError || !data) return <div className="text-destructive p-8 bg-destructive/10 rounded-xl">Erro ao carregar dashboard.</div>;
+  if (isError || !data) return <div className="text-destructive p-8 bg-destructive/10 rounded-xl">Erro ao carregar terminal de dados.</div>;
 
-  // Verificar se há membros que devem ser congelados automaticamente
   const membrosBloqueados = loans ? verificarCongelamentos(loans) : [];
 
-  // Calcular status de cada empréstimo activo
   const emprestimosStatus = (loans || [])
     .filter(l => l.status !== "Liquidado")
     .map(l => ({
@@ -31,209 +29,203 @@ export default function DashboardPage() {
     }));
 
   return (
-    <div className="space-y-10 pb-20">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 relative">
+    <div className="space-y-10 pb-20 selection:bg-primary/30">
+      {/* Top Tech Header */}
+      <header className="flex flex-col md:flex-row md:items-start justify-between gap-8 relative">
         <div className="relative">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest mb-4 animate-pulse">
-            <span className="w-2 h-2 rounded-full bg-primary" />
-            Sistema de Alta Performance • Chimoio 
+          <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-md bg-primary/5 border border-primary/20 text-primary text-[9px] font-black uppercase tracking-[0.3em] mb-6">
+            <Activity className="w-3 h-3 animate-pulse" />
+             Core Network: Active • Chimoio Node 01
           </div>
-          <h1 className="text-4xl md:text-6xl font-display font-black text-white tracking-tighter leading-none hero-glow italic">
-            ELITE<span className="text-primary not-italic">BANKING</span>
+          <h1 className="text-5xl md:text-7xl font-display font-black text-white tracking-tighter leading-none text-glow-blue uppercase italic">
+            Cyber<span className="text-secondary not-italic">Vault</span>
           </h1>
-          <p className="text-muted-foreground mt-4 max-w-md font-medium">Gestão de capital de alto escalão. Controle total em tempo real.</p>
+          <p className="text-white/40 mt-4 max-w-md font-mono text-[10px] uppercase tracking-widest leading-relaxed">
+             [Protocolo Quantum Banking] • Terminal de Gestão de Ativos em Tempo Real. Integridade do Capital: 100%.
+          </p>
         </div>
         
-        <div className="flex items-center gap-4 bg-white/5 p-3 rounded-3xl border border-white/5 backdrop-blur-md">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary-foreground flex items-center justify-center text-black font-black text-xl shadow-lg shadow-primary/20">
-            JH
+        <div className="flex flex-col items-end gap-3">
+          <div className="flex items-center gap-4 bg-black/40 p-4 rounded-xl border border-white/5 backdrop-blur-xl border-l-primary border-l-4">
+            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary shadow-[0_0_20px_rgba(0,212,255,0.2)]">
+              <Cpu className="w-7 h-7" />
+            </div>
+            <div className="pr-4">
+              <p className="text-[9px] text-primary font-black uppercase tracking-widest">Master Controller</p>
+              <h4 className="text-sm font-bold text-white font-mono tracking-tighter">ID: ADMIN_JH_026</h4>
+            </div>
           </div>
-          <div className="pr-4">
-            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Master Admin</p>
-            <h4 className="text-sm font-bold text-white">José Horácio</h4>
+          <div className="flex gap-2">
+             <div className="neo-badge text-success">Uptime: 99.9%</div>
+             <div className="neo-badge text-primary">Latency: 14ms</div>
           </div>
         </div>
       </header>
 
-      {/* Grid de Estatísticas 3D Elite */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      {/* Main Stats Grid Cyber */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
-          title="Capital em Caixa" 
+          title="Liquidez em Rede" 
           value={formatMT(data.caixa)} 
-          description="Liquidez Instantânea"
-          icon={<Wallet className="w-8 h-8" />}
+          description="Fundo de Saque Ativo"
+          icon={<Globe className="w-6 h-6" />}
           delay={0.1}
-          className="bg-success/5 border-success/10"
+          className="border-primary/20"
         />
         <StatCard 
-          title="Capital Ativo" 
+          title="Capital em Operação" 
           value={formatMT(data.naRua)} 
-          description="Ativos no Mercado"
-          icon={<RefreshCw className="w-8 h-8" />}
+          description="Ativos Externos"
+          icon={<Zap className="w-6 h-6" />}
           delay={0.2}
-          className="bg-warning/5 border-warning/10"
+          className="border-primary/10"
         />
         <StatCard 
-          title="Lucros Brutos" 
+          title="ROI Total" 
           value={formatMT(data.lucros)} 
-          description="Rendimento Elite"
-          icon={<TrendingUp className="w-8 h-8" />}
+          description="Rendimento de Rede"
+          icon={<TrendingUp className="w-6 h-6" />}
           delay={0.3}
-          trend={{ value: 12.5, isPositive: true }}
-          className="bg-primary/10 border-primary/20 shadow-[0_0_30px_rgba(212,175,55,0.15)]"
+          trend={{ value: 14.2, isPositive: true }}
+          className="border-secondary/20 shadow-[0_10px_40px_rgba(255,0,85,0.1)]"
         />
         <StatCard 
-          title="Solicitações" 
+          title="Alertas de Sistema" 
           value={data.solicitacoes_pendentes.toString()} 
-          description={data.solicitacoes_pendentes > 0 ? "Aguardando Aprovação" : "Fluxo Estabilizado"}
-          icon={<AlertCircle className={cn("w-8 h-8", data.solicitacoes_pendentes > 0 ? "text-warning animate-pulse" : "text-muted-foreground")} />}
+          description={data.solicitacoes_pendentes > 0 ? "Requisições em Fila" : "Status Nominal"}
+          icon={<AlertCircle className={cn("w-6 h-6", data.solicitacoes_pendentes > 0 ? "text-secondary animate-pulse" : "text-white/20")} />}
           delay={0.4}
-          className={cn(data.solicitacoes_pendentes > 0 ? "border-warning/40 bg-warning/5" : "opacity-60")}
+          className={cn(data.solicitacoes_pendentes > 0 ? "border-secondary/40 bg-secondary/5" : "opacity-60")}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 relative">
-          <div className="absolute -top-10 -left-10 w-40 h-40 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
-          <BankingCharts />
+        <div className="lg:col-span-2 glass-card-elite rounded-[2rem] p-8 tech-grid-bg relative border-primary/10">
+           <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-4">
+                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                    <Activity className="w-6 h-6" />
+                 </div>
+                 <h3 className="text-xl font-black text-white italic uppercase tracking-tighter">Fluxo Dinâmico de Capital</h3>
+              </div>
+              <div className="flex gap-2">
+                 <span className="neo-badge">REAL-TIME FEED</span>
+              </div>
+           </div>
+           <BankingCharts />
         </div>
-        <div className="glass-card-elite rounded-[2.5rem] p-8 border-white/10 flex flex-col justify-between relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-[50px] opacity-30 group-hover:opacity-60 transition-opacity" />
-          <div className="relative z-10">
-            <h3 className="text-xl font-black text-white italic tracking-tighter mb-2">Relatório de Elite</h3>
-            <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em] mb-8">Health Score & Credit Data</p>
-            
-            <div className="space-y-8">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-[1.25rem] bg-gradient-to-br from-primary/30 to-black flex items-center justify-center text-primary border border-primary/20 shadow-xl group-hover:scale-110 transition-transform">
-                    <Award className="w-7 h-7" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-black text-white uppercase tracking-tight">Índice Pagador</p>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Confiança do Cofre</p>
-                  </div>
+
+        <div className="space-y-8">
+          <div className="glass-card-elite rounded-[2rem] p-8 border-secondary/10 relative group">
+             <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-20 transition-all">
+                <Shield className="w-32 h-32" />
+             </div>
+             <h3 className="text-lg font-black text-white italic tracking-tighter mb-6 uppercase">Escudo de Auditoria</h3>
+             
+             <div className="space-y-6">
+                <div className="flex justify-between items-center p-4 bg-black/40 rounded-xl border border-white/5">
+                   <div>
+                      <p className="text-[9px] text-white/40 font-black uppercase tracking-widest mb-1">Health Score</p>
+                      <p className="text-2xl font-black text-white font-mono">98.4<span className="text-xs text-primary">%</span></p>
+                   </div>
+                   <div className="w-12 h-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" style={{ animationDuration: '3s' }} />
                 </div>
-              </div>
-              <div className="relative pt-1">
-                <div className="flex mb-2 items-center justify-between">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Performance Global</span>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-primary">Excelente</span>
+                
+                <div className="space-y-3">
+                   <div className="flex justify-between text-[9px] font-black uppercase tracking-widest">
+                      <span>Network Load</span>
+                      <span className="text-primary">Safe State</span>
+                   </div>
+                   <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: '65%' }}
+                        className="h-full bg-primary shadow-[0_0_10px_rgba(0,212,255,1)]"
+                      />
+                   </div>
                 </div>
-                <div className="overflow-hidden h-2.5 text-xs flex rounded-full bg-white/5 border border-white/5">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: '84%' }}
-                    transition={{ duration: 1.5, ease: "easeOut" }}
-                    className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-primary/40 to-primary"
-                  />
-                </div>
-              </div>
-            </div>
+             </div>
+
+             <div className="mt-8">
+                <button className="btn-elite w-full group">
+                   <ShieldAlert className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                   Protocolo Auditoria
+                </button>
+             </div>
           </div>
 
-          <div className="mt-12 p-5 rounded-[1.5rem] bg-black/40 border border-white/5 backdrop-blur-sm group-hover:border-primary/20 transition-colors">
-            <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em] mb-2 text-center">Recomendação Bancária</p>
-            <p className="text-sm text-center text-white font-black italic tracking-tighter">LIMITE DE EXPANSÃO: <span className="text-success text-glow">C$ 5.0M</span></p>
+          <div className="p-6 rounded-2xl bg-secondary/5 border border-secondary/20 flex items-center gap-4">
+             <div className="w-10 h-10 rounded-lg bg-secondary/20 flex items-center justify-center text-secondary">
+                <Globe className="w-5 h-5" />
+             </div>
+             <div>
+                <p className="text-[9px] font-black text-secondary uppercase tracking-[.2em]">Sede Operacional</p>
+                <p className="text-xs font-bold text-white uppercase italic tracking-tighter">CHIMOIO HUB • NOD_A</p>
+             </div>
           </div>
         </div>
       </div>
 
-      {membrosBloqueados.length > 0 && (
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }} 
-          animate={{ opacity: 1, scale: 1 }}
-          className="p-8 rounded-[2.5rem] bg-destructive/10 border-2 border-destructive/40 flex items-center gap-8 relative overflow-hidden group"
-        >
-          <div className="absolute inset-0 bg-destructive/5 animate-pulse" />
-          <div className="w-20 h-20 rounded-[1.5rem] bg-destructive/20 flex items-center justify-center flex-shrink-0 relative z-10 border border-destructive/30 shadow-2xl overflow-hidden">
-             <div className="absolute inset-0 bg-gradient-to-br from-destructive/40 to-transparent" />
-             <ShieldAlert className="w-10 h-10 text-destructive drop-shadow-[0_0_15px_rgba(239,68,68,0.6)]" />
-          </div>
-          <div className="relative z-10">
-            <h3 className="text-2xl font-black text-white italic tracking-tighter mb-1 uppercase">Congelamento de Alta Prioridade</h3>
-            <p className="text-sm text-muted-foreground font-medium leading-relaxed max-w-2xl">
-              {membrosBloqueados.length} membros atingiram o limite crítico de 3 meses sem devolução. 
-              As contas foram <span className="text-white font-black">BLOQUEADAS</span> via Cloud Sec. Todas as solicitações de saque foram revogadas.
-            </p>
-          </div>
-        </motion.div>
-      )}
-
       <section className="pt-8">
-        <div className="flex items-center justify-between mb-10">
-          <div>
-            <h2 className="text-3xl font-display font-black text-white italic tracking-tighter mb-1">
-              Mapa de <span className="text-primary underline decoration-primary/20 underline-offset-8">Risco</span>
-            </h2>
-            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Acompanhamento Dinâmico de Prazos</p>
-          </div>
+        <div className="flex items-center gap-4 mb-10">
+           <div className="h-[2px] w-12 bg-secondary/40" />
+           <h2 className="text-3xl font-display font-black text-white italic tracking-tighter uppercase">
+             Monitor de <span className="text-secondary">Risco Ativo</span>
+           </h2>
+           <div className="h-[2px] flex-1 bg-white/5" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {emprestimosStatus.map((emp, i) => {
             const s = emp.autoFreezeStatus;
-            const faseColors = {
-              1: "border-success/20 bg-success/5 hover:border-success/40 shadow-success/5",
-              2: "border-warning/20 bg-warning/5 hover:border-warning/40 shadow-warning/5",
-              3: "border-destructive/20 bg-destructive/5 hover:border-destructive/40 shadow-destructive/5",
-              VENCIDO: "border-destructive bg-destructive/20 hover:border-destructive animate-pulse-subtle",
-            };
-            const faseIcons = {
-              1: <span className="text-[10px] font-black px-2 py-1 bg-success/10 text-success border border-success/20 rounded-lg uppercase">SAFE • 10%</span>,
-              2: <span className="text-[10px] font-black px-2 py-1 bg-warning/10 text-warning border border-warning/20 rounded-lg uppercase">ALERT • 20%</span>,
-              3: <span className="text-[10px] font-black px-2 py-1 bg-destructive/10 text-destructive border border-destructive/20 rounded-lg uppercase">CRITICAL • 50%</span>,
-              VENCIDO: <span className="text-[10px] font-black px-3 py-1 bg-destructive text-white rounded-lg uppercase tracking-wider">LOCKED</span>,
-            };
-
+            const isCritical = s.fase === 3 || s.fase === "VENCIDO";
+            
             return (
               <Link key={emp.id} href={`/emprestimos/${emp.id}`}>
                 <motion.div 
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1, duration: 0.6 }}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
                   className={cn(
-                    "glass-card-elite rounded-[2.5rem] p-8 cursor-pointer hover:-translate-y-3 transition-all duration-500 border-2 overflow-hidden relative group",
-                    faseColors[s.fase as keyof typeof faseColors]
+                    "glass-card-elite rounded-[1.5rem] p-7 border-l-4 group cursor-pointer transition-all duration-500",
+                    isCritical ? "border-l-secondary" : "border-l-primary"
                   )}
                 >
-                  <div className="absolute -top-10 -left-10 w-24 h-24 bg-white/5 rounded-full blur-2xl group-hover:bg-white/10 transition-colors" />
-                  
-                  <div className="flex justify-between items-start mb-6 relative z-10">
+                  <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-white/10 to-transparent flex items-center justify-center font-black text-white text-xl border border-white/5 shadow-2xl group-hover:rotate-12 transition-transform">
-                        {emp.tomador_foto}
+                      <div className="w-14 h-14 rounded-xl bg-black/60 border border-white/10 flex items-center justify-center text-white font-mono text-xl group-hover:border-primary/40 transition-colors">
+                        {emp.tomador_foto || emp.tomador_nome[0]}
                       </div>
                       <div>
-                        <h4 className="font-black text-white italic tracking-tighter text-lg">{emp.tomador_nome}</h4>
-                        <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">DÍVIDA BÁSICA: {formatMT(emp.valor_original)}</span>
+                        <h4 className="font-black text-white uppercase italic tracking-tighter">{emp.tomador_nome}</h4>
+                        <span className="text-[9px] text-white/40 font-black tracking-widest uppercase">ID_TX: {emp.id.slice(0, 8)}</span>
                       </div>
                     </div>
+                    <div className={cn("neo-badge font-mono", isCritical ? "text-secondary border-secondary/30" : "text-primary border-primary/30")}>
+                       {emp.status}
+                    </div>
                   </div>
-                  
-                  <div className="relative z-10 p-5 rounded-3xl bg-black/40 border border-white/5 space-y-4 mb-4">
-                     <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Juro Acumulado</span>
-                        <span className="font-mono text-primary font-black text-xl text-glow">{formatMT(s.juro)}</span>
+
+                  <div className="bg-black/40 p-4 rounded-xl border border-white/5 space-y-3 mb-4 font-mono">
+                     <div className="flex justify-between items-center text-[10px]">
+                        <span className="text-white/40 uppercase font-black">Montante Principal</span>
+                        <span className="text-white font-bold">{formatMT(emp.valor_original)}</span>
                      </div>
-                     <div className="flex justify-between items-center group-hover:scale-105 transition-transform origin-right">
-                        <span className="text-[10px] font-black text-white uppercase tracking-widest">Total Devido</span>
-                        <span className="font-mono text-white font-black text-2xl tracking-tighter">{formatMT(s.totalDevido)}</span>
+                     <div className="flex justify-between items-center text-[10px]">
+                        <span className="text-white/40 uppercase font-black">Juro Acumulado</span>
+                        <span className="text-primary font-bold text-glow-blue">{formatMT(s.juro)}</span>
+                     </div>
+                     <div className="pt-2 border-t border-white/5 flex justify-between items-center">
+                        <span className="text-[9px] text-white/60 uppercase font-black">Débito Total</span>
+                        <span className="text-lg font-black text-white">{formatMT(s.totalDevido)}</span>
                      </div>
                   </div>
 
-                  <div className="flex justify-between items-center relative z-10">
-                    {faseIcons[s.fase as keyof typeof faseIcons]}
-                    {s.diasRestantes > 0 ? (
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-3 h-3 text-muted-foreground" />
-                        <span className={cn("text-xs font-black uppercase italic tracking-widest", s.diasRestantes <= 5 ? "text-destructive" : "text-muted-foreground")}>
-                          {s.diasRestantes} dias left
-                        </span>
-                      </div>
-                    ) : s.fase === "VENCIDO" ? null : (
-                       <span className="text-[10px] font-black text-destructive uppercase tracking-widest">Expirado</span>
-                    )}
+                  <div className="flex justify-between items-center">
+                     <div className="flex items-center gap-2">
+                        <Clock className="w-3 h-3 text-white/20" />
+                        <span className="text-[9px] font-black text-white/40 uppercase uppercase tracking-widest">{s.diasRestantes}D RESTANTES</span>
+                     </div>
+                     <button className="text-[9px] font-black text-primary hover:text-white transition-colors uppercase tracking-widest underline underline-offset-4">Ver Detalhes</button>
                   </div>
                 </motion.div>
               </Link>
@@ -242,55 +234,24 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <section className="glass-card-elite rounded-[3rem] p-10 relative overflow-hidden border-primary/10 mt-12">
-        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
-        <div className="flex flex-col md:flex-row items-center gap-8 relative z-10">
-           <div className="w-24 h-24 rounded-3xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shrink-0 shadow-2xl">
-              <Shield className="w-12 h-12" />
-           </div>
-           <div className="flex-1 text-center md:text-left">
-              <h3 className="text-3xl font-display font-black text-white italic tracking-tighter mb-2">Protocolos de Liquidação</h3>
-              <p className="text-muted-foreground font-medium max-w-2xl">Regras fixas para garantir a saúde do sistema. A escalada de juros ocorre a cada ciclo de 30 dias para proteger o capital dos investidores.</p>
-           </div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-          <div className="p-6 rounded-[2rem] bg-white/5 border border-white/5 hover:border-success/30 transition-all group">
-            <div className="text-success font-black text-2xl italic mb-2 tracking-tighter group-hover:scale-110 transition-transform origin-left">Ciclo 01 • 10%</div>
-            <p className="text-xs text-muted-foreground font-medium leading-relaxed">Janela padrão para devolução do capital com juros bonificados.</p>
-          </div>
-          <div className="p-6 rounded-[2rem] bg-white/5 border border-white/5 hover:border-warning/30 transition-all group">
-            <div className="text-warning font-black text-2xl italic mb-2 tracking-tighter group-hover:scale-110 transition-transform origin-left">Ciclo 02 • 20%</div>
-            <p className="text-xs text-muted-foreground font-medium leading-relaxed">Fase de alerta. O custo do capital aumenta para compensar o atraso inicial.</p>
-          </div>
-          <div className="p-6 rounded-[2rem] bg-white/5 border border-white/5 hover:border-destructive/30 transition-all group">
-            <div className="text-destructive font-black text-2xl italic mb-2 tracking-tighter group-hover:scale-110 transition-transform origin-left">Vencimento • 50%</div>
-            <p className="text-xs text-muted-foreground font-medium leading-relaxed">Limite de segurança. Após este ponto, as contas são congeladas via Cloud Sec.</p>
-          </div>
-        </div>
-      </section>
-
       {isAdmin && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="pt-16"
-        >
-          <div className="glass-card-elite rounded-[2.5rem] p-10 border-destructive/20 bg-gradient-to-r from-destructive/10 to-transparent">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-              <div className="flex items-center gap-6 text-center md:text-left">
-                <div className="w-16 h-16 rounded-2xl bg-destructive/20 flex items-center justify-center text-destructive border border-destructive/20 shadow-2xl animate-pulse">
-                  <Settings className="w-8 h-8" />
+        <div className="pt-16">
+          <div className="glass-card-elite rounded-[2rem] p-10 border-secondary/20 relative overflow-hidden">
+             <div className="absolute inset-0 tech-grid-bg opacity-20 pointer-events-none" />
+             <div className="flex flex-col md:flex-row justify-between items-center gap-8 relative z-10">
+                <div className="flex items-center gap-6">
+                   <div className="w-20 h-20 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary border border-secondary/20 shadow-[0_0_30px_rgba(255,0,85,0.2)]">
+                      <Settings className="w-10 h-10 animate-spin-slow" />
+                   </div>
+                   <div>
+                      <h3 className="text-3xl font-black text-white tracking-tighter uppercase italic">Terminal Root</h3>
+                      <p className="text-[10px] text-white/40 font-black uppercase tracking-[0.3em] mt-1">Acesso Restrito • Gestão de Segurança Cloud</p>
+                   </div>
                 </div>
-                <div>
-                  <h3 className="text-2xl font-black text-white tracking-tighter uppercase italic">Terminal de Comando</h3>
-                  <p className="text-sm text-muted-foreground font-medium">Controle de protocolos críticos e redefinição de core capital.</p>
-                </div>
-              </div>
-              <ResetAppModal />
-            </div>
+                <ResetAppModal />
+             </div>
           </div>
-        </motion.div>
+        </div>
       )}
     </div>
   );
