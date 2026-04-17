@@ -1,103 +1,70 @@
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
 /* ═══════════════════════════════════════════════════════════════
-   COFRE ELITE · HOLOGRAPHIC INTERFACE SYSTEM v4.0
-   Aesthetic: TRON Legacy × Iron Man HUD × Cyberpunk 2077
+   COFRE CAPITAL · STATE-OF-THE-ART CORPORATE PLATFORM
+   Aesthetic: Premium FinTech, Elegant, Professional, Glassmorphism
 ═══════════════════════════════════════════════════════════════ */
 @theme {
   --font-sans:    'Inter', sans-serif;
-  --font-display: 'Orbitron', monospace;
-  --font-mono:    'Share Tech Mono', monospace;
+  --font-display: 'Outfit', sans-serif;
+  --font-mono:    'Inter', monospace;
 
-  /* ── Deep Space Palette ── */
-  --color-background:          hsl(220 60% 3%);
-  --color-foreground:          hsl(185 100% 92%);
-  --color-card:                hsl(210 50% 5%);
-  --color-card-foreground:     hsl(185 100% 92%);
+  /* ── Corporate Palette ── */
+  --color-background:          #0A0F1C; /* Deep Midnight Blue */
+  --color-foreground:          #F8FAFC;
+  --color-card:                #111827;
+  --color-card-foreground:     #F8FAFC;
 
-  /* Ciano électrico — cor principal HUD */
-  --color-primary:             hsl(185 100% 50%);
-  --color-primary-foreground:  hsl(220 60% 4%);
+  /* Primary: Vibrant Royal Blue / Sapphire */
+  --color-primary:             #2563EB;
+  --color-primary-foreground:  #FFFFFF;
 
-  /* Verde néon — secundário / sucesso */
-  --color-secondary:           hsl(145 100% 45%);
-  --color-secondary-foreground:hsl(220 60% 4%);
+  /* Secondary: Emerald Green for finance success */
+  --color-secondary:           #10B981;
+  --color-secondary-foreground:#FFFFFF;
 
-  /* Magenta — alerta / perigo */
-  --color-muted:               hsl(210 40% 8%);
-  --color-muted-foreground:    hsl(185 30% 45%);
-  --color-accent:              hsl(185 100% 50%);
+  /* Accent: Platinum / Soft Gold */
+  --color-muted:               #1E293B;
+  --color-muted-foreground:    #94A3B8;
+  --color-accent:              #6366F1; /* Indigo */
 
-  --color-success:             hsl(145 100% 45%);
-  --color-warning:             hsl(45 100% 55%);
-  --color-destructive:         hsl(330 100% 55%);
+  --color-success:             #10B981;
+  --color-warning:             #F59E0B;
+  --color-destructive:         #EF4444;
 
-  --color-border:              hsl(185 100% 50%);
-  --color-input:               hsl(210 50% 6%);
-  --color-ring:                hsl(185 100% 50%);
+  --color-border:              rgba(255,255,255,0.08);
+  --color-input:               rgba(255,255,255,0.05);
+  --color-ring:                #2563EB;
 
-  --radius-sm:  2px;
-  --radius-md:  4px;
-  --radius-lg:  6px;
-  --radius-xl:  8px;
-  --radius-2xl: 10px;
-  --radius-3xl: 12px;
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  14px;
+  --radius-xl:  20px;
+  --radius-2xl: 28px;
+  --radius-3xl: 36px;
 }
 
 /* ═══════════════════════════════════════
-   KEYFRAMES HUD
+   PREMIUM KEYFRAMES 
 ═══════════════════════════════════════ */
-@keyframes scan-line {
-  0%   { top: -5%; }
-  100% { top: 105%; }
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-@keyframes neon-flicker {
-  0%,19%,21%,23%,25%,54%,56%,100% { opacity:1; }
-  20%,24%,55% { opacity:0.6; }
+@keyframes gentle-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
-@keyframes border-flow {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
 }
-@keyframes data-pulse {
-  0%,100% { box-shadow: 0 0 5px rgba(0,212,255,0.3), 0 0 10px rgba(0,212,255,0.1); }
-  50%     { box-shadow: 0 0 20px rgba(0,212,255,0.6), 0 0 40px rgba(0,212,255,0.2); }
-}
-@keyframes grid-move {
-  0%   { background-position: 0 0; }
-  100% { background-position: 30px 30px; }
-}
-@keyframes cursor-blink {
-  0%,100% { opacity:1; }
-  50%     { opacity:0; }
-}
-@keyframes slide-up {
-  from { opacity:0; transform:translateY(12px); }
-  to   { opacity:1; transform:translateY(0); }
-}
-@keyframes fade-in {
-  from { opacity:0; }
-  to   { opacity:1; }
-}
-@keyframes shimmer-scan {
-  0%   { background-position:-200% center; }
+@keyframes shimmer-elegant {
+  0% { background-position: -200% center; }
   100% { background-position: 200% center; }
-}
-@keyframes rotate-ring {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-@keyframes hud-boot {
-  0%   { clip-path: inset(0 100% 0 0); }
-  100% { clip-path: inset(0 0% 0 0); }
-}
-@keyframes float {
-  0%,100% { transform:translateY(0); }
-  50%     { transform:translateY(-6px); }
 }
 
 /* ═══════════════════════════════════════
@@ -113,395 +80,180 @@
     -webkit-text-size-adjust: 100%;
   }
   body {
-    background-color: hsl(220 60% 3%);
-    color: hsl(185 100% 92%);
+    background-color: #0A0F1C;
+    /* Suave base glow */
+    background-image: 
+      radial-gradient(circle at 15% 50%, rgba(37, 99, 235, 0.08), transparent 25%),
+      radial-gradient(circle at 85% 30%, rgba(99, 102, 241, 0.08), transparent 25%);
+    background-attachment: fixed;
+    color: #F8FAFC;
     font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     min-height: 100dvh;
     overscroll-behavior: none;
-    position: relative;
-    /* Grid hexagonal de fundo */
-    background-image:
-      radial-gradient(ellipse 80% 50% at 50% 0%, hsla(185,100%,50%,0.05) 0%, transparent 60%),
-      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
-    background-size: cover, 30px 30px, 30px 30px;
-    background-attachment: fixed;
   }
-
-  /* Linha de scan animada no body */
-  body::after {
-    content: '';
-    position: fixed;
-    left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(0,212,255,0.4), rgba(0,212,255,0.8), rgba(0,212,255,0.4), transparent);
-    pointer-events: none;
-    z-index: 9999;
-    animation: scan-line 6s linear infinite;
-    filter: blur(1px);
-  }
-
   ::selection {
-    background: rgba(0,212,255,0.2);
+    background: rgba(37, 99, 235, 0.3);
     color: white;
   }
 }
 
 /* ═══════════════════════════════════════
-   COMPONENTES HUD — CSS Puro
+   COMPONENTES CORPORATIVOS
 ═══════════════════════════════════════ */
 @layer components {
-
-  /* ─── Painel HUD Base ─── */
+  /* ─── Premium Glass Card ─── */
   .glass-panel {
-    background: rgba(0,212,255,0.02);
-    border: 1px solid rgba(0,212,255,0.15);
-    position: relative;
-    overflow: hidden;
-    transition: all 0.2s ease;
-  }
-  .glass-panel::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(0,212,255,0.03) 0%, transparent 50%);
-    pointer-events: none;
+    background: rgba(17, 24, 39, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .glass-panel:hover {
-    border-color: rgba(0,212,255,0.4);
-    box-shadow: 0 0 20px rgba(0,212,255,0.08), inset 0 0 20px rgba(0,212,255,0.02);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
   }
 
-  /* ─── Card Elite HUD ─── */
-  .card-elite {
-    background: rgba(0,8,20,0.85);
-    border: 1px solid rgba(0,212,255,0.2);
-    position: relative;
-    overflow: hidden;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-    box-shadow:
-      0 0 0 1px rgba(0,212,255,0.05),
-      inset 0 0 30px rgba(0,212,255,0.02);
+  /* ─── Card Principal ─── */
+  .card-elite, .glass-card-elite {
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-2xl);
+    transition: all 0.4s ease;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+  .card-elite:hover, .glass-card-elite:hover {
+    transform: translateY(-4px);
+    border-color: rgba(96, 165, 250, 0.3);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(59, 130, 246, 0.1);
   }
 
-  /* Cantos decorativos HUD */
-  .card-elite::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0;
-    width: 20px; height: 20px;
-    border-top: 2px solid rgba(0,212,255,0.7);
-    border-left: 2px solid rgba(0,212,255,0.7);
-    pointer-events: none;
-    z-index: 2;
-  }
-  .card-elite::after {
-    content: '';
-    position: absolute;
-    bottom: 0; right: 0;
-    width: 20px; height: 20px;
-    border-bottom: 2px solid rgba(0,212,255,0.7);
-    border-right: 2px solid rgba(0,212,255,0.7);
-    pointer-events: none;
-    z-index: 2;
-  }
-  .card-elite:hover {
-    border-color: rgba(0,212,255,0.5);
-    box-shadow:
-      0 0 30px rgba(0,212,255,0.12),
-      0 0 60px rgba(0,212,255,0.05),
-      inset 0 0 30px rgba(0,212,255,0.04);
-    transform: translateY(-1px);
-  }
-
-  /* ─── Alias glass-card-elite ─── */
-  .glass-card-elite {
-    background: rgba(0,8,20,0.85);
-    border: 1px solid rgba(0,212,255,0.2);
-    position: relative; overflow: hidden;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-    box-shadow: 0 0 0 1px rgba(0,212,255,0.05), inset 0 0 30px rgba(0,212,255,0.02);
-  }
-  .glass-card-elite::before {
-    content: '';
-    position: absolute; top: 0; left: 0;
-    width: 16px; height: 16px;
-    border-top: 2px solid rgba(0,212,255,0.6);
-    border-left: 2px solid rgba(0,212,255,0.6);
-    pointer-events: none; z-index: 2;
-  }
-  .glass-card-elite::after {
-    content: '';
-    position: absolute; bottom: 0; right: 0;
-    width: 16px; height: 16px;
-    border-bottom: 2px solid rgba(0,212,255,0.6);
-    border-right: 2px solid rgba(0,212,255,0.6);
-    pointer-events: none; z-index: 2;
-  }
-  .glass-card-elite:hover {
-    border-color: rgba(0,212,255,0.5);
-    box-shadow: 0 0 30px rgba(0,212,255,0.1), inset 0 0 30px rgba(0,212,255,0.03);
-    transform: translateY(-1px);
-  }
-
-  /* ─── Botão Primário HUD ─── */
+  /* ─── Premium Buttons ─── */
   .btn-primary {
-    position: relative; overflow: hidden;
-    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-    font-family: 'Orbitron', monospace;
-    font-weight: 600; font-size: 0.65rem;
-    text-transform: uppercase; letter-spacing: 0.15em;
-    border-radius: 3px;
-    padding: 0.625rem 1.5rem;
-    transition: all 0.15s ease;
-    cursor: pointer; user-select: none;
-    background: rgba(0,212,255,0.08);
-    border: 1px solid rgba(0,212,255,0.5);
-    color: hsl(185 100% 70%);
-    box-shadow: 0 0 10px rgba(0,212,255,0.15), inset 0 0 10px rgba(0,212,255,0.03);
-  }
-  .btn-primary::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(0,212,255,0.1), transparent);
-    transform: translateX(-100%);
-    transition: transform 0.4s ease;
-  }
-  .btn-primary:hover::before { transform: translateX(100%); }
-  .btn-primary:hover {
-    background: rgba(0,212,255,0.15);
-    border-color: rgba(0,212,255,0.8);
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
     color: white;
-    box-shadow: 0 0 20px rgba(0,212,255,0.3), inset 0 0 15px rgba(0,212,255,0.05);
-    text-shadow: 0 0 8px rgba(0,212,255,0.8);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    border-radius: var(--radius-xl);
+    padding: 0.875rem 2rem;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,0.1);
   }
-  .btn-primary:active { transform: scale(0.97); }
-  .btn-primary:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  }
+  .btn-primary:active {
+    transform: translateY(0);
+  }
 
-  /* ─── Alias btn-elite ─── */
-  .btn-elite {
-    position: relative; overflow: hidden;
-    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-    font-family: 'Orbitron', monospace; font-weight: 600; font-size: 0.65rem;
-    text-transform: uppercase; letter-spacing: 0.15em;
-    border-radius: 3px; padding: 0.625rem 1.5rem;
-    transition: all 0.15s ease; cursor: pointer; user-select: none;
-    background: rgba(0,212,255,0.08);
-    border: 1px solid rgba(0,212,255,0.5);
-    color: hsl(185 100% 70%);
-    box-shadow: 0 0 10px rgba(0,212,255,0.15), inset 0 0 10px rgba(0,212,255,0.03);
-  }
-  .btn-elite:hover {
-    background: rgba(0,212,255,0.15); border-color: rgba(0,212,255,0.8);
-    color: white; box-shadow: 0 0 20px rgba(0,212,255,0.3);
-    text-shadow: 0 0 8px rgba(0,212,255,0.8);
-  }
-  .btn-elite:active { transform: scale(0.97); }
-
-  /* ─── Botão Ghost HUD ─── */
   .btn-ghost {
-    position: relative; overflow: hidden;
-    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-    font-family: 'Orbitron', monospace; font-weight: 600; font-size: 0.65rem;
-    text-transform: uppercase; letter-spacing: 0.15em;
-    border-radius: 3px; padding: 0.625rem 1.5rem;
-    transition: all 0.15s ease; cursor: pointer; user-select: none;
-    background: transparent;
-    border: 1px solid rgba(0,212,255,0.2);
-    color: rgba(0,212,255,0.5);
+    background: rgba(255, 255, 255, 0.03);
+    color: #F8FAFC;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-xl);
+    padding: 0.875rem 2rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
   }
   .btn-ghost:hover {
-    border-color: rgba(0,212,255,0.5); color: rgba(0,212,255,0.8);
-    box-shadow: 0 0 10px rgba(0,212,255,0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
   }
 
-  /* ─── Botão Perigo HUD ─── */
-  .btn-danger {
-    position: relative; overflow: hidden;
-    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-    font-family: 'Orbitron', monospace; font-weight: 600; font-size: 0.65rem;
-    text-transform: uppercase; letter-spacing: 0.15em;
-    border-radius: 3px; padding: 0.625rem 1.5rem;
-    transition: all 0.15s ease; cursor: pointer; user-select: none;
-    background: rgba(255,0,128,0.06);
-    border: 1px solid rgba(255,0,128,0.4);
-    color: rgba(255,0,128,0.8);
-    box-shadow: 0 0 10px rgba(255,0,128,0.1);
-  }
-  .btn-danger:hover {
-    background: rgba(255,0,128,0.12); border-color: rgba(255,0,128,0.7);
-    color: white; box-shadow: 0 0 20px rgba(255,0,128,0.25);
-    text-shadow: 0 0 8px rgba(255,0,128,0.8);
-  }
-  .btn-danger:active { transform: scale(0.97); }
-
-  /* ─── Input HUD ─── */
+  /* ─── Premium Inputs ─── */
   .input-elite {
     width: 100%;
-    border-radius: 3px;
-    padding: 0.75rem 1rem;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 0.875rem;
-    color: hsl(185 100% 80%);
-    transition: all 0.15s;
-    outline: none;
-    background: rgba(0,8,20,0.9);
-    border: 1px solid rgba(0,212,255,0.15);
-    caret-color: hsl(185 100% 50%);
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.25rem;
+    transition: all 0.3s ease;
   }
-  .input-elite::placeholder { color: rgba(0,212,255,0.2); font-family: 'Share Tech Mono', monospace; }
   .input-elite:focus {
-    border-color: rgba(0,212,255,0.5);
-    box-shadow: 0 0 15px rgba(0,212,255,0.1), inset 0 0 10px rgba(0,212,255,0.03);
+    outline: none;
+    border-color: #3B82F6;
+    background: rgba(15, 23, 42, 0.9);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+  .input-elite::placeholder {
+    color: rgba(255, 255, 255, 0.3);
   }
 
-  /* ─── Badge HUD ─── */
+  /* ─── Corporate Badges ─── */
   .badge-elite {
-    display: inline-flex; align-items: center; gap: 0.25rem;
-    padding: 0.15rem 0.5rem;
-    border-radius: 2px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 9px; font-weight: 400;
-    text-transform: uppercase; letter-spacing: 0.1em;
-    background: rgba(0,212,255,0.06);
-    border: 1px solid rgba(0,212,255,0.2);
-    color: rgba(0,212,255,0.7);
-  }
-
-  /* ─── Alias neo-badge ─── */
-  .neo-badge {
-    display: inline-flex; align-items: center; gap: 0.25rem;
-    padding: 0.15rem 0.5rem; border-radius: 2px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 9px; font-weight: 400;
-    text-transform: uppercase; letter-spacing: 0.1em;
-    background: rgba(0,212,255,0.06);
-    border: 1px solid rgba(0,212,255,0.2);
-    color: rgba(0,212,255,0.7);
-  }
-
-  /* ─── Stat Tile HUD ─── */
-  .stat-tile {
-    background: rgba(0,8,20,0.85);
-    border: 1px solid rgba(0,212,255,0.15);
-    border-left: 2px solid rgba(0,212,255,0.6);
-    border-radius: 4px;
-    padding: 1rem;
-    position: relative; overflow: hidden;
-  }
-
-  /* ─── Shimmer HUD ─── */
-  .shimmer {
-    background: linear-gradient(90deg,
-      transparent 25%,
-      rgba(0,212,255,0.04) 50%,
-      transparent 75%);
-    background-size: 200% auto;
-    animation: shimmer-scan 2s linear infinite;
-  }
-
-  /* ─── Glows ─── */
-  .glow-blue  { filter: drop-shadow(0 0 8px rgba(0,212,255,0.7)); }
-  .glow-red   { filter: drop-shadow(0 0 8px rgba(255,0,128,0.7)); }
-  .glow-green { filter: drop-shadow(0 0 8px rgba(0,255,140,0.7)); }
-
-  .text-glow-blue { text-shadow: 0 0 15px rgba(0,212,255,0.8), 0 0 30px rgba(0,212,255,0.4); }
-  .text-glow-red  { text-shadow: 0 0 15px rgba(255,0,128,0.8), 0 0 30px rgba(255,0,128,0.4); }
-
-  /* ─── Divider HUD ─── */
-  .divider-elite {
-    height: 1px;
-    background: linear-gradient(90deg,
-      transparent,
-      rgba(0,212,255,0.2) 30%,
-      rgba(0,212,255,0.5) 50%,
-      rgba(0,212,255,0.2) 70%,
-      transparent);
-    box-shadow: 0 0 8px rgba(0,212,255,0.2);
-  }
-
-  /* ─── Pulse Ring HUD ─── */
-  .pulse-ring {
-    box-shadow: 0 0 0 0 rgba(0,212,255,0.5);
-    animation: hud-pulse 2.5s ease-in-out infinite;
-  }
-  @keyframes hud-pulse {
-    0%,100% { box-shadow: 0 0 0 0 rgba(0,212,255,0.5); }
-    50%     { box-shadow: 0 0 0 8px rgba(0,212,255,0); }
-  }
-
-  /* ─── Scanline (activo no modo sci-fi) ─── */
-  .scanline-overlay {
-    pointer-events: none;
-    display: block;
-    position: absolute; inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,212,255,0.01) 2px,
-      rgba(0,212,255,0.01) 4px
-    );
-    z-index: 1;
-  }
-
-  /* ─── Tech Grid HUD ─── */
-  .tech-grid-bg {
-    background-image:
-      linear-gradient(rgba(0,212,255,0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,212,255,0.05) 1px, transparent 1px);
-    background-size: 24px 24px;
-  }
-
-  /* ─── Nav Link Mobile HUD ─── */
-  .nav-link {
-    display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
-    padding: 0.5rem 0.75rem; border-radius: 3px;
-    transition: all 0.15s;
-    color: rgba(0,212,255,0.3);
-    font-family: 'Orbitron', monospace;
-    font-size: 7px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;
-  }
-  .nav-link.active, .nav-link:hover {
-    color: hsl(185 100% 60%);
-    background: rgba(0,212,255,0.06);
-    border: 1px solid rgba(0,212,255,0.15);
-    text-shadow: 0 0 8px rgba(0,212,255,0.5);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(37, 99, 235, 0.1);
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    color: #60A5FA;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding: 0.375rem 1rem;
+    border-radius: 9999px;
   }
 }
 
 /* ═══════════════════════════════════════
-   SCROLLBAR HUD
+   UTILITY CLASSES (Para transição limpa)
 ═══════════════════════════════════════ */
-::-webkit-scrollbar       { width: 2px; height: 2px; }
-::-webkit-scrollbar-track { background: rgba(0,212,255,0.03); }
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, rgba(0,212,255,0.5), rgba(0,255,140,0.3));
-  border-radius: 0;
-  box-shadow: 0 0 6px rgba(0,212,255,0.5);
+@layer utilities {
+  .text-glow { text-shadow: 0 0 20px rgba(255, 255, 255, 0.2); }
+  .text-glow-primary { text-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
+  .text-glow-success { text-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+  
+  .animate-float { animation: gentle-float 6s ease-in-out infinite; }
+  
+  /* Fallback para antigas classes neon para nao quebrar */
+  .tech-border { border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--radius-lg); }
+  .hud-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #94A3B8;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .hud-value {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+  }
+
+  /* Scrollbar Elegante */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
 }
-::-webkit-scrollbar-corner { background: transparent; }
-
-/* ═══════════════════════════════════════
-   MOBILE
-═══════════════════════════════════════ */
-@media (max-width: 640px) {
-  body::after { animation-duration: 8s; }
-  button, a   { min-height: 44px; }
-}
-
-/* ═══════════════════════════════════════
-   UTILITÁRIOS GLOBAIS
-═══════════════════════════════════════ */
-.font-display { font-family: 'Orbitron', monospace; }
-.font-mono    { font-family: 'Share Tech Mono', monospace; }
-
-.animate-float     { animation: float 5s ease-in-out infinite; }
-.animate-glow      { animation: neon-flicker 4s ease-in-out infinite; }
-.animate-slide-up  { animation: slide-up 0.3s ease both; }
-.animate-fade-in   { animation: fade-in 0.25s ease both; }
-.animate-shimmer   { animation: shimmer-scan 2s linear infinite; }
-.animate-spin-slow { animation: rotate-ring 10s linear infinite; }

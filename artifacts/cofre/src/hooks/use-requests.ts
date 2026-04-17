@@ -454,6 +454,9 @@ export function useCreateMembershipRequest() {
 export function useApproveMembershipRequest() {
   const [isPending, setIsPending] = useState(false);
   const { toast } = useToast();
+  
+  const COMISSAO_ADM = 3000; // Unidades do sistema (30 MTn)
+
   return {
     isPending,
     mutateAsync: async ({ requestId }: { requestId: string }) => {
@@ -461,6 +464,19 @@ export function useApproveMembershipRequest() {
       try {
         const req = dbStore.membershipRequests.find(r => r.id === requestId);
         if (!req || req.status !== "Pendente") return;
+        
+        if (req.saldo_base <= COMISSAO_ADM) {
+          toast({
+            title: "Aporte Inicial Insuficiente",
+            description: `O valor do primeiro aporte deve ser superior a 30 MTn para cobrir a taxa de adesão.`,
+            variant: "destructive"
+          });
+          setIsPending(false);
+          return;
+        }
+
+        const valorLiquido = req.saldo_base - COMISSAO_ADM;
+        const tsNow = Math.floor(Date.now() / 1000);
         
         const updates: any = {};
         updates[`membershipRequests/${requestId}/status`] = "Aprovado";
@@ -471,7 +487,7 @@ export function useApproveMembershipRequest() {
           nome: req.nome, 
           foto: req.foto, 
           status: "Ativo" as const, 
-          saldo_base: req.saldo_base, 
+          saldo_base: valorLiquido, 
           lucro_acumulado: 0,
           nacionalidade: req.nacionalidade,
           profissao: req.profissao,
@@ -487,24 +503,54 @@ export function useApproveMembershipRequest() {
         updates[`users/${newUserId}`] = newUser;
         updates[`userDetails/${newUserId}`] = {
           user: newUser,
-          emCaixa: req.saldo_base,
+          emCaixa: valorLiquido,
           emCirculacao: [],
           totalEmCirculacao: 0,
           totalJuroEsperado: 0,
-          patrimonioTotal: req.saldo_base
+          patrimonioTotal: valorLiquido
         };
         
         updates[`dashboard/membros_ativos`] = (dbStore.dashboard.membros_ativos || 0) + 1;
-        updates[`dashboard/caixa`] = (dbStore.dashboard.caixa || 0) + req.saldo_base;
-        updates[`dashboard/total`] = (dbStore.dashboard.total || 0) + req.saldo_base;
+        updates[`dashboard/caixa`] = (dbStore.dashboard.caixa || 0) + valorLiquido;
+        updates[`dashboard/total`] = (dbStore.dashboard.total || 0) + valorLiquido;
+
+        // Comissão vai para conta isolada do Admin
+        const comissaoId = "com" + Date.now();
+        const comissaoAtual = (dbStore as any).adminComissao || { total: 0, registros: [] };
+        updates[`adminComissao/total`] = (comissaoAtual.total || 0) + COMISSAO_ADM;
+        updates[`adminComissao/registros/${comissaoId}`] = {
+          id: comissaoId,
+          ts: tsNow,
+          origem: `Taxa de Adesão de ${req.nome}`,
+          valor: COMISSAO_ADM,
+          aporte_original: req.saldo_base,
+          membership_req_id: requestId
+        };
+
+        // Notificação de boas-vindas e dedução de taxa
+        const notifId = "ntf" + Date.now();
+        updates[`notifications/${notifId}`] = {
+          id: notifId,
+          user_id: newUserId,
+          ts: tsNow,
+          tipo: "COMISSAO",
+          titulo: "🎉 Bem-vindo ao Cofre Elite!",
+          mensagem: `A sua adesão foi concluída. Um aporte inicial de ${req.saldo_base / 100} MTn foi efectuado, com dedução da taxa fiduciária de adesão de 30 MTn. Valor na sua conta: ${valorLiquido / 100} MTn.`,
+          lida: false
+        };
         
         const auditId = "a" + Date.now();
         updates[`audit/${auditId}`] = {
-          id: auditId, ts: Math.floor(Date.now() / 1000), tipo: "MEMBRO", desc: `Pedido de adesão de ${newUser.nome} aprovado com aporte inicial de ${req.saldo_base / 100} MTn`, valor: req.saldo_base, user: "Admin"
+          id: auditId, 
+          ts: tsNow, 
+          tipo: "MEMBRO", 
+          desc: `Adesão de ${newUser.nome} aprovada (Aporte: ${req.saldo_base / 100} MTn). Net: ${valorLiquido / 100} MTn. Taxa Admin: 30 MTn.`, 
+          valor: valorLiquido, 
+          user: "Admin"
         };
         
         await update(ref(rtdb), updates);
-        toast({ title: "Adesão aprovada", description: `${newUser.nome} agora é membro do cofre.` });
+        toast({ title: "✅ Adesão Aprovada", description: `${newUser.nome} adicionado. Comissão de 30 MTn recolhida.` });
       } catch (err) {
         toast({ title: "Erro", description: "Não foi possível aprovar a adesão.", variant: "destructive" });
       } finally {

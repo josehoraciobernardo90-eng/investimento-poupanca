@@ -5,37 +5,26 @@ import { useMember } from "@/hooks/use-member";
 import { useToast } from "@/hooks/use-toast";
 import { MembershipRegistrationModal } from "@/components/members/MembershipRegistrationModal";
 import { 
-  Shield, Wallet, UserPlus, Users, ArrowRight, Lock, Eye, EyeOff, 
-  Activity, CheckCircle, Zap, BarChart3, ShieldCheck, Database,
-  Cpu, TrendingUp, Globe
+  ShieldCheck, Wallet, UserPlus, Users, ArrowRight, Lock, Eye, EyeOff, 
+  BarChart3, Banknote, Building, ChevronRight, CheckCircle2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const C = 'rgba(0,212,255,1)';
-const G = 'rgba(0,255,140,1)';
-const M = 'rgba(255,0,128,1)';
 
 const feats = [
   { 
     icon: ShieldCheck, 
-    color: C, 
-    label: "Cofre Blindado", 
-    desc: "Dados criptografados end-to-end via Firebase em tempo real.",
-    tag: "AES-256"
-  },
-  { 
-    icon: Zap, 
-    color: G, 
-    label: "Tempo Real", 
-    desc: "Saldos e lucros actualizados ao milissegundo via sync.",
-    tag: "< 14ms"
+    label: "Segurança de Cripto-nível", 
+    desc: "A infraestrutura é blindada com padrões de encriptação militar, assegurando as suas transações."
   },
   { 
     icon: BarChart3, 
-    color: M, 
-    label: "Auditoria Fiscal", 
-    desc: "Sentinela automático verifica cada centavo depositado.",
-    tag: "AUTO-AUDIT"
+    label: "Monitorização em Tempo Real", 
+    desc: "Acompanhe os rendimentos e a evolução do seu capital através de relatórios e painéis dinâmicos."
+  },
+  { 
+    icon: Building, 
+    label: "Governança Transparente", 
+    desc: "Gestão fiduciária com auditorias registadas a cada movimento e distribuição de lucros rigorosa."
   },
 ];
 
@@ -57,10 +46,10 @@ export function LandingPage() {
   const handleAdminSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (adminLogin(adminId, password)) {
-      toast({ title: "Acesso Liberado", description: "Bem-vindo ao Sistema de Controlo." });
+      toast({ title: "Acesso Autorizado", description: "Sessão corporativa iniciada com sucesso." });
     } else {
       setError(true);
-      toast({ title: "Acesso Negado", description: "Código ou Senha incorrectos.", variant: "destructive" });
+      toast({ title: "Falha na Autenticação", description: "Credenciais de gestão inválidas.", variant: "destructive" });
     }
   };
 
@@ -70,294 +59,222 @@ export function LandingPage() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#020617]">
-      {/* ── Animated background grid ── */}
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#0A0F1C] text-slate-100 flex flex-col justify-center items-center">
+      {/* ── Corporate Background Layers ── */}
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]" />
       <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute inset-0 tech-grid-bg opacity-30" />
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,212,255,0.07) 0%, transparent 70%)' }} />
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 60% 40% at 100% 100%, rgba(255,0,128,0.04) 0%, transparent 60%)' }} />
+        <div className="absolute top-0 right-0 w-3/4 h-3/4 bg-blue-500/10 mix-blend-screen blur-[120px] rounded-full translate-x-1/4 -translate-y-1/4" />
+        <div className="absolute bottom-0 left-0 w-3/4 h-3/4 bg-indigo-500/10 mix-blend-screen blur-[120px] rounded-full -translate-x-1/4 translate-y-1/4" />
       </div>
 
-      {/* ── Scanline overlay ── */}
-      <div className="pointer-events-none fixed inset-0 z-10 opacity-[0.025]" style={{ background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, #00d4ff 2px, #00d4ff 4px)' }} />
-
-      <div className="min-h-screen flex flex-col items-center justify-center p-5 md:p-10 relative z-20">
+      <div className="w-full min-h-screen flex flex-col items-center justify-center p-6 md:p-12 relative z-20 overflow-x-hidden">
         <AnimatePresence mode="wait">
 
-          {/* ═══════ TELA PRINCIPAL ═══════ */}
+          {/* ═══════ CORPORATE MAIN LANDING ═══════ */}
           {view === "landing" && (
             <motion.div
               key="landing"
               initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }}
-              exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.3 } }}
-              className="w-full max-w-4xl space-y-14 text-center"
+              animate={{ opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }}
+              exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.3 } }}
+              className="w-full max-w-5xl mx-auto space-y-16"
             >
-              {/* ── Logo Sci-Fi ── */}
-              <div className="space-y-8">
-                <div className="flex justify-center">
-                  <div className="relative">
-                    {/* Anel orbital externo */}
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-                      className="absolute -inset-5 rounded-full"
-                      style={{ border: '1px dashed rgba(0,212,255,0.25)' }}
-                    />
-                    {/* Anel orbital médio */}
-                    <motion.div
-                      animate={{ rotate: -360 }}
-                      transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                      className="absolute -inset-3 rounded-full"
-                      style={{ border: '1px solid rgba(0,255,140,0.15)' }}
-                    />
-                    {/* Pulso de fundo */}
-                    <motion.div
-                      animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0, 0.3] }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                      className="absolute inset-0 rounded-full"
-                      style={{ background: 'rgba(0,212,255,0.15)' }}
-                    />
-                    {/* Ícone principal */}
-                    <div
-                      className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-[1.5rem] flex items-center justify-center"
-                      style={{ background: 'rgba(0,8,20,0.9)', border: '1px solid rgba(0,212,255,0.4)', boxShadow: '0 0 40px rgba(0,212,255,0.15), inset 0 0 20px rgba(0,212,255,0.05)' }}
-                    >
-                      <motion.div
-                        animate={{ filter: ['drop-shadow(0 0 4px rgba(0,212,255,0.5))', 'drop-shadow(0 0 16px rgba(0,212,255,0.9))', 'drop-shadow(0 0 4px rgba(0,212,255,0.5))'] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      >
-                        <Shield className="w-10 h-10 sm:w-12 sm:h-12" style={{ color: C }} />
-                      </motion.div>
-                      {/* Cantos HUD */}
-                      <span className="absolute top-0 left-0 w-3 h-3" style={{ borderTop: `2px solid ${C}`, borderLeft: `2px solid ${C}`, borderRadius: '2px 0 0 0' }} />
-                      <span className="absolute top-0 right-0 w-3 h-3" style={{ borderTop: `2px solid ${C}`, borderRight: `2px solid ${C}`, borderRadius: '0 2px 0 0' }} />
-                      <span className="absolute bottom-0 left-0 w-3 h-3" style={{ borderBottom: `2px solid ${C}`, borderLeft: `2px solid ${C}`, borderRadius: '0 0 0 2px' }} />
-                      <span className="absolute bottom-0 right-0 w-3 h-3" style={{ borderBottom: `2px solid ${C}`, borderRight: `2px solid ${C}`, borderRadius: '0 0 2px 0' }} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Status bar sistêmica */}
-                <motion.div
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: 'auto' }}
-                  transition={{ delay: 0.4, duration: 0.6 }}
-                  className="flex items-center justify-center gap-3"
+              {/* ── Brand & Typography ── */}
+              <div className="text-center space-y-8">
+                <motion.div 
+                  initial={{ scale: 0.9, opacity: 0 }} 
+                  animate={{ scale: 1, opacity: 1 }} 
+                  transition={{ duration: 0.8 }}
+                  className="mx-auto w-24 h-24 sm:w-28 sm:h-28 rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center p-[2px] shadow-2xl shadow-blue-500/20"
                 >
-                  <div className="h-px w-12 opacity-30" style={{ background: `linear-gradient(90deg, transparent, ${C})` }} />
-                  <div className="flex items-center gap-2 px-3 py-1 rounded" style={{ background: 'rgba(0,255,140,0.05)', border: '1px solid rgba(0,255,140,0.2)' }}>
-                    <motion.div animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1.5, repeat: Infinity }} className="w-1.5 h-1.5 rounded-full" style={{ background: G }} />
-                    <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 9, color: 'rgba(0,255,140,0.8)', letterSpacing: '0.2em' }}>SISTEMA ACTIVO · CHIMOIO-MZ · NODE_SECURE</span>
+                  <div className="w-full h-full rounded-[inherit] bg-[#0A0F1C] flex items-center justify-center">
+                    <Banknote className="w-12 h-12 text-blue-500" strokeWidth={1.5} />
                   </div>
-                  <div className="h-px w-12 opacity-30" style={{ background: `linear-gradient(90deg, ${C}, transparent)` }} />
                 </motion.div>
 
-                {/* Título HUD */}
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-semibold tracking-wide shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                  Plataforma de Gestão Fiduciária
+                </div>
+
                 <div>
-                  <h1 style={{ fontFamily: "'Orbitron', monospace", fontWeight: 900, letterSpacing: '-0.02em', lineHeight: 1 }} className="text-6xl sm:text-7xl md:text-9xl text-white">
-                    COFRE
-                    <span style={{ color: C, textShadow: '0 0 30px rgba(0,212,255,0.5)' }}>ELITE</span>
+                  <h1 className="font-display font-medium text-5xl sm:text-6xl md:text-8xl text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400 tracking-tight leading-tight">
+                    Cofre<span className="text-blue-500 font-normal">Capital</span>
                   </h1>
-                  <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 11, letterSpacing: '0.2em' }} className="text-white/30 uppercase mt-4">
-                    // Sistema de Gestão de Poupança e Investimento Colectivo
+                  <p className="mt-6 text-slate-400 font-sans text-base sm:text-lg max-w-2xl mx-auto font-light leading-relaxed">
+                    A excelência em gestão de poupanças e investimentos institucionais. Simplificamos o crescimento do seu capital através de governança transparente e tecnologia de ponta.
                   </p>
                 </div>
               </div>
 
-              {/* ── Botões de Acção ── */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-lg mx-auto">
+              {/* ── Ações Corporativas ── */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
                 <motion.button
+                  whileHover={{ y: -2 }} whileTap={{ y: 0 }}
                   onClick={() => setView("member-login")}
-                  whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                  className="relative overflow-hidden w-full sm:w-auto min-w-[220px] py-4 px-8 group"
-                  style={{ background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.5)', borderRadius: 3, fontFamily: "'Orbitron', monospace", fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', color: 'rgba(0,212,255,0.9)', textTransform: 'uppercase', boxShadow: '0 0 20px rgba(0,212,255,0.1)' }}
+                  className="w-full sm:w-auto btn-primary py-4 px-10 text-lg shadow-xl shadow-blue-500/25"
                 >
-                  <motion.div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, transparent, rgba(0,212,255,0.08), transparent)', translateX: '-100%' }} whileHover={{ translateX: '100%', transition: { duration: 0.5 } }} />
-                  <span className="relative z-10 flex items-center justify-center gap-3">
-                    <Wallet className="w-4 h-4" />
-                    Entrar como Membro
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </span>
+                  <Wallet className="w-5 h-5 mr-3" />
+                  Acesso à Conta
                 </motion.button>
 
                 <motion.button
+                  whileHover={{ y: -2 }} whileTap={{ y: 0 }}
                   onClick={() => setIsRegisterOpen(true)}
-                  whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                  className="w-full sm:w-auto min-w-[220px] py-4 px-8 group"
-                  style={{ background: 'transparent', border: '1px solid rgba(0,212,255,0.2)', borderRadius: 3, fontFamily: "'Orbitron', monospace", fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', color: 'rgba(0,212,255,0.5)', textTransform: 'uppercase' }}
+                  className="w-full sm:w-auto btn-ghost py-4 px-10 text-lg"
                 >
-                  <span className="flex items-center justify-center gap-3">
-                    <UserPlus className="w-4 h-4" />
-                    Quero Ser Membro
-                  </span>
+                  <UserPlus className="w-5 h-5 mr-3 text-slate-400" />
+                  Abrir Conta Institucional
                 </motion.button>
               </div>
 
-              {/* ── Feature Cards HUD ── */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
+              {/* ── Value Proposition Cards ── */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-12 border-t border-white/5">
                 {feats.map((f, i) => (
                   <motion.div
                     key={i}
                     initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0, transition: { delay: 0.2 + i * 0.1 } }}
-                    className="relative p-5 text-left overflow-hidden group"
-                    style={{ background: 'rgba(0,8,20,0.8)', border: `1px solid ${f.color.replace('1)', '0.15)')}`, borderRadius: 4, boxShadow: `0 0 20px ${f.color.replace('1)', '0.04)')}` }}
-                    whileHover={{ borderColor: f.color.replace('1)', '0.4)'), boxShadow: `0 0 30px ${f.color.replace('1)', '0.1)')}` }}
+                    animate={{ opacity: 1, y: 0, transition: { delay: 0.4 + i * 0.1 } }}
+                    className="glass-panel p-8 group hover:bg-white/5 transition-all text-left"
                   >
-                    {/* Tag */}
-                    <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded" style={{ background: f.color.replace('1)', '0.08)'), fontFamily: "'Share Tech Mono', monospace", fontSize: 7, color: f.color.replace('1)', '0.6)'), letterSpacing: '0.1em' }}>{f.tag}</div>
-                    {/* Canto HUD */}
-                    <span className="absolute top-0 left-0 w-2.5 h-2.5" style={{ borderTop: `1px solid ${f.color.replace('1)', '0.5)')}`, borderLeft: `1px solid ${f.color.replace('1)', '0.5)')}` }} />
-
-                    <motion.div
-                      animate={{ filter: [`drop-shadow(0 0 3px ${f.color.replace('1)', '0.4)')})`, `drop-shadow(0 0 10px ${f.color})`, `drop-shadow(0 0 3px ${f.color.replace('1)', '0.4)')})`] }}
-                      transition={{ duration: 2.5, repeat: Infinity, delay: i * 0.3 }}
-                      className="mb-4"
-                    >
-                      <f.icon className="w-6 h-6" style={{ color: f.color }} />
-                    </motion.div>
-                    <h3 style={{ fontFamily: "'Orbitron', monospace", fontSize: 11, fontWeight: 700, color: 'white', letterSpacing: '0.05em' }} className="mb-2 uppercase">{f.label}</h3>
-                    <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>{f.desc}</p>
+                    <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-6 border border-blue-500/20 group-hover:scale-110 transition-transform duration-500">
+                      <f.icon className="w-7 h-7 text-blue-400" strokeWidth={1.5} />
+                    </div>
+                    <h3 className="font-display text-xl font-medium text-slate-100 mb-3">{f.label}</h3>
+                    <p className="font-sans text-sm text-slate-400 leading-relaxed font-light">{f.desc}</p>
                   </motion.div>
                 ))}
               </div>
 
-              {/* ── Acesso Admin Oculto ── */}
-              <button
-                onClick={() => setView("admin-login")}
-                className="flex items-center gap-2 mx-auto group transition-all"
-                style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 9, color: 'rgba(0,212,255,0.2)', letterSpacing: '0.2em', textTransform: 'uppercase' }}
-              >
-                <Lock className="w-3 h-3 group-hover:text-cyan-400 transition-colors" />
-                <span className="group-hover:text-cyan-400/50 transition-colors">Área Restrita · Administrador</span>
-              </button>
+              {/* ── Link Admin Gestão ── */}
+              <div className="pt-8 flex justify-center">
+                <button
+                  onClick={() => setView("admin-login")}
+                  className="flex items-center gap-2 text-slate-500 hover:text-slate-300 font-sans text-xs tracking-widest uppercase transition-colors"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  Portal Restrito para Gestão
+                </button>
+              </div>
             </motion.div>
           )}
 
-          {/* ═══════ FORMULÁRIOS DE LOGIN ═══════ */}
+          {/* ═══════ LOGIN FORMS ═══════ */}
           {(view === "admin-login" || view === "member-login") && (
             <motion.div
               key={view}
-              initial={{ opacity: 0, scale: 0.92, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } }}
-              exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.25 } }}
-              className="w-full max-w-sm"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }}
+              exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.25 } }}
+              className="w-full max-w-md"
             >
               <div className={cn(
-                "relative overflow-hidden p-8 sm:p-10",
-                error && "ring-1 ring-rose-500/30"
-              )}
-                style={{ background: 'rgba(0,8,20,0.92)', border: `1px solid ${view === 'admin-login' ? 'rgba(255,0,128,0.3)' : 'rgba(0,212,255,0.3)'}`, borderRadius: 4, boxShadow: `0 0 60px ${view === 'admin-login' ? 'rgba(255,0,128,0.08)' : 'rgba(0,212,255,0.08)'}` }}
-              >
-                {/* Linha topo */}
-                <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: `linear-gradient(90deg, transparent, ${view === 'admin-login' ? M : C}, transparent)` }} />
+                "glass-card-elite p-8 sm:p-12 relative overflow-hidden",
+                error && "border-rose-500/30 shadow-2xl shadow-rose-500/10"
+              )}>
+                
+                {/* ── Decorator ── */}
+                <div className={cn(
+                  "absolute top-0 left-0 w-full h-1",
+                  view === "admin-login" ? "bg-gradient-to-r from-transparent via-indigo-500 to-transparent" : "bg-gradient-to-r from-transparent via-blue-500 to-transparent"
+                )} />
 
-                {/* Cantos HUD */}
-                {[['top-0 left-0', 'border-t border-l'], ['top-0 right-0', 'border-t border-r'], ['bottom-0 left-0', 'border-b border-l'], ['bottom-0 right-0', 'border-b border-r']].map(([pos, borders], i) => (
-                  <span key={i} className={`absolute ${pos} w-4 h-4 ${borders}`} style={{ borderColor: view === 'admin-login' ? 'rgba(255,0,128,0.5)' : 'rgba(0,212,255,0.5)' }} />
-                ))}
-
-                {/* Botão Voltar */}
                 <button
                   onClick={() => { setView("landing"); setError(false); }}
-                  className="mb-8 flex items-center gap-2 group transition-colors"
-                  style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.15em', textTransform: 'uppercase' }}
+                  className="mb-10 flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-sans text-sm font-medium"
                 >
-                  <ArrowRight className="w-3 h-3 rotate-180 group-hover:-translate-x-1 transition-transform" style={{ color: view === 'admin-login' ? M : C }} />
-                  Voltar
+                  <ChevronRight className="w-4 h-4 rotate-180" />
+                  Voltar ao Portal
                 </button>
 
-                {/* Ícone + Título */}
-                <div className="text-center mb-8">
-                  <div className="relative inline-block mb-5">
-                    <motion.div
-                      animate={{ rotate: view === 'admin-login' ? [0, 5, -5, 0] : 360 }}
-                      transition={view === 'admin-login' ? { duration: 3, repeat: Infinity, type: 'tween' } : { duration: 10, repeat: Infinity, ease: 'linear' }}
-                      className="absolute -inset-3 rounded-full"
-                      style={{ border: `1px dashed ${view === 'admin-login' ? 'rgba(255,0,128,0.2)' : 'rgba(0,212,255,0.2)'}` }}
-                    />
-                    <div className="w-16 h-16 rounded flex items-center justify-center"
-                      style={{ background: view === 'admin-login' ? 'rgba(255,0,128,0.06)' : 'rgba(0,212,255,0.06)', border: `1px solid ${view === 'admin-login' ? 'rgba(255,0,128,0.3)' : 'rgba(0,212,255,0.3)'}`, boxShadow: `0 0 20px ${view === 'admin-login' ? 'rgba(255,0,128,0.1)' : 'rgba(0,212,255,0.1)'}` }}
-                    >
-                      <motion.div animate={{ filter: [`drop-shadow(0 0 4px ${view === 'admin-login' ? M : C})`, `drop-shadow(0 0 14px ${view === 'admin-login' ? M : C})`, `drop-shadow(0 0 4px ${view === 'admin-login' ? M : C})`] }} transition={{ duration: 2, repeat: Infinity }}>
-                        {view === "admin-login" ? <Lock className="w-8 h-8" style={{ color: M }} /> : <Users className="w-8 h-8" style={{ color: C }} />}
-                      </motion.div>
-                    </div>
+                <div className="text-center mb-10">
+                  <div className={cn(
+                    "w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-6 shadow-lg",
+                    view === "admin-login" ? "bg-indigo-500/10 border border-indigo-500/20 text-indigo-400" : "bg-blue-500/10 border border-blue-500/20 text-blue-400"
+                  )}>
+                    {view === "admin-login" ? <Lock className="w-8 h-8" strokeWidth={1.5} /> : <Users className="w-8 h-8" strokeWidth={1.5} />}
                   </div>
-                  <h2 style={{ fontFamily: "'Orbitron', monospace", fontWeight: 900, fontSize: 20, color: 'white', letterSpacing: '0.05em' }}>
-                    {view === "admin-login" ? "ACESSO_ADMIN" : "ACESSO_MEMBRO"}
+                  <h2 className="font-display text-2xl font-semibold text-white mb-2">
+                    {view === "admin-login" ? "Gestão Corporativa" : "Portal do Cliente"}
                   </h2>
-                  <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 9, color: view === 'admin-login' ? 'rgba(255,0,128,0.5)' : 'rgba(0,212,255,0.5)', letterSpacing: '0.2em', textTransform: 'uppercase' }} className="mt-1">
-                    {view === "admin-login" ? "// Área de Gestão Fiduciária" : "// Portal do Investidor"}
+                  <p className="font-sans text-sm text-slate-400 font-light">
+                    {view === "admin-login" ? "Acesso reservado para administradores credenciados." : "Aceda à sua área pessoal de investimentos e poupanças."}
                   </p>
                 </div>
 
-                {/* Formulário */}
-                <form onSubmit={view === "admin-login" ? handleAdminSubmit : handleMemberSubmit} className="space-y-4">
-                  <input
-                    autoFocus
-                    type="text"
-                    required
-                    value={view === "admin-login" ? adminId : memberPhone}
-                    onChange={e => { view === "admin-login" ? setAdminId(e.target.value) : setMemberPhone(e.target.value); setError(false); }}
-                    className={cn("input-elite w-full", error && "border-rose-500/40")}
-                    placeholder={view === "admin-login" ? "Código de Administrador" : "Telefone ou Código"}
-                  />
-                  <div className="relative">
+                <form onSubmit={view === "admin-login" ? handleAdminSubmit : handleMemberSubmit} className="space-y-5">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                      {view === "admin-login" ? "ID Institucional" : "Telefone de Registo"}
+                    </label>
                     <input
-                      type={showMemberPin ? "text" : "password"}
+                      autoFocus
+                      type="text"
                       required
-                      maxLength={view === "member-login" ? 6 : 30}
-                      value={view === "admin-login" ? password : memberPin}
-                      onChange={e => { view === "admin-login" ? setPassword(e.target.value) : setMemberPin(e.target.value); setError(false); }}
-                      className={cn("input-elite w-full tracking-widest pr-14", error && "border-rose-500/40")}
-                      placeholder={view === "admin-login" ? "Senha" : "PIN (6 dígitos)"}
+                      value={view === "admin-login" ? adminId : memberPhone}
+                      onChange={e => { view === "admin-login" ? setAdminId(e.target.value) : setMemberPhone(e.target.value); setError(false); }}
+                      className={cn("input-elite font-sans font-medium", error && "border-rose-500/40 bg-rose-500/5")}
+                      placeholder={view === "admin-login" ? "ex: ADM-2024" : "ex: 840000000"}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowMemberPin(!showMemberPin)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white/25 hover:text-white transition-colors"
-                    >
-                      {showMemberPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                      {view === "admin-login" ? "Palavra-passe" : "Protocolo PIN"}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showMemberPin ? "text" : "password"}
+                        required
+                        maxLength={view === "member-login" ? 6 : 30}
+                        value={view === "admin-login" ? password : memberPin}
+                        onChange={e => { view === "admin-login" ? setPassword(e.target.value) : setMemberPin(e.target.value); setError(false); }}
+                        className={cn("input-elite tracking-widest pr-14 font-medium", error && "border-rose-500/40 bg-rose-500/5")}
+                        placeholder="••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowMemberPin(!showMemberPin)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                      >
+                        {showMemberPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
 
-                  {error && (
-                    <motion.p initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="text-rose-400 text-[10px] font-bold uppercase tracking-widest text-center" style={{ fontFamily: "'Share Tech Mono', monospace" }}>
-                      ⚠ Credenciais inválidas. Acesso negado.
-                    </motion.p>
-                  )}
+                  <AnimatePresence>
+                    {error && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="text-rose-400 text-xs font-medium text-center bg-rose-500/10 py-2 rounded-lg border border-rose-500/20">
+                        Credenciais não reconhecidas. Tente novamente.
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
                   <button
                     type="submit"
-                    className="relative overflow-hidden w-full py-4 mt-2 group"
-                    style={{ background: view === 'admin-login' ? 'rgba(255,0,128,0.08)' : 'rgba(0,212,255,0.08)', border: `1px solid ${view === 'admin-login' ? 'rgba(255,0,128,0.5)' : 'rgba(0,212,255,0.5)'}`, borderRadius: 3, fontFamily: "'Orbitron', monospace", fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', color: view === 'admin-login' ? 'rgba(255,0,128,0.9)' : 'rgba(0,212,255,0.9)', textTransform: 'uppercase', boxShadow: `0 0 20px ${view === 'admin-login' ? 'rgba(255,0,128,0.1)' : 'rgba(0,212,255,0.1)'}` }}
+                    className="w-full btn-primary mt-4 py-4"
                   >
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                      <CheckCircle className="w-4 h-4" />
-                      {view === "admin-login" ? "Entrar no Sistema" : "Aceder Minha Conta"}
-                    </span>
+                    <CheckCircle2 className="w-5 h-5 mr-2" />
+                    Autenticar e Entrar
                   </button>
                 </form>
 
-                {/* Registo membro */}
                 {view === "member-login" && (
-                  <p className="text-center mt-6" style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>
-                    Ainda não é membro?{" "}
+                  <p className="text-center mt-8 font-sans text-sm font-light text-slate-400">
+                    Ainda não possui conta corporativa?{" "}
                     <button
                       type="button"
                       onClick={() => { setView("landing"); setTimeout(() => setIsRegisterOpen(true), 300); }}
-                      style={{ color: C, fontWeight: 700 }}
-                      className="hover:brightness-125 transition-all"
+                      className="text-blue-400 font-semibold hover:text-blue-300 transition-colors"
                     >
-                      Registar-se
+                      Solicitar Abertura
                     </button>
                   </p>
                 )}
               </div>
             </motion.div>
           )}
+
         </AnimatePresence>
       </div>
 
@@ -368,4 +285,3 @@ export function LandingPage() {
     </div>
   );
 }
-
