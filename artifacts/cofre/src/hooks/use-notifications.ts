@@ -88,7 +88,21 @@ export function useNotifications() {
       }
     });
 
-    return list.sort((a, b) => b.ts - a.ts).slice(0, 20); // Last 20
+    // 5. From Notifications Node (Direct messages)
+    dbStore.notifications.forEach(n => {
+      if (n.user_id === memberUser.id) {
+        list.push({
+          id: n.id,
+          type: n.tipo === "COMISSAO" ? "warning" : n.tipo || "info",
+          title: n.titulo || "Notificação",
+          message: n.mensagem,
+          ts: n.ts,
+          read: n.lida || false
+        });
+      }
+    });
+
+    return list.sort((a, b) => b.ts - a.ts).slice(0, 30); // Last 30
   }, [memberUser, version]);
 
   return { notifications };

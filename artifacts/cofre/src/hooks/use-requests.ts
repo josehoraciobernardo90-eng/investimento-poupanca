@@ -12,9 +12,10 @@ export function useRequests() {
     memberships: dbStore.membershipRequests,
     loans: dbStore.loanRequests,
     deposits: dbStore.depositRequests,
-    liquidations: (dbStore as any).liquidationRequests || [],
+    liquidations: dbStore.liquidationRequests || [],
     profileEdits: dbStore.profileEditRequests,
     deletionRequests: dbStore.deletionRequests,
+    membershipRequests: dbStore.membershipRequests,
     isLoading: false,
     isError: false,
   };
@@ -280,6 +281,11 @@ export function useCreateDepositRequest() {
 export function useApproveDepositRequest() {
   const [isPending, setIsPending] = useState(false);
   const { toast } = useToast();
+
+  // Comissão fiduciária fixa: 30 MT por aporte
+  // Este valor vai EXCLUSIVAMENTE para a conta do Admin — fora do cofre
+  const COMISSAO_ADM = 3000; // unidades do sistema (centavos × 100)
+
   return {
     isPending,
     mutateAsync: async ({ requestId }: { requestId: string }) => {
@@ -288,28 +294,83 @@ export function useApproveDepositRequest() {
         const req = dbStore.depositRequests.find(r => r.id === requestId);
         if (!req || req.status !== "Pendente") return;
 
+        // Gàrdia: o aporte deve ser superior à comissão
+        if (req.valor <= COMISSAO_ADM) {
+          toast({
+            title: "Aporte Insuficiente",
+            description: `O valor do aporte deve ser superior a 30 MTn (taxa fixa de processamento).`,
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Valor líquido que vai para o membro e para o cofre
+        const valorLiquido = req.valor - COMISSAO_ADM;
+
         const updates: any = {};
+        const tsNow = Math.floor(Date.now() / 1000);
+
+        // 1. Marcar pedido como aprovado
         updates[`depositRequests/${requestId}/status`] = "Aprovado";
-        
+        updates[`depositRequests/${requestId}/comissao_adm`] = COMISSAO_ADM;
+        updates[`depositRequests/${requestId}/valor_liquido`] = valorLiquido;
+
+        // 2. Creditar APENAS o valor líquido ao membro
         const u = dbStore.userDetails[req.user_id];
         if (u) {
-          const novaCaixa = u.emCaixa + req.valor;
+          const novaCaixa = u.emCaixa + valorLiquido;
           updates[`userDetails/${req.user_id}/emCaixa`] = novaCaixa;
-          updates[`userDetails/${req.user_id}/patrimonioTotal`] = novaCaixa + u.totalEmCirculacao + u.totalJuroEsperado;
+          updates[`userDetails/${req.user_id}/patrimonioTotal`] = novaCaixa + (u.totalEmCirculacao || 0) + (u.totalJuroEsperado || 0);
           updates[`users/${req.user_id}/saldo_base`] = novaCaixa;
         }
 
-        updates[`dashboard/caixa`] = dbStore.dashboard.caixa + req.valor;
-        updates[`dashboard/total`] = dbStore.dashboard.total + req.valor;
+        // 3. Dashboard reflecte só o valor líquido
+        updates[`dashboard/caixa`] = dbStore.dashboard.caixa + valorLiquido;
+        updates[`dashboard/total`] = dbStore.dashboard.total + valorLiquido;
 
+        // 4. Comissão vai para conta isolada do Admin (FORA do cofre)
+        const comissaoId = "com" + Date.now();
+        const comissaoAtual = (dbStore as any).adminComissao || { total: 0, registros: [] };
+        updates[`adminComissao/total`] = (comissaoAtual.total || 0) + COMISSAO_ADM;
+        updates[`adminComissao/registros/${comissaoId}`] = {
+          id: comissaoId,
+          ts: tsNow,
+          origem: `Aporte de ${req.user_nome}`,
+          valor: COMISSAO_ADM,
+          aporte_original: req.valor,
+          deposit_req_id: requestId
+        };
+
+        // 5. Notificação automática ao membro sobre o desconto
+        const notifId = "ntf" + Date.now();
+        updates[`notifications/${notifId}`] = {
+          id: notifId,
+          user_id: req.user_id,
+          ts: tsNow,
+          tipo: "COMISSAO",
+          titulo: "Aporte Processado com Sucesso ✔️",
+          mensagem: `O seu aporte de ${req.valor / 100} MTn foi aprovado. Uma taxa de processamento fixa de 30 MTn foi deduzida automaticamente. Valor creditado na sua conta: ${valorLiquido / 100} MTn.`,
+          lida: false
+        };
+
+        // 6. Auditoria do sistema (regista apenas o valor líquido)
         const auditId = "a" + Date.now();
         updates[`audit/${auditId}`] = {
-          id: auditId, ts: Math.floor(Date.now() / 1000), tipo: "DEPOSITO", desc: `Aporte de ${req.valor / 100} MTn aprovado de ${req.user_nome}`, valor: req.valor, user: "Admin"
+          id: auditId,
+          ts: tsNow,
+          tipo: "DEPOSITO",
+          desc: `Aporte de ${req.valor / 100} MTn aprovado de ${req.user_nome}. Net: ${valorLiquido / 100} MTn creditados. Comissão de 30 MTn separada para Admin.`,
+          valor: valorLiquido,
+          user: "Admin"
         };
 
         await update(ref(rtdb), updates);
-        toast({ title: "✅ Aporte aprovado", description: "O saldo do membro foi actualizado no cofre." });
+        toast({
+          title: "✅ Aporte Aprovado",
+          description: `${req.user_nome} receberá ${valorLiquido / 100} MTn. Comissão de 30 MTn registada na sua conta privada.`
+        });
       } catch (err) {
+        console.error("[useApproveDepositRequest]", err);
         toast({ title: "Erro inesperado", description: "Não foi possível processar o aporte.", variant: "destructive" });
       } finally {
         setIsPending(false);
@@ -641,10 +702,15 @@ export function useCreateProfileEditRequest() {
     mutateAsync: async ({ data }: { 
       data: { 
         user_id: string; user_nome: string; user_foto: string;
+        // Dados pessoais principais
+        nome?: string; foto?: string; telefone?: string; email?: string;
+        profissao?: string; nacionalidade?: string;
+        // Endereço
+        bairro?: string; zona?: string; cidade?: string; endereco?: string;
+        // Contactos de emergência
         conjuge_nome?: string; conjuge_numero?: string;
         irmao_nome?: string; irmao_numero?: string;
         parente_nome?: string; parente_numero?: string;
-        bairro?: string; zona?: string; email?: string;
       } 
     }) => {
       setIsPending(true);
@@ -670,6 +736,7 @@ export function useCreateProfileEditRequest() {
   };
 }
 
+
 export function useApproveProfileEditRequest() {
   const [isPending, setIsPending] = useState(false);
   const { toast } = useToast();
@@ -682,31 +749,71 @@ export function useApproveProfileEditRequest() {
         if (!req || req.status !== "Pendente") return;
 
         const updates: any = {};
-        updates[`profileEditRequests/${requestId}/status`] = "Aprovado";
-        
+        const tsNow = Math.floor(Date.now() / 1000);
         const uid = req.user_id;
-        const userNode = dbStore.userDetails[uid]?.user;
-        if(userNode) {
-          const fields = ["conjuge_nome", "conjuge_numero", "irmao_nome", "irmao_numero", "parente_nome", "parente_numero", "bairro", "zona", "email"];
-          fields.forEach(f => {
-            if (req[f] !== undefined) {
-               updates[`users/${uid}/${f}`] = req[f];
-               updates[`userDetails/${uid}/user/${f}`] = req[f];
-            }
-          });
-        }
 
-        const auditId = "a" + Date.now();
-        updates[`audit/${auditId}`] = {
-          id: auditId, ts: Math.floor(Date.now() / 1000), tipo: "MEMBRO", 
-          desc: `Edição de Perfil aprovada para ${req.user_nome}.`, 
-          valor: 0, user: "Admin"
+        // 1. Marcar pedido como aprovado
+        updates[`profileEditRequests/${requestId}/status`] = "Aprovado";
+
+        // 2. Lista completa de campos editáveis pelo membro
+        //    Escreve simultaneamente em users/ (base) e userDetails/user/ (detalhes)
+        //    O Firebase propaga em tempo real para admin E membro via onValue listeners
+        const CAMPOS_EDITAVEIS = [
+          // Dados pessoais principais
+          "nome", "foto", "telefone", "email",
+          "profissao", "nacionalidade",
+          // Endereço
+          "bairro", "zona", "cidade", "endereco",
+          // Contactos de emergência
+          "conjuge_nome", "conjuge_numero",
+          "irmao_nome",   "irmao_numero",
+          "parente_nome", "parente_numero",
+        ];
+
+        const camposActualizados: string[] = [];
+        CAMPOS_EDITAVEIS.forEach(campo => {
+          if (req[campo] !== undefined && req[campo] !== null && req[campo] !== "") {
+            // Escreve nos dois nós para manter consistência total
+            updates[`users/${uid}/${campo}`] = req[campo];
+            updates[`userDetails/${uid}/user/${campo}`] = req[campo];
+            camposActualizados.push(campo);
+          }
+        });
+
+        console.debug(`[ApproveProfileEdit] uid=${uid} | campos="${camposActualizados.join(", ")}"`);
+
+        // 3. Notificação em tempo real para o membro (aparece no sino do painel do membro)
+        const notifId = "ntf" + Date.now();
+        updates[`notifications/${notifId}`] = {
+          id: notifId,
+          user_id: uid,
+          ts: tsNow,
+          tipo: "PERFIL",
+          titulo: "✅ Perfil Actualizado",
+          mensagem: `O seu pedido de edição de perfil foi aprovado pelo Administrador. As suas informações já foram actualizadas: ${camposActualizados.join(", ")}.`,
+          lida: false
         };
 
+        // 4. Auditoria
+        const auditId = "a" + Date.now();
+        updates[`audit/${auditId}`] = {
+          id: auditId,
+          ts: tsNow,
+          tipo: "MEMBRO",
+          desc: `Edição de Perfil aprovada para ${req.user_nome}. Campos actualizados: ${camposActualizados.join(", ")}.`,
+          valor: 0,
+          user: "Admin"
+        };
+
+        // 5. Escrita atómica única no Firebase → propaga para TODOS os listeners em tempo real
         await update(ref(rtdb), updates);
-        toast({ title: "Aprovado", description: `O perfil de ${req.user_nome} foi atualizado com sucesso.` });
-      } catch {
-        toast({ title: "Erro", description: "Falha ao aprovar edição.", variant: "destructive" });
+        toast({
+          title: "✅ Perfil Sincronizado",
+          description: `${req.user_nome}: ${camposActualizados.length} campo(s) actualizados em tempo real.`
+        });
+      } catch (err) {
+        console.error("[useApproveProfileEditRequest] Erro:", err);
+        toast({ title: "Erro", description: "Falha ao aprovar edição de perfil.", variant: "destructive" });
       } finally {
         setIsPending(false);
       }
@@ -908,5 +1015,20 @@ export function useRejectLiquidationRequest() {
         setIsPending(false);
       }
     }
+  };
+}
+
+// ══════════════════════════════════════════════════
+// COMISSÃO FIDUCIÁRIA DO ADMIN
+// Acesso exclusivo ao saldo privado de comissões
+// Este nó é independente do cofre do sistema
+// ══════════════════════════════════════════════════
+export function useAdminComissao() {
+  useMockDataSync();
+  const comissao = (dbStore as any).adminComissao || { total: 0, registros: [] };
+  return {
+    total: comissao.total || 0,
+    registros: comissao.registros || [],
+    totalMTn: ((comissao.total || 0) / 100).toFixed(2)
   };
 }

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { dbStore, type User, type UserDetails } from "@/data/firebase-data";
 import { useToast } from "@/hooks/use-toast";
+import { useMockDataSync } from "@/hooks/use-mock-store";
 
 interface MemberContextType {
   isMember: boolean;
@@ -13,6 +14,7 @@ interface MemberContextType {
 const MemberContext = createContext<MemberContextType | undefined>(undefined);
 
 export function MemberProvider({ children }: { children: ReactNode }) {
+  useMockDataSync();
   const { toast } = useToast();
   const [memberId, setMemberId] = useState(() => sessionStorage.getItem("member_id"));
   

@@ -53,7 +53,9 @@ export const dbStore = {
   deletionRequests: [] as any[],
   profileEditRequests: [] as any[],
   liquidationRequests: [] as any[],
-  audit: [] as any[]
+  audit: [] as any[],
+  adminComissao: { total: 0, registros: [] as any[] } as any,
+  notifications: [] as any[],
 };
 
 let isInitialized = false;
@@ -118,9 +120,26 @@ export function initFirebaseSync() {
     emitMockDataChange();
   });
 
+  onValue(ref(rtdb, 'adminComissao'), snap => {
+    if (snap.val()) {
+      (dbStore as any).adminComissao = {
+        total: snap.val().total || 0,
+        registros: snap.val().registros
+          ? Object.values(snap.val().registros as Record<string,any>).sort((a: any, b: any) => b.ts - a.ts)
+          : []
+      };
+    }
+    emitMockDataChange();
+  });
+
   onValue(ref(rtdb, 'audit'), snap => { 
     dbStore.audit = snap.val() ? Object.values(snap.val() as Record<string,any>).sort((a,b)=>b.ts - a.ts) : []; 
     emitMockDataChange(); 
+  });
+
+  onValue(ref(rtdb, 'notifications'), snap => {
+    dbStore.notifications = snap.val() ? Object.values(snap.val() as Record<string,any>) : [];
+    emitMockDataChange();
   });
 }
 

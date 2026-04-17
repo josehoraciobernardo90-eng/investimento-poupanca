@@ -1,12 +1,11 @@
-import { useState } from "react";
 import { useRoute, Link } from "wouter";
-import { useLoan, useLiquidateLoan } from "@/hooks/use-loans";
-import { formatMT, parseInputMoney } from "@/lib/utils";
+import { useLoan } from "@/hooks/use-loans";
+import { formatMT } from "@/lib/utils";
 import { calcularStatusEmprestimo } from "@/lib/auto-freeze";
 import { PageLoader } from "@/components/ui/page-loader";
 import { StatCard } from "@/components/ui/stat-card";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { ArrowLeft, Coins, CheckCircle, Percent, AlertTriangle, X, ShieldAlert, Clock, CalendarClock } from "lucide-react";
+import { ArrowLeft, Coins, Percent, AlertTriangle, ShieldAlert, Clock, CalendarClock } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function LoanDetailPage() {
