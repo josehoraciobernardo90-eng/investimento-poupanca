@@ -12,6 +12,7 @@ export function useRequests() {
     memberships: dbStore.membershipRequests,
     loans: dbStore.loanRequests,
     deposits: dbStore.depositRequests,
+    liquidations: (dbStore as any).liquidationRequests || [],
     profileEdits: dbStore.profileEditRequests,
     deletionRequests: dbStore.deletionRequests,
     isLoading: false,
@@ -738,6 +739,171 @@ export function useRejectProfileEditRequest() {
         toast({ title: "Rejeitado", description: "O pedido de edição foi rejeitado." });
       } catch {
         toast({ title: "Erro", description: "Falha ao rejeitar edição.", variant: "destructive" });
+      } finally {
+        setIsPending(false);
+      }
+    }
+  };
+}
+
+export function useCreateLiquidationRequest() {
+  const [isPending, setIsPending] = useState(false);
+  const { toast } = useToast();
+  return {
+    isPending,
+    mutateAsync: async ({ data }: { data: { user_id: string; loan_id: string; valor: number } }) => {
+      setIsPending(true);
+      try {
+        const user = dbStore.users.find(u => u.id === data.user_id);
+        const reqId = "lqr" + Date.now();
+        const updates: any = {};
+        
+        updates[`liquidationRequests/${reqId}`] = {
+          id: reqId,
+          loan_id: data.loan_id,
+          user_id: data.user_id,
+          user_nome: user?.nome || "Membro",
+          user_foto: user?.foto || "??",
+          valor: data.valor,
+          ts: Math.floor(Date.now() / 1000),
+          status: "Pendente"
+        };
+        
+        await update(ref(rtdb), updates);
+        toast({ title: "Pedido de Liquidação Enviado", description: "Aguarde a confirmação do Admin para finalizar a sua dívida." });
+      } catch {
+        toast({ title: "Erro", description: "Falha ao enviar pedido de liquidação.", variant: "destructive" });
+      } finally {
+        setIsPending(false);
+      }
+    }
+  };
+}
+
+export function useApproveLiquidationRequest() {
+  const [isPending, setIsPending] = useState(false);
+  const { toast } = useToast();
+  return {
+    isPending,
+    mutateAsync: async ({ requestId }: { requestId: string }) => {
+      setIsPending(true);
+      try {
+        const req = ((dbStore as any).liquidationRequests || []).find((r: any) => r.id === requestId);
+        if (!req || req.status !== "Pendente") return;
+
+        const loanId = req.loan_id;
+        const detail = dbStore.loanDetails[loanId];
+        if (!detail || detail.loan.status === "Liquidado") {
+          toast({ title: "Aviso", description: "Este empréstimo já foi liquidado.", variant: "destructive" });
+          return;
+        }
+
+        const updates: any = {};
+        const base = detail.loan.valor_original;
+        const totalPago = req.valor;
+        const juros = Math.max(0, totalPago - base);
+
+        // Divisão Profissional 20/80
+        const juroMutuario = juros * 0.2;
+        const juroInvestidores = juros * 0.8;
+
+        // 1. Distribuir para Investidores
+        const updatedTraces = [...detail.traces];
+        updatedTraces.forEach((trace: any) => {
+          const juroGanho = juroInvestidores * (trace.pctReal / 100);
+          trace.juro = juroGanho;
+          trace.total = trace.valor_contribuido + juroGanho;
+
+          const invUser = dbStore.userDetails[trace.owner_id];
+          if (invUser) {
+            const novaCaixa = invUser.emCaixa + trace.total;
+            updates[`userDetails/${trace.owner_id}/emCaixa`] = novaCaixa;
+            updates[`users/${trace.owner_id}/saldo_base`] = novaCaixa;
+            
+            const baseUser = dbStore.users.find(u => u.id === trace.owner_id);
+            if (baseUser) {
+              updates[`users/${trace.owner_id}/lucro_acumulado`] = (baseUser.lucro_acumulado || 0) + juroGanho;
+            }
+
+            const currentCirc = invUser.emCirculacao || [];
+            const circIndex = currentCirc.findIndex((c: any) => c.loan_id === loanId);
+            if (circIndex >= 0) {
+               updates[`userDetails/${trace.owner_id}/emCirculacao/${circIndex}/status`] = "Liquidado";
+               updates[`userDetails/${trace.owner_id}/emCirculacao/${circIndex}/total_esperado`] = trace.total;
+            }
+
+            const activeCirc = currentCirc.filter((c: any, i: number) => i !== circIndex && c.status !== "Liquidado");
+            const newTotalCirc = activeCirc.reduce((acc: number, c: any) => acc + c.valor_contribuido, 0);
+            const newTotalJuro = activeCirc.reduce((acc: number, c: any) => acc + c.juro_esperado, 0);
+            
+            updates[`userDetails/${trace.owner_id}/totalEmCirculacao`] = newTotalCirc;
+            updates[`userDetails/${trace.owner_id}/totalJuroEsperado`] = newTotalJuro;
+            updates[`userDetails/${trace.owner_id}/patrimonioTotal`] = novaCaixa + newTotalCirc + newTotalJuro;
+          }
+        });
+
+        // 2. Dar 20% ao Tomador (Membro que pagou)
+        const tomadorUser = dbStore.userDetails[req.user_id];
+        if (tomadorUser) {
+          const tomadorCaixa = tomadorUser.emCaixa + juroMutuario;
+          updates[`userDetails/${req.user_id}/emCaixa`] = tomadorCaixa;
+          updates[`users/${req.user_id}/saldo_base`] = tomadorCaixa;
+          const baseTomador = dbStore.users.find(u => u.id === req.user_id);
+          if (baseTomador) {
+             updates[`users/${req.user_id}/lucro_acumulado`] = (baseTomador.lucro_acumulado || 0) + juroMutuario;
+          }
+          updates[`userDetails/${req.user_id}/patrimonioTotal`] = tomadorCaixa + (tomadorUser.totalEmCirculacao || 0) + (tomadorUser.totalJuroEsperado || 0);
+        }
+
+        // 3. Atualizar Estado do Empréstimo e Dashboard
+        updates[`liquidationRequests/${requestId}/status`] = "Aprovado";
+        updates[`loans/${loanId}/status`] = "Liquidado";
+        updates[`loans/${loanId}/valor_pago`] = totalPago;
+        updates[`loanDetails/${loanId}/loan/status`] = "Liquidado";
+        updates[`loanDetails/${loanId}/loan/valor_pago`] = totalPago;
+        updates[`loanDetails/${loanId}/traces`] = updatedTraces;
+
+        updates[`dashboard/caixa`] = dbStore.dashboard.caixa + totalPago;
+        updates[`dashboard/naRua`] = Math.max(0, dbStore.dashboard.naRua - base);
+        updates[`dashboard/lucros`] = dbStore.dashboard.lucros + juros;
+        updates[`dashboard/emprestimos_ativos`] = Math.max(0, dbStore.dashboard.emprestimos_ativos - 1);
+
+        const auditId = "a" + Date.now();
+        updates[`audit/${auditId}`] = {
+          id: auditId,
+          ts: Math.floor(Date.now() / 1000),
+          tipo: "LIQUIDACAO",
+          desc: `Liquidação Confirmada: Empréstimo #${loanId.slice(0, 6)} pago por ${req.user_nome}. Lucros distribuídos 20/80.`,
+          valor: totalPago,
+          user: "Admin"
+        };
+
+        await update(ref(rtdb), updates);
+        toast({ title: "✅ Liquidação Confirmada", description: "Dívida encerrada e lucros distribuídos com sucesso." });
+      } catch (err) {
+        console.error("[useApproveLiquidationRequest] Erro:", err);
+        toast({ title: "Erro na Validação", description: "Não foi possível confirmar a liquidação.", variant: "destructive" });
+      } finally {
+        setIsPending(false);
+      }
+    }
+  };
+}
+
+export function useRejectLiquidationRequest() {
+  const [isPending, setIsPending] = useState(false);
+  const { toast } = useToast();
+  return {
+    isPending,
+    mutateAsync: async ({ requestId }: { requestId: string }) => {
+      setIsPending(true);
+      try {
+        const updates: any = {};
+        updates[`liquidationRequests/${requestId}/status`] = "Rejeitado";
+        await update(ref(rtdb), updates);
+        toast({ title: "Liquidação Rejeitada", description: "O pedido de pagamento foi recusado pelo Admin." });
+      } catch {
+        toast({ title: "Erro", description: "Falha ao rejeitar liquidação.", variant: "destructive" });
       } finally {
         setIsPending(false);
       }

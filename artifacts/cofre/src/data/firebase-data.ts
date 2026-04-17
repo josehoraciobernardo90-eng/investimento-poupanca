@@ -52,6 +52,7 @@ export const dbStore = {
   membershipRequests: [] as any[],
   deletionRequests: [] as any[],
   profileEditRequests: [] as any[],
+  liquidationRequests: [] as any[],
   audit: [] as any[]
 };
 
@@ -112,6 +113,11 @@ export function initFirebaseSync() {
     emitMockDataChange();
   });
 
+  onValue(ref(rtdb, 'liquidationRequests'), snap => {
+    dbStore.liquidationRequests = snap.val() ? Object.values(snap.val() as Record<string,any>).sort((a,b)=>b.ts - a.ts) : [];
+    emitMockDataChange();
+  });
+
   onValue(ref(rtdb, 'audit'), snap => { 
     dbStore.audit = snap.val() ? Object.values(snap.val() as Record<string,any>).sort((a,b)=>b.ts - a.ts) : []; 
     emitMockDataChange(); 
@@ -145,6 +151,7 @@ export async function factoryReset() {
       set(ref(rtdb, 'membershipRequests'), null),
       set(ref(rtdb, 'deletionRequests'), null),
       set(ref(rtdb, 'profileEditRequests'), null),
+      set(ref(rtdb, 'liquidationRequests'), null),
       set(ref(rtdb, 'audit'), null),
       set(ref(rtdb, 'dashboard'), resetDashboard)
     ]);

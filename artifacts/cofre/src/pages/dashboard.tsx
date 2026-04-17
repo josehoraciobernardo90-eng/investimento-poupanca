@@ -155,19 +155,18 @@ export default function DashboardPage() {
                 <button 
                   onClick={runAudit}
                   disabled={isAuditing}
-                  className="btn-elite w-full group flex items-center justify-center gap-3"
+                  className="btn-elite w-full group flex items-center justify-center gap-3 min-h-[56px]"
                 >
-                   {isAuditing ? (
-                     <>
-                       <Loader2 className="w-5 h-5 animate-spin" />
-                       Auditando Banco de Dados...
-                     </>
-                   ) : (
-                     <>
-                       <ShieldAlert className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                       Iniciar Auditoria Fiscal
-                     </>
-                   )}
+                   <div className="flex items-center gap-3">
+                      {isAuditing ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <ShieldAlert className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                      )}
+                      <span>
+                        {isAuditing ? "Auditando Banco de Dados..." : "Iniciar Auditoria Fiscal"}
+                      </span>
+                   </div>
                 </button>
              </div>
           </div>
