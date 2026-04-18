@@ -92,6 +92,7 @@ export default function MemberDashboard() {
     parente_numero: memberUser?.parente_numero || "",
     profissao: memberUser?.profissao || "",
     bi: memberUser?.bi || "",
+    nuit: memberUser?.nuit || "",
   });
 
   if (!memberUser || !memberDetails) return null;
@@ -568,7 +569,7 @@ export default function MemberDashboard() {
                      </div>
                      <div>
                        <label className="text-xs font-semibold text-slate-400 mb-1 block">Telefone</label>
-                       <input value={profileForm.telefone} onChange={e => setProfileForm({...profileForm, telefone: e.target.value})} className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
+                       <input value={profileForm.telefone} onChange={e => setProfileForm({...profileForm, telefone: e.target.value.replace(/\D/g, '').slice(0, 9)})} pattern="^$|^[0-9]{9}$" title="Apenas números, com exatamente 9 dígitos" placeholder="Ex: 840000000" className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
                      </div>
                    </div>
                    <div className="grid grid-cols-2 gap-3">
@@ -577,15 +578,21 @@ export default function MemberDashboard() {
                        <input value={profileForm.profissao} onChange={e => setProfileForm({...profileForm, profissao: e.target.value})} className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
                      </div>
                      <div>
-                       <label className="text-xs font-semibold text-slate-400 mb-1 block">Nº de B.I.</label>
-                       <input value={profileForm.bi} onChange={e => setProfileForm({...profileForm, bi: e.target.value})} className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
+                       <label className="text-xs font-semibold text-slate-400 mb-1 block">NUIT Fiscal</label>
+                       <input value={profileForm.nuit} onChange={e => setProfileForm({...profileForm, nuit: e.target.value.replace(/\D/g, '').slice(0, 9)})} pattern="^$|^[0-9]{9}$" title="O NUIT deve conter exatamente 9 dígitos numéricos" placeholder="Ex: 123456789" className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
                      </div>
                    </div>
                    <div className="grid grid-cols-2 gap-3">
                      <div>
+                       <label className="text-xs font-semibold text-slate-400 mb-1 block">Nº de B.I.</label>
+                       <input value={profileForm.bi} onChange={e => setProfileForm({...profileForm, bi: e.target.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase().slice(0, 13)})} pattern="^$|^[0-9]{12}[A-Z]$" title="Deve conter 12 números e terminar com 1 letra (Ex: 123456789012A)" placeholder="Ex: 000000000000A" className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
+                     </div>
+                     <div>
                        <label className="text-xs font-semibold text-slate-400 mb-1 block">Bairro</label>
                        <input value={profileForm.bairro} onChange={e => setProfileForm({...profileForm, bairro: e.target.value})} className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
                      </div>
+                   </div>
+                   <div className="grid grid-cols-1 gap-3">
                      <div>
                        <label className="text-xs font-semibold text-slate-400 mb-1 block">Zona</label>
                        <input value={profileForm.zona} onChange={e => setProfileForm({...profileForm, zona: e.target.value})} className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
@@ -601,7 +608,7 @@ export default function MemberDashboard() {
                         </div>
                         <div>
                           <label className="text-xs font-semibold text-slate-400 mb-1 block">Nº do Parente</label>
-                          <input value={profileForm.parente_numero} onChange={e => setProfileForm({...profileForm, parente_numero: e.target.value})} className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
+                          <input value={profileForm.parente_numero} onChange={e => setProfileForm({...profileForm, parente_numero: e.target.value.replace(/\D/g, '').slice(0, 9)})} pattern="^$|^[0-9]{9}$" title="Apenas números, com exatamente 9 dígitos" placeholder="Ex: 840000000" className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
                         </div>
                       </div>
                    </div>

@@ -807,7 +807,7 @@ export function useApproveProfileEditRequest() {
         const CAMPOS_EDITAVEIS = [
           // Dados pessoais principais
           "nome", "foto", "telefone", "email",
-          "profissao", "nacionalidade", "bi",
+          "profissao", "nacionalidade", "bi", "nuit",
           // Endereço
           "bairro", "zona", "cidade", "endereco",
           // Contactos de emergência
