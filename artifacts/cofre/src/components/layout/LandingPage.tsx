@@ -77,42 +77,42 @@ export function LandingPage() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }}
               exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.3 } }}
-              className="w-full max-w-5xl mx-auto space-y-16"
+              className="w-full max-w-5xl mx-auto space-y-8 md:space-y-16"
             >
               {/* ── Brand & Typography ── */}
-              <div className="text-center space-y-8">
+              <div className="text-center space-y-4 md:space-y-8">
                 <motion.div 
                   initial={{ scale: 0.9, opacity: 0 }} 
                   animate={{ scale: 1, opacity: 1 }} 
                   transition={{ duration: 0.8 }}
-                  className="mx-auto w-24 h-24 sm:w-28 sm:h-28 rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center p-[2px] shadow-2xl shadow-blue-500/20"
+                  className="mx-auto w-14 h-14 sm:w-28 sm:h-28 rounded-2xl sm:rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center p-[2px] shadow-2xl shadow-blue-500/20"
                 >
                   <div className="w-full h-full rounded-[inherit] bg-[#0A0F1C] flex items-center justify-center">
-                    <Banknote className="w-12 h-12 text-blue-500" strokeWidth={1.5} />
+                    <Banknote className="w-7 h-7 sm:w-12 sm:h-12 text-blue-500" strokeWidth={1.5} />
                   </div>
                 </motion.div>
 
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-semibold tracking-wide shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] sm:text-sm font-semibold tracking-wide shadow-sm">
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-500 animate-pulse" />
                   Plataforma de Gestão Fiduciária
                 </div>
 
                 <div>
-                  <h1 className="font-display font-medium text-5xl sm:text-6xl md:text-8xl text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400 tracking-tight leading-tight">
+                  <h1 className="font-display font-medium text-2xl whitespace-nowrap sm:text-6xl md:text-8xl text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400 tracking-tight leading-tight">
                     Cofre<span className="text-blue-500 font-normal">Capital</span>
                   </h1>
-                  <p className="mt-6 text-slate-400 font-sans text-base sm:text-lg max-w-2xl mx-auto font-light leading-relaxed">
+                  <p className="mt-2 md:mt-6 text-slate-400 font-sans text-[10px] sm:text-lg max-w-2xl mx-auto font-light leading-snug px-2">
                     A excelência em gestão de poupanças e investimentos institucionais. Simplificamos o crescimento do seu capital através de governança transparente e tecnologia de ponta.
                   </p>
                 </div>
               </div>
 
               {/* ── Ações Corporativas ── */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5 px-4">
                 <motion.button
                   whileHover={{ y: -2 }} whileTap={{ y: 0 }}
                   onClick={() => setView("member-login")}
-                  className="w-full sm:w-auto btn-primary py-4 px-10 text-lg shadow-xl shadow-blue-500/25"
+                  className="w-full sm:w-auto btn-primary py-3.5 sm:py-4 px-10 text-base sm:text-lg shadow-xl shadow-blue-500/25"
                 >
                   <Wallet className="w-5 h-5 mr-3" />
                   Acesso à Conta
@@ -129,19 +129,21 @@ export function LandingPage() {
               </div>
 
               {/* ── Value Proposition Cards ── */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-12 border-t border-white/5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-1 md:gap-6 pt-4 md:pt-12 border-t border-white/5">
                 {feats.map((f, i) => (
                   <motion.div
                     key={i}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0, transition: { delay: 0.4 + i * 0.1 } }}
-                    className="glass-panel p-8 group hover:bg-white/5 transition-all text-left"
+                    className="bg-transparent md:glass-panel p-1.5 md:p-8 group hover:bg-white/5 transition-all text-left flex flex-row md:flex-col items-center md:items-start gap-2 md:gap-0"
                   >
-                    <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-6 border border-blue-500/20 group-hover:scale-110 transition-transform duration-500">
-                      <f.icon className="w-7 h-7 text-blue-400" strokeWidth={1.5} />
+                    <div className="w-6 h-6 md:w-10 md:h-10 shrink-0 rounded-md md:rounded-xl bg-blue-500/10 flex items-center justify-center md:mb-5 border border-blue-500/20 group-hover:scale-110 transition-transform duration-500">
+                      <f.icon className="w-3.5 h-3.5 md:w-5 md:h-5 text-blue-400" strokeWidth={1.5} />
                     </div>
-                    <h3 className="font-display text-xl font-medium text-slate-100 mb-3">{f.label}</h3>
-                    <p className="font-sans text-sm text-slate-400 leading-relaxed font-light">{f.desc}</p>
+                    <div>
+                      <h3 className="font-display text-[11px] md:text-xl font-medium text-slate-100 mb-0 md:mb-3">{f.label}</h3>
+                      <p className="font-sans text-[8.5px] md:text-sm text-slate-400 leading-tight md:leading-relaxed font-light">{f.desc}</p>
+                    </div>
                   </motion.div>
                 ))}
               </div>

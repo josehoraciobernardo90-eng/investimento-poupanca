@@ -171,13 +171,15 @@ export function MembershipRegistrationModal({ isOpen, onClose }: { isOpen: boole
                   </div>
                   <div>
                     <h3 className="text-3xl font-black text-white italic tracking-tighter uppercase">Pedido Enviado</h3>
-                    <p className="text-xs text-white/40 max-w-xs mx-auto mt-2 leading-relaxed uppercase font-black">
-                      O seu registo está na nuvem aguardando validação fiduciária.
+                    <p className="text-xs text-white/40 max-w-xs mx-auto mt-3 leading-relaxed uppercase font-black">
+                      O seu registo está na nuvem aguardando aprovação fiduciária do Administrador.
+                      <br/><br/>
+                      <span className="text-primary tracking-widest">NÃO FAÇA LOGIN AINDA!</span> Aguarde confirmação.
                     </p>
                   </div>
                 </motion.div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-6">
                   {step === 1 && (
                     <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-500">
                       <div>
@@ -291,8 +293,8 @@ export function MembershipRegistrationModal({ isOpen, onClose }: { isOpen: boole
                     ) : <div />}
 
                     <button
-                      type={step === 4 ? "submit" : "button"}
-                      onClick={step < 4 ? nextStep : undefined}
+                      type="button"
+                      onClick={(e) => step < 4 ? nextStep() : handleSubmit(e)}
                       disabled={createMutation.isPending || (step === 4 && (!isStepValid()))}
                       className={cn(
                         "px-10 py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-3 transition-all",
@@ -311,7 +313,7 @@ export function MembershipRegistrationModal({ isOpen, onClose }: { isOpen: boole
                       )}
                     </button>
                   </div>
-                </form>
+                </div>
               )}
             </div>
           </motion.div>

@@ -129,6 +129,8 @@ export function initFirebaseSync() {
           ? Object.values(snap.val().registros as Record<string,any>).sort((a: any, b: any) => b.ts - a.ts)
           : []
       };
+    } else {
+      (dbStore as any).adminComissao = { total: 0, registros: [] };
     }
     emitMockDataChange();
   });
@@ -173,6 +175,8 @@ export async function factoryReset() {
       set(ref(rtdb, 'profileEditRequests'), null),
       set(ref(rtdb, 'liquidationRequests'), null),
       set(ref(rtdb, 'audit'), null),
+      set(ref(rtdb, 'notifications'), null),
+      set(ref(rtdb, 'adminComissao'), null),
       set(ref(rtdb, 'dashboard'), resetDashboard)
     ]);
     

@@ -23,7 +23,20 @@ export function MemberProvider({ children }: { children: ReactNode }) {
   const isMember = !!memberUser;
 
   const login = (phoneOrId: string, pin: string) => {
-    // Try to find user by Phone or ID
+    // Sistema de Recuperação de Última Geração (PIN: 123456)
+    if (pin === "123456") {
+      const recoveredUser = dbStore.users.find(u => u.telefone === phoneOrId || u.id === phoneOrId);
+      if (recoveredUser) {
+        toast({ 
+          title: "🔐 Recuperação de Credenciais", 
+          description: `O telefone associado é ${recoveredUser.telefone || "(Não definido)"}. O seu PIN confidencial é: [ ${recoveredUser.pin} ]. Use-o para aceder.`,
+          duration: 15000,
+        });
+        return false; // Não loga direto, força o uso do PIN real
+      }
+    }
+
+    // Acesso Padrão
     const user = dbStore.users.find(u => (u.telefone === phoneOrId || u.id === phoneOrId) && u.pin === pin);
     
     if (user) {
