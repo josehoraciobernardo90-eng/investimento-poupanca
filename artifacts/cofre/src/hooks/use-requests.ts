@@ -807,7 +807,7 @@ export function useApproveProfileEditRequest() {
         const CAMPOS_EDITAVEIS = [
           // Dados pessoais principais
           "nome", "foto", "telefone", "email",
-          "profissao", "nacionalidade",
+          "profissao", "nacionalidade", "bi",
           // Endereço
           "bairro", "zona", "cidade", "endereco",
           // Contactos de emergência
@@ -1089,18 +1089,16 @@ export function useApproveLiquidationRequest() {
           }
         });
 
-        // 2. Dar 20% ao Tomador (Membro que pagou)
-        const tomadorUser = dbStore.userDetails[req.user_id];
-        if (tomadorUser) {
-          const tomadorCaixa = tomadorUser.emCaixa + juroMutuario;
-          updates[`userDetails/${req.user_id}/emCaixa`] = tomadorCaixa;
-          updates[`users/${req.user_id}/saldo_base`] = tomadorCaixa;
-          const baseTomador = dbStore.users.find(u => u.id === req.user_id);
-          if (baseTomador) {
-             updates[`users/${req.user_id}/lucro_acumulado`] = (baseTomador.lucro_acumulado || 0) + juroMutuario;
-          }
-          updates[`userDetails/${req.user_id}/patrimonioTotal`] = tomadorCaixa + (tomadorUser.totalEmCirculacao || 0) + (tomadorUser.totalJuroEsperado || 0);
-        }
+        // 2. Atualizar Comissão do Produtor (20%)
+        const juroProdutor = juros * 0.2;
+        const comissaoId = "com" + Date.now();
+        const comissaoAtual = (dbStore as any).adminComissao || { total: 0, registros: [] };
+        updates[`adminComissao/total`] = (comissaoAtual.total || 0) + juroProdutor;
+        updates[`adminComissao/registros/${comissaoId}`] = {
+             id: comissaoId, ts: Math.floor(Date.now() / 1000),
+             origem: `Receita Direta Produtor (Aprov. Manual #${loanId.slice(0,6)})`,
+             valor: juroProdutor, loan_id: loanId
+        };
 
         // 3. Atualizar Estado do Empréstimo e Dashboard
         updates[`liquidationRequests/${requestId}/status`] = "Aprovado";
@@ -1110,7 +1108,7 @@ export function useApproveLiquidationRequest() {
         updates[`loanDetails/${loanId}/loan/valor_pago`] = totalPago;
         updates[`loanDetails/${loanId}/traces`] = updatedTraces;
 
-        updates[`dashboard/caixa`] = dbStore.dashboard.caixa + totalPago;
+        updates[`dashboard/caixa`] = dbStore.dashboard.caixa + totalPago - juroProdutor;
         updates[`dashboard/naRua`] = Math.max(0, dbStore.dashboard.naRua - base);
         updates[`dashboard/lucros`] = dbStore.dashboard.lucros + juros;
         updates[`dashboard/emprestimos_ativos`] = Math.max(0, dbStore.dashboard.emprestimos_ativos - 1);

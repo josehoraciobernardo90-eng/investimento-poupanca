@@ -19,6 +19,7 @@ export interface User {
   cidade?: string;
   bairro?: string;
   nuit?: string;
+  bi?: string;
   endereco?: string;
   nacionalidade?: string;
   conjuge_nome?: string;

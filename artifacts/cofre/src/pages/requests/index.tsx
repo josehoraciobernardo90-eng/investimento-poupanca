@@ -140,6 +140,21 @@ export default function RequestsPage() {
     } catch {}
   };
 
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete) return;
+    try {
+      const { type, req } = confirmDelete;
+      await createDelReqMut.mutateAsync({
+        targetId: req.id,
+        targetType: type as any,
+        userId: req.user_id,
+        userNome: req.user_nome,
+        details: { valor: req.valor }
+      });
+      setTimeout(() => setConfirmDelete(null), 100);
+    } catch {}
+  };
+
   const isApproving = approveLoanMut.isPending || approveDepMut.isPending || approveMemMut.isPending || approveProfileMut.isPending;
 
   return (
@@ -370,6 +385,31 @@ export default function RequestsPage() {
             <AlertDialogFooter className="gap-2 mt-4">
               <AlertDialogCancel className="rounded-lg h-10 text-xs font-medium px-4" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.07)' }}>Manter Pedido</AlertDialogCancel>
               <AlertDialogAction onClick={(e) => { e.preventDefault(); handleConfirmReject(); }} className="flex-1 rounded-lg h-10 text-xs font-semibold" style={{ background: 'hsl(0 72% 51%)', color: 'white' }}>Confirmar Rejeição</AlertDialogAction>
+            </AlertDialogFooter>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!confirmDelete} onOpenChange={(open) => !open && setConfirmDelete(null)}>
+        <AlertDialogContent className="max-w-sm rounded-xl p-0 overflow-hidden border-0" style={{ background: 'hsl(222 35% 7%)', border: '1px solid rgba(239,68,68,0.15)' }}>
+          <div className="p-6">
+            <AlertDialogHeader>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}>
+                  <Trash2 className="w-4 h-4" style={{ color: 'rgba(239,68,68,0.8)' }} />
+                </div>
+                <div>
+                  <AlertDialogTitle className="text-base font-bold text-white">Eliminar Histórico</AlertDialogTitle>
+                  <p className="text-[9px] uppercase tracking-widest" style={{ color: 'rgba(239,68,68,0.6)' }}>Auditoria de Sistema</p>
+                </div>
+              </div>
+              <AlertDialogDescription className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                Uma solicitação formal de exclusão será enviada. O histórico só será permanentemente apagado após a aprovação no cofre.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-2 mt-4">
+              <AlertDialogCancel className="rounded-lg h-10 text-xs font-medium px-4" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.07)' }}>Manter Histórico</AlertDialogCancel>
+              <AlertDialogAction onClick={(e) => { e.preventDefault(); handleConfirmDelete(); }} className="flex-1 rounded-lg h-10 text-xs font-semibold" style={{ background: 'hsl(0 72% 51%)', color: 'white' }}>Solicitar Exclusão</AlertDialogAction>
             </AlertDialogFooter>
           </div>
         </AlertDialogContent>
