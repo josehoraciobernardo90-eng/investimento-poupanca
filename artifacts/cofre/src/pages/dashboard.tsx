@@ -53,6 +53,30 @@ export default function DashboardPage() {
     .filter(l => l.status !== "Liquidado")
     .map(l => ({ ...l, autoFreezeStatus: calcularStatusEmprestimo(l.valor_original, l.data_inicio) }));
 
+  // --- CÁLCULO ABSOLUTO DO CAPITAL GERAL ---
+  let globalCaixa = 0;
+  Object.values(dbStore.userDetails || {}).forEach((ud: any) => {
+    globalCaixa += ud.emCaixa || 0;
+  });
+
+  let globalLucro = comissao?.total || 0;
+  Object.values(dbStore.users || {}).forEach((u: any) => {
+    globalLucro += u.lucro_acumulado || 0;
+  });
+
+  let globalNaRua = 0;
+  let activeContracts = 0;
+  Object.values(dbStore.loans || {}).forEach((l: any) => {
+    if (l.status === "Aprovado" || l.status === "Ativo" || l.status === "Atrasado" || l.status === "Auditoria" || l.status === "Em Processo") {
+      globalNaRua += l.valor_original || 0;
+      activeContracts++;
+    }
+  });
+
+  const patrimonyGlobal = globalCaixa + globalNaRua;
+  const membrosCount = Object.keys(dbStore.userDetails || {}).length;
+  // -----------------------------------------
+
   return (
     <div className="space-y-8 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -94,19 +118,56 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* ── STAT GRID ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatCard title="Caixa Disponível" value={formatMT(data.caixa)} description="Fundos prontos para mobilização" icon={<Wallet className="w-5 h-5 text-blue-500" />} delay={0.05} />
-        <StatCard title="Capital Investido" value={formatMT(data.naRua)} description="Montante total em circulação" icon={<Zap className="w-5 h-5 text-indigo-500" />} delay={0.1} />
-        <StatCard title="Lucro Acumulado" value={formatMT(data.lucros)} description="Rendimento histórico total" icon={<TrendingUp className="w-5 h-5 text-emerald-500" />} delay={0.15} trend={{ value: 14.2, isPositive: true }} />
-        <StatCard
-          title="Pendentes"
-          value={data.solicitacoes_pendentes.toString()}
-          description={data.solicitacoes_pendentes > 0 ? "Ações requerem atenção" : "Nenhuma ação pendente"}
-          icon={<AlertCircle className={cn("w-5 h-5", data.solicitacoes_pendentes > 0 ? "text-amber-500" : "text-slate-400")} />}
-          delay={0.2}
-        />
-      </div>
+      {/* ── PAINEL DE CONTROLO DE SEDE GLOBAL ── */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-8 rounded-[2rem] glass-card-elite border-t border-b border-t-blue-500/30 border-b-blue-500/10 shadow-[0_0_80px_rgba(59,130,246,0.15)] relative overflow-hidden mb-6">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5" />
+        <div className="absolute top-0 right-[-10%] p-10 opacity-[0.03] pointer-events-none"><Database className="w-96 h-96 text-blue-500" /></div>
+        
+        <div className="relative z-10 flex flex-col lg:flex-row gap-10 lg:items-center">
+           {/* Capital Total */}
+           <div className="lg:w-1/3">
+             <div className="flex items-center gap-2 mb-3">
+               <ShieldAlert className="w-5 h-5 text-blue-400 drop-shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+               <span className="text-xs text-blue-400 uppercase font-bold tracking-widest drop-shadow-sm">Sede do Capital Geral</span>
+             </div>
+             <h2 className="text-slate-400 text-sm font-medium mb-1 drop-shadow-sm">Património Global do Fundo</h2>
+             <div className="font-display text-5xl sm:text-6xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-400 drop-shadow-sm mb-4">
+               {formatMT(patrimonyGlobal)}
+             </div>
+             <div className="flex items-center gap-3">
+               <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded text-emerald-400 text-xs font-semibold flex items-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.15)]"><Activity className="w-3.5 h-3.5"/> Sistema Master Opearcional</span>
+               <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">{membrosCount} Cofres</span>
+             </div>
+           </div>
+
+           {/* Metrics Grid */}
+           <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div className="p-6 rounded-2xl bg-slate-900/60 border border-emerald-500/20 relative overflow-hidden group hover:border-emerald-500/40 hover:bg-slate-800/80 transition-all shadow-lg hover:shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+                 <div className="w-1.5 h-full absolute left-0 top-0 bg-gradient-to-b from-emerald-400 to-emerald-600" />
+                 <Wallet className="w-7 h-7 text-emerald-400 mb-4 opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all" />
+                 <div className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1.5 drop-shadow-sm">Dinheiro em Caixa</div>
+                 <div className="font-display text-3xl font-semibold text-white drop-shadow-sm">{formatMT(globalCaixa)}</div>
+                 <div className="text-[10px] text-slate-500 mt-2 font-medium uppercase tracking-widest">Reserva Imediata</div>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-slate-900/60 border border-indigo-500/20 relative overflow-hidden group hover:border-indigo-500/40 hover:bg-slate-800/80 transition-all shadow-lg hover:shadow-[0_0_30px_rgba(99,102,241,0.1)]">
+                 <div className="w-1.5 h-full absolute left-0 top-0 bg-gradient-to-b from-indigo-400 to-indigo-600" />
+                 <Zap className="w-7 h-7 text-indigo-400 mb-4 opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all" />
+                 <div className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1.5 drop-shadow-sm">Capital na Estrada</div>
+                 <div className="font-display text-3xl font-semibold text-white drop-shadow-sm">{formatMT(globalNaRua)}</div>
+                 <div className="text-[10px] text-slate-500 mt-2 font-medium uppercase tracking-widest">{activeContracts} Contratos (Risco)</div>
+              </div>
+
+              <div className="p-6 rounded-2xl bg-slate-900/60 border border-amber-500/20 relative overflow-hidden group hover:border-amber-500/40 hover:bg-slate-800/80 transition-all shadow-lg hover:shadow-[0_0_30px_rgba(245,158,11,0.1)]">
+                 <div className="w-1.5 h-full absolute left-0 top-0 bg-gradient-to-b from-amber-400 to-amber-600" />
+                 <TrendingUp className="w-7 h-7 text-amber-400 mb-4 opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all" />
+                 <div className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1.5 drop-shadow-sm">Lucro Global (Fundos)</div>
+                 <div className="font-display text-3xl font-semibold text-white drop-shadow-sm">{formatMT(globalLucro)}</div>
+                 <div className="text-[10px] text-emerald-400 mt-2 font-medium uppercase tracking-widest">+ Taxas Consolidadas</div>
+              </div>
+           </div>
+        </div>
+      </motion.div>
 
       {/* ── PANELS DE OPERAÇÃO ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -132,7 +193,7 @@ export default function DashboardPage() {
           </div>
           <div className="mt-5 pt-4 border-t border-white/5 flex justify-between items-center">
             <span className="text-sm font-medium text-slate-400">Total em Custódia</span>
-            <span className="text-base font-bold text-white">{formatMT(data.caixa)}</span>
+            <span className="text-base font-bold text-white">{formatMT(globalCaixa)}</span>
           </div>
         </CorporatePanel>
 
@@ -168,11 +229,11 @@ export default function DashboardPage() {
         <CorporatePanel>
           <div className="flex justify-between items-center mb-6">
             <SectionLabel>Exposição de Carteira</SectionLabel>
-            <span className="text-xs font-medium text-slate-400 bg-slate-800 px-2 py-1 rounded">Total Exposto: {formatMT(data.naRua)}</span>
+            <span className="text-xs font-medium text-slate-400 bg-slate-800 px-2 py-1 rounded">Total Exposto: {formatMT(globalNaRua)}</span>
           </div>
           <div className="space-y-5 max-h-[220px] overflow-y-auto custom-scrollbar pr-2">
             {emprestimosStatus.slice(0, 3).map((emp: any) => {
-              const pct = (emp.valor_original / (data.naRua || 1)) * 100;
+              const pct = (emp.valor_original / (globalNaRua || 1)) * 100;
               return (
                 <div key={emp.id}>
                   <div className="flex justify-between text-xs mb-2 font-medium">
@@ -207,11 +268,11 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 gap-5">
             <div className="flex flex-col gap-2 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
               <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Lucro Registado</span>
-              <span className="text-2xl font-display font-medium text-white">{formatMT(data.lucros)}</span>
+              <span className="text-2xl font-display font-medium text-white">{formatMT(globalLucro)}</span>
             </div>
             <div className="flex flex-col gap-2 p-4 rounded-xl bg-slate-800/50 border border-white/5 opacity-80">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Juros Projetados</span>
-              <span className="text-xl font-display font-medium text-slate-300">{formatMT(data.naRua * 0.1)}</span>
+              <span className="text-xl font-display font-medium text-slate-300">{formatMT(globalNaRua * 0.1)}</span>
             </div>
           </div>
           <div className="mt-5 p-4 rounded-xl bg-slate-800/80 border border-white/5 flex items-center gap-4">

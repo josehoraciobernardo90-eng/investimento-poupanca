@@ -908,24 +908,118 @@ export function useCreateLiquidationRequest() {
       setIsPending(true);
       try {
         const user = dbStore.users.find(u => u.id === data.user_id);
-        const reqId = "lqr" + Date.now();
+        const userDetail = dbStore.userDetails[data.user_id];
+        if (!user || !userDetail) throw new Error("Usuário não encontrado.");
+
+        if (userDetail.emCaixa < data.valor) {
+           toast({ title: "Saldo Fiduciário Insuficiente", description: `Liquidez indisponível. Tem ${formatMT(userDetail.emCaixa)} em Caixa, mas precisa de ${formatMT(data.valor)}. Por favor, efetue um Novo Aporte para carregar o seu cofre corporativo.`, variant: "destructive" });
+           return false;
+        }
+
+        const loanId = data.loan_id;
+        const detail = dbStore.loanDetails[loanId];
+        if (!detail || detail.loan.status === "Liquidado") {
+          toast({ title: "Proteção de Auditoria", description: "Este contrato já se encontra liquidado na Blockchain interna.", variant: "destructive" });
+          return false;
+        }
+
         const updates: any = {};
+        const tsNow = Math.floor(Date.now() / 1000);
         
-        updates[`liquidationRequests/${reqId}`] = {
-          id: reqId,
-          loan_id: data.loan_id,
-          user_id: data.user_id,
-          user_nome: user?.nome || "Membro",
-          user_foto: user?.foto || "??",
-          valor: data.valor,
-          ts: Math.floor(Date.now() / 1000),
-          status: "Pendente"
+        const base = detail.loan.valor_original;
+        const totalPago = data.valor;
+        const juros = Math.max(0, totalPago - base);
+
+        // Divisão Profissional 80/20 (Investidores / Produtor)
+        const juroInvestidores = juros * 0.8;
+        const juroProdutor = juros * 0.2;
+
+        // 1. Deduzir o valor total do tomador da dívida
+        const tomadorCaixaNova = userDetail.emCaixa - totalPago;
+        updates[`userDetails/${data.user_id}/emCaixa`] = tomadorCaixaNova;
+        updates[`users/${data.user_id}/saldo_base`] = tomadorCaixaNova;
+        updates[`userDetails/${data.user_id}/patrimonioTotal`] = tomadorCaixaNova + (userDetail.totalEmCirculacao || 0) + (userDetail.totalJuroEsperado || 0);
+
+        // 2. Distribuir lucros e capital para os investidores
+        const updatedTraces = [...detail.traces];
+        updatedTraces.forEach((trace: any) => {
+          const juroGanho = juroInvestidores * (trace.pctReal / 100);
+          trace.juro = juroGanho;
+          trace.total = trace.valor_contribuido + juroGanho;
+
+          const invUser = dbStore.userDetails[trace.owner_id];
+          if (invUser) {
+            const novaCaixa = invUser.emCaixa + trace.total;
+            updates[`userDetails/${trace.owner_id}/emCaixa`] = novaCaixa;
+            updates[`users/${trace.owner_id}/saldo_base`] = novaCaixa;
+            
+            const baseUser = dbStore.users.find(u => u.id === trace.owner_id);
+            if (baseUser) {
+              updates[`users/${trace.owner_id}/lucro_acumulado`] = (baseUser.lucro_acumulado || 0) + juroGanho;
+            }
+
+            const currentCirc = invUser.emCirculacao || [];
+            const circIndex = currentCirc.findIndex((c: any) => c.loan_id === loanId);
+            if (circIndex >= 0) {
+               updates[`userDetails/${trace.owner_id}/emCirculacao/${circIndex}/status`] = "Liquidado";
+               updates[`userDetails/${trace.owner_id}/emCirculacao/${circIndex}/total_esperado`] = trace.total;
+            }
+
+            const activeCirc = currentCirc.filter((c: any, i: number) => i !== circIndex && c.status !== "Liquidado");
+            const newTotalCirc = activeCirc.reduce((acc: number, c: any) => acc + c.valor_contribuido, 0);
+            const newTotalJuro = activeCirc.reduce((acc: number, c: any) => acc + c.juro_esperado, 0);
+            
+            updates[`userDetails/${trace.owner_id}/totalEmCirculacao`] = newTotalCirc;
+            updates[`userDetails/${trace.owner_id}/totalJuroEsperado`] = newTotalJuro;
+            updates[`userDetails/${trace.owner_id}/patrimonioTotal`] = novaCaixa + newTotalCirc + newTotalJuro;
+
+            // Notifica investidor sobre ROI
+            const notifId = "ntf" + Date.now() + Math.random().toString(36).substring(7);
+            updates[`notifications/${notifId}`] = {
+               id: notifId, user_id: trace.owner_id, ts: tsNow, tipo: "LIQUIDACAO",
+               titulo: "💰 Rendimento Creditado!",
+               mensagem: `Smart Contract #${loanId.slice(0,6)} liquidado com sucesso. O seu cofre recuperou ${formatMT(trace.valor_contribuido)} em risco e um prêmio fiduciário de ${formatMT(juroGanho)}.`,
+               lida: false
+            };
+          }
+        });
+
+        // 3. Atualizar Comissão do Produtor (20%)
+        const comissaoId = "com" + Date.now();
+        const comissaoAtual = (dbStore as any).adminComissao || { total: 0, registros: [] };
+        updates[`adminComissao/total`] = (comissaoAtual.total || 0) + juroProdutor;
+        updates[`adminComissao/registros/${comissaoId}`] = {
+             id: comissaoId, ts: tsNow,
+             origem: `Receita Direta Produtor (Dossier #${loanId.slice(0,6)})`,
+             valor: juroProdutor, loan_id: loanId
         };
-        
+
+        // 4. Fechar o Empréstimo
+        updates[`loans/${loanId}/status`] = "Liquidado";
+        updates[`loans/${loanId}/valor_pago`] = totalPago;
+        updates[`loanDetails/${loanId}/loan/status`] = "Liquidado";
+        updates[`loanDetails/${loanId}/loan/valor_pago`] = totalPago;
+        updates[`loanDetails/${loanId}/traces`] = updatedTraces;
+
+        // 5. Atualizar Globais
+        updates[`dashboard/caixa`] = Math.max(0, dbStore.dashboard.caixa - juroProdutor);
+        updates[`dashboard/naRua`] = Math.max(0, dbStore.dashboard.naRua - base);
+        updates[`dashboard/lucros`] = dbStore.dashboard.lucros + juros;
+        updates[`dashboard/emprestimos_ativos`] = Math.max(0, dbStore.dashboard.emprestimos_ativos - 1);
+
+        const auditId = "a" + Date.now();
+        updates[`audit/${auditId}`] = {
+          id: auditId, ts: tsNow, tipo: "LIQUIDACAO",
+          desc: `Liquidação Fiduciária Automática: #${loanId.slice(0, 6)} quitado integralmente por ${user.nome}. Rateio inteligente 80/20 ativado e processado com sucesso.`,
+          valor: totalPago, user: user.nome
+        };
+
         await update(ref(rtdb), updates);
-        toast({ title: "Pedido de Liquidação Enviado", description: "Aguarde a confirmação do Admin para finalizar a sua dívida." });
-      } catch {
-        toast({ title: "Erro", description: "Falha ao enviar pedido de liquidação.", variant: "destructive" });
+        toast({ title: "Smart Contract Concluído", description: "Liquidação efetuada instantâneamente. Capital e lucros foram roteados e notificados nas carteiras de cada participante." });
+        return true;
+      } catch (err: any) {
+        console.error(err);
+        toast({ title: "Erro Fiduciário", description: "Houve uma falha interna na execução do contrato digital.", variant: "destructive" });
       } finally {
         setIsPending(false);
       }
