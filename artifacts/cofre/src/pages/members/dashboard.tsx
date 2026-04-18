@@ -426,7 +426,10 @@ export default function MemberDashboard() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsLoanOpen(false)} />
               <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }} className="relative bg-[#111827] rounded-t-3xl p-6 sm:max-w-md w-full mx-auto pb-8">
                 <div className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-6" />
-                <h3 className="text-xl font-semibold text-white mb-6">Solicitar Crédito</h3>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-semibold text-white">Solicitar Crédito</h3>
+                  <button onClick={() => setIsLoanOpen(false)} className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors"><X className="w-5 h-5"/></button>
+                </div>
                 <form onSubmit={handleLoanSubmit} className="space-y-5">
                    <div className="bg-slate-800/50 p-4 rounded-2xl">
                       <p className="text-xs text-slate-400 font-medium mb-1">Limite Disponível</p>
@@ -453,7 +456,10 @@ export default function MemberDashboard() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsDepositOpen(false)} />
               <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }} className="relative bg-[#111827] rounded-t-3xl p-6 sm:max-w-md w-full mx-auto pb-8">
                 <div className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-6" />
-                <h3 className="text-xl font-semibold text-white mb-6">Aportar Capital</h3>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-semibold text-white">Aportar Capital</h3>
+                  <button onClick={() => setIsDepositOpen(false)} className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors"><X className="w-5 h-5"/></button>
+                </div>
                 <form onSubmit={handleDepositSubmit} className="space-y-5">
                    <div>
                        <label className="text-sm font-medium text-slate-300 block mb-2">Valor a Investir (MZN)</label>
@@ -475,7 +481,10 @@ export default function MemberDashboard() {
                 <div className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-6" />
                 <div className="flex justify-between items-center mb-6">
                    <h3 className="text-xl font-semibold text-white">Detalhes do Crédito</h3>
-                   <span className="text-xs font-medium bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md">ID: {selectedLoan.id.slice(0,8)}</span>
+                   <div className="flex items-center gap-2">
+                     <span className="text-xs font-medium bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md">ID: {selectedLoan.id.slice(0,8)}</span>
+                     <button onClick={() => setSelectedLoan(null)} className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors"><X className="w-4 h-4"/></button>
+                   </div>
                 </div>
                 
                 <div className="space-y-4 mb-8">
@@ -523,7 +532,10 @@ export default function MemberDashboard() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsNotifOpen(false)} />
               <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }} className="relative bg-[#111827] rounded-t-3xl p-6 sm:max-w-md w-full mx-auto pb-8 max-h-[85vh] flex flex-col">
                 <div className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-6" />
-                <h3 className="text-xl font-semibold text-white mb-6">Notificações</h3>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-semibold text-white">Notificações</h3>
+                  <button onClick={() => setIsNotifOpen(false)} className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors"><X className="w-5 h-5"/></button>
+                </div>
                 <div className="overflow-y-auto space-y-3 pb-6 flex-1">
                   {notifications.length === 0 ? (
                     <div className="text-center text-slate-500 py-10">Nenhuma notificação.</div>
@@ -544,7 +556,10 @@ export default function MemberDashboard() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsProfileEditOpen(false)} />
               <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }} className="relative bg-[#111827] rounded-t-3xl p-6 sm:max-w-md w-full mx-auto pb-8 max-h-[90vh] overflow-y-auto">
                 <div className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-6" />
-                <h3 className="text-xl font-semibold text-white mb-6">Editar Perfil</h3>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-semibold text-white">Editar Perfil</h3>
+                  <button onClick={() => setIsProfileEditOpen(false)} type="button" className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors"><X className="w-5 h-5"/></button>
+                </div>
                 <form onSubmit={handleProfileSubmit} className="space-y-4">
                    <div className="grid grid-cols-2 gap-3">
                      <div>
