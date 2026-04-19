@@ -443,7 +443,8 @@ export function useCreateMembershipRequest() {
         await update(ref(rtdb), updates);
         toast({ title: "Pedido Submetido", description: "O seu pedido de adesão foi enviado para aprovação central." });
       } catch (err) {
-        toast({ title: "Erro", description: "Não foi possível enviar o pedido.", variant: "destructive" });
+        toast({ title: "Falha na Conexão", description: "Não foi possível enviar o pedido. O seu Firebase parece estar offline ou mal configurado.", variant: "destructive" });
+        throw err;
       } finally {
         setIsPending(false);
       }

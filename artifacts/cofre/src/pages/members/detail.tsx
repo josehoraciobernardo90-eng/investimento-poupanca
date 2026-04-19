@@ -79,27 +79,61 @@ export default function MemberDetailPage() {
             <Briefcase className="w-5 h-5 text-primary" /> Perfil do Investidor
           </h2>
           <div className="glass-panel rounded-2xl p-6 space-y-4">
-            <div>
-               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Contacto Principal (Telefone)</p>
-               <p className="font-mono text-white tracking-wide">{data.user.telefone || "Não fornecido"}</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                 <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Contacto Principal</p>
+                 <p className="font-mono text-white tracking-wide">{data.user.telefone || "N/A"}</p>
+              </div>
+              <div>
+                 <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">E-mail</p>
+                 <p className="text-white truncate">{data.user.email || "N/A"}</p>
+              </div>
             </div>
-            <div>
-               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">E-mail</p>
-               <p className="text-white">{data.user.email || "Não fornecido"}</p>
+            
+            <div className="pt-4 border-t border-white/5 space-y-4">
+              <div>
+                 <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Endereço Fiscal</p>
+                 <p className="text-white">{data.user.endereco || (data.user.bairro ? `${data.user.bairro}${data.user.zona ? `, ${data.user.zona}` : ''}, ${data.user.cidade || 'Chimoio'}` : "Não fornecido")}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                 <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">NUIT</p>
+                    <p className="font-mono text-white">{data.user.nuit || "N/A"}</p>
+                 </div>
+                 <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Profissão</p>
+                    <p className="text-white">{data.user.profissao || "N/A"}</p>
+                 </div>
+              </div>
             </div>
-            <div>
-               <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Endereço Fiscal</p>
-               <p className="text-white">{data.user.endereco || "Não fornecido"}</p>
-            </div>
-            <div className="pt-4 border-t border-white/5 grid grid-cols-2 gap-4">
-               <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">NUIT</p>
-                  <p className="font-mono text-white">{data.user.nuit || "Não fornecido"}</p>
-               </div>
-               <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Profissão/Área</p>
-                  <p className="text-white">{data.user.profissao || "Não especificado"}</p>
-               </div>
+
+            {/* Nova Secção: Contactos de Emergência */}
+            <div className="pt-4 border-t border-blue-500/20 space-y-4 bg-blue-500/5 -mx-6 px-6 pb-2">
+              <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-2">Emergência / Parentes</p>
+              
+              <div className="space-y-3">
+                {data.user.conjuge_nome && (
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400 uppercase font-bold text-[9px]">Cônjuge:</span>
+                    <span className="text-white font-medium">{data.user.conjuge_nome} ({data.user.conjuge_numero})</span>
+                  </div>
+                )}
+                {data.user.irmao_nome && (
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400 uppercase font-bold text-[9px]">Irmão/ã:</span>
+                    <span className="text-white font-medium">{data.user.irmao_nome} ({data.user.irmao_numero})</span>
+                  </div>
+                )}
+                {data.user.parente_nome && (
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400 uppercase font-bold text-[9px]">Parente:</span>
+                    <span className="text-white font-medium">{data.user.parente_nome} ({data.user.parente_numero})</span>
+                  </div>
+                )}
+                {!data.user.conjuge_nome && !data.user.irmao_nome && !data.user.parente_nome && (
+                  <p className="text-[10px] text-slate-500 italic">Nenhum contacto de emergência registado.</p>
+                )}
+              </div>
             </div>
           </div>
         </div>

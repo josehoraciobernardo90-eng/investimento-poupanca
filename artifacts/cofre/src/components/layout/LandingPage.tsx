@@ -82,14 +82,45 @@ export function LandingPage() {
               {/* ── Brand & Typography ── */}
               <div className="text-center space-y-4 md:space-y-8">
                 <motion.div 
-                  initial={{ scale: 0.9, opacity: 0 }} 
-                  animate={{ scale: 1, opacity: 1 }} 
-                  transition={{ duration: 0.8 }}
-                  className="mx-auto w-14 h-14 sm:w-28 sm:h-28 rounded-2xl sm:rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center p-[2px] shadow-2xl shadow-blue-500/20"
+                  initial={{ rotateY: -90, scale: 0.6, opacity: 0 }} 
+                  animate={{ rotateY: 0, scale: 1, opacity: 1 }} 
+                  transition={{ type: "spring", damping: 15, stiffness: 100, duration: 1.2 }}
+                  className="mx-auto w-24 h-24 sm:w-40 sm:h-40 relative drop-shadow-[0_0_40px_rgba(37,99,235,0.4)] hover:scale-105 transition-transform duration-500"
                 >
-                  <div className="w-full h-full rounded-[inherit] bg-[#0A0F1C] flex items-center justify-center">
-                    <Banknote className="w-7 h-7 sm:w-12 sm:h-12 text-blue-500" strokeWidth={1.5} />
-                  </div>
+                  <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="landing-gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#FFF1B8" />
+                        <stop offset="50%" stopColor="#EBB320" />
+                        <stop offset="100%" stopColor="#9E7606" />
+                      </linearGradient>
+                      <linearGradient id="landing-blue-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#1E3A8A" /> {/* Blue-900 */}
+                        <stop offset="100%" stopColor="#2563EB" /> {/* Blue-600 */}
+                      </linearGradient>
+                      <filter id="landing-glow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="6" result="blur" />
+                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                      </filter>
+                    </defs>
+                    
+                    {/* Outer Gold Ring */}
+                    <circle cx="50" cy="50" r="46" fill="url(#landing-gold-grad)" stroke="#FFFFFF" strokeWidth="1" filter="url(#landing-glow)"/>
+                    
+                    {/* Inner Rich Blue Base */}
+                    <circle cx="50" cy="50" r="39" fill="url(#landing-blue-grad)" />
+                    
+                    {/* Inner Gold Shield Base */}
+                    <path d="M50 22 L76 34 L76 56 C76 78 50 88 50 88 C50 88 24 78 24 56 L24 34 L50 22 Z" fill="url(#landing-gold-grad)" />
+                    
+                    {/* Shield Cutout (Dark Blue Core) */}
+                    <path d="M50 28 L69 38 L69 54 C69 70 50 80 50 80 C50 80 31 70 31 54 L31 38 L50 28 Z" fill="#0A0F1C" />
+                    
+                    {/* Keyhole */}
+                    <circle cx="50" cy="46" r="7" fill="url(#landing-gold-grad)" />
+                    <path d="M45 48 L55 48 L53 66 L47 66 Z" fill="url(#landing-gold-grad)" />
+                    <circle cx="50" cy="64" r="2" fill="#0A0F1C" />
+                  </svg>
                 </motion.div>
 
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] sm:text-sm font-semibold tracking-wide shadow-sm">
@@ -98,33 +129,39 @@ export function LandingPage() {
                 </div>
 
                 <div>
-                  <h1 className="font-display font-medium text-2xl whitespace-nowrap sm:text-6xl md:text-8xl text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-200 to-slate-400 tracking-tight leading-tight">
-                    Cofre<span className="text-blue-500 font-normal">Capital</span>
+                  <h1 className="font-display font-semibold text-5xl whitespace-nowrap sm:text-7xl md:text-[5.5rem] tracking-tight leading-tight drop-shadow-lg">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-300">Cofre</span>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-tr from-[#EBB320] via-[#FFF1B8] to-[#9E7606] font-light ml-1">Capital</span>
                   </h1>
-                  <p className="mt-2 md:mt-6 text-slate-400 font-sans text-[10px] sm:text-lg max-w-2xl mx-auto font-light leading-snug px-2">
+                  <p className="mt-4 md:mt-6 text-slate-400 font-sans text-xs sm:text-lg max-w-2xl mx-auto font-light leading-relaxed px-4">
                     A excelência em gestão de poupanças e investimentos institucionais. Simplificamos o crescimento do seu capital através de governança transparente e tecnologia de ponta.
                   </p>
                 </div>
               </div>
 
-              {/* ── Ações Corporativas ── */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5 px-4">
+              {/* ── Ações Corporativas Premium ── */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 px-6">
                 <motion.button
-                  whileHover={{ y: -2 }} whileTap={{ y: 0 }}
+                  whileHover={{ y: -3, scale: 1.02 }} whileTap={{ y: 0, scale: 0.98 }}
                   onClick={() => setView("member-login")}
-                  className="w-full sm:w-auto btn-primary py-3.5 sm:py-4 px-10 text-base sm:text-lg shadow-xl shadow-blue-500/25"
+                  className="relative group w-full sm:w-auto py-4 px-10 text-base sm:text-lg font-semibold rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-2xl shadow-blue-500/30 overflow-hidden border border-white/10"
                 >
-                  <Wallet className="w-5 h-5 mr-3" />
-                  Acesso à Conta
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
+                  <span className="flex items-center justify-center relative z-10">
+                    <Wallet className="w-5 h-5 mr-3 drop-shadow-md" />
+                    Acesso à Conta
+                  </span>
                 </motion.button>
 
                 <motion.button
-                  whileHover={{ y: -2 }} whileTap={{ y: 0 }}
+                  whileHover={{ y: -3, backgroundColor: "rgba(255,255,255,0.05)" }} whileTap={{ y: 0 }}
                   onClick={() => setIsRegisterOpen(true)}
-                  className="w-full sm:w-auto btn-ghost py-4 px-10 text-lg"
+                  className="w-full sm:w-auto py-4 px-10 text-base sm:text-lg rounded-2xl border border-slate-700/50 bg-slate-800/30 text-slate-300 hover:text-white backdrop-blur-md transition-all shadow-xl shadow-black/20"
                 >
-                  <UserPlus className="w-5 h-5 mr-3 text-slate-400" />
-                  Abrir Conta Institucional
+                  <span className="flex items-center justify-center">
+                    <UserPlus className="w-5 h-5 mr-3 text-[#EBB320]" />
+                    Abrir Conta Institucional
+                  </span>
                 </motion.button>
               </div>
 

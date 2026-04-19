@@ -257,20 +257,16 @@ export default function MemberDashboard() {
                       <h3 className="text-sm font-semibold text-white">Resumo Global do Fundo</h3>
                       <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-emerald-500"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"/> Ao vivo</div>
                    </div>
-                   <div className="bg-slate-800/20 rounded-3xl p-5 border border-white/5 space-y-4">
-                     <div className="flex justify-between items-center pb-4 border-b border-white/5">
-                        <span className="text-sm text-slate-400 font-medium">Custódia Total</span>
-                        <span className="font-semibold text-white">{formatMT(globalStats?.caixa || 0)}</span>
-                     </div>
-                     <div className="flex justify-between items-center pb-4 border-b border-white/5">
-                        <span className="text-sm text-slate-400 font-medium">Cap. Gerido</span>
-                        <span className="font-semibold text-white">{formatMT(globalStats?.total || 0)}</span>
-                     </div>
-                     <div className="flex justify-between items-center">
-                        <span className="text-sm text-slate-400 font-medium">Rentabilidade</span>
-                        <span className="font-semibold text-emerald-400">+{formatMT(globalStats?.lucros || 0)}</span>
-                     </div>
-                   </div>
+                    <div className="bg-slate-800/20 rounded-3xl p-5 border border-white/5 space-y-4">
+                      <div className="flex justify-between items-center pb-4 border-b border-white/5">
+                         <span className="text-sm text-slate-400 font-medium">Custódia Total</span>
+                         <span className="font-semibold text-white">{formatMT(globalStats?.caixa || 0)}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                         <span className="text-sm text-slate-400 font-medium">Cap. Gerido</span>
+                         <span className="font-semibold text-white">{formatMT(globalStats?.total || 0)}</span>
+                      </div>
+                    </div>
                 </div>
               </motion.div>
             )}
@@ -371,7 +367,6 @@ export default function MemberDashboard() {
             {activeTab === "profile" && (
               <motion.div key="profile" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
                  <h2 className="text-2xl font-display font-semibold text-white px-2">Meu Perfil</h2>
-                 
                  <div className="bg-slate-800/30 rounded-3xl border border-white/5 overflow-hidden">
                     <div className="p-4 flex items-center gap-4 border-b border-white/5">
                        <UserIcon className="w-5 h-5 text-blue-400"/>
@@ -381,14 +376,70 @@ export default function MemberDashboard() {
                        <Phone className="w-5 h-5 text-blue-400"/>
                        <div className="flex-1 text-sm text-slate-300">{memberUser.telefone || 'Não definido'}</div>
                     </div>
+                    {memberUser.email && (
+                      <div className="p-4 flex items-center gap-4 border-b border-white/5">
+                         <FileText className="w-5 h-5 text-blue-400"/>
+                         <div className="flex-1 text-sm text-slate-300">{memberUser.email}</div>
+                      </div>
+                    )}
                     <div className="p-4 flex items-center gap-4 border-b border-white/5">
                        <MapPin className="w-5 h-5 text-blue-400"/>
-                       <div className="flex-1 text-sm text-slate-300">{memberUser.bairro ? `${memberUser.bairro}, Chimoio` : 'Endereço não definido'}</div>
+                       <div className="flex-1 text-sm text-slate-300">
+                          {memberUser.endereco || (memberUser.bairro ? `${memberUser.bairro}${memberUser.zona ? `, ${memberUser.zona}` : ''}, ${memberUser.cidade || 'Chimoio'}` : 'Endereço não definido')}
+                       </div>
                     </div>
+                    {memberUser.nuit && (
+                      <div className="p-4 flex items-center gap-4 border-b border-white/5">
+                         <Building2 className="w-5 h-5 text-blue-400"/>
+                         <div className="flex-1 text-sm text-slate-300">NUIT: {memberUser.nuit}</div>
+                      </div>
+                    )}
+                    {memberUser.bi && (
+                      <div className="p-4 flex items-center gap-4 border-b border-white/5">
+                         <CreditCard className="w-5 h-5 text-blue-400"/>
+                         <div className="flex-1 text-sm text-slate-300">B.I.: {memberUser.bi}</div>
+                      </div>
+                    )}
                  </div>
 
+                 {/* Contactos de Emergência no Painel */}
+                 {(memberUser.conjuge_nome || memberUser.irmao_nome || memberUser.parente_nome) && (
+                   <div className="space-y-3">
+                      <h3 className="text-sm font-semibold text-slate-400 px-2 uppercase tracking-wide">Emergência / Parentes</h3>
+                      <div className="bg-slate-800/20 rounded-3xl border border-white/5 p-2 space-y-1">
+                         {memberUser.conjuge_nome && (
+                           <div className="p-3 flex justify-between items-center bg-white/5 rounded-2xl">
+                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">Cônjuge</span>
+                             <div className="text-right">
+                               <p className="text-sm font-medium text-white leading-none mb-1">{memberUser.conjuge_nome}</p>
+                               <p className="text-xs text-blue-400/80 font-mono tracking-tighter leading-none">{memberUser.conjuge_numero}</p>
+                             </div>
+                           </div>
+                         )}
+                         {memberUser.irmao_nome && (
+                           <div className="p-3 flex justify-between items-center bg-white/5 rounded-2xl">
+                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">Irmão(ã)</span>
+                             <div className="text-right">
+                               <p className="text-sm font-medium text-white leading-none mb-1">{memberUser.irmao_nome}</p>
+                               <p className="text-xs text-blue-400/80 font-mono tracking-tighter leading-none">{memberUser.irmao_numero}</p>
+                             </div>
+                           </div>
+                         )}
+                         {memberUser.parente_nome && (
+                           <div className="p-3 flex justify-between items-center bg-white/5 rounded-2xl">
+                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">Familiar</span>
+                             <div className="text-right">
+                               <p className="text-sm font-medium text-white leading-none mb-1">{memberUser.parente_nome}</p>
+                               <p className="text-xs text-blue-400/80 font-mono tracking-tighter leading-none">{memberUser.parente_numero}</p>
+                             </div>
+                           </div>
+                         )}
+                      </div>
+                   </div>
+                 )}
+
                  <div className="space-y-3 mt-6">
-                    <h3 className="text-sm font-semibold text-slate-400 px-2 mb-2 uppercase tracking-wide">Ações</h3>
+                    <h3 className="text-sm font-semibold text-slate-400 px-2 mb-2 uppercase tracking-wide">Ações de Gestão</h3>
                     <button onClick={() => setIsProfileEditOpen(true)} className="w-full flex items-center justify-between p-4 bg-slate-800/40 rounded-2xl active:bg-slate-700/50 transition-colors border border-white/5">
                        <div className="flex items-center gap-3 text-white">
                          <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center"><Settings className="w-5 h-5"/></div>
@@ -600,18 +651,48 @@ export default function MemberDashboard() {
                    </div>
                    
                    <div className="pt-2">
-                      <p className="text-xs text-blue-400 font-semibold uppercase tracking-wide mb-3">Contacto de Parente / Emergência</p>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-xs font-semibold text-slate-400 mb-1 block">Nome do Parente</label>
-                          <input value={profileForm.parente_nome} onChange={e => setProfileForm({...profileForm, parente_nome: e.target.value})} className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold text-slate-400 mb-1 block">Nº do Parente</label>
-                          <input value={profileForm.parente_numero} onChange={e => setProfileForm({...profileForm, parente_numero: e.target.value.replace(/\D/g, '').slice(0, 9)})} pattern="^$|^[0-9]{9}$" title="Apenas números, com exatamente 9 dígitos" placeholder="Ex: 840000000" className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
-                        </div>
-                      </div>
-                   </div>
+                       <p className="text-xs text-blue-400 font-black uppercase tracking-[0.2em] mb-4">Contactos de Emergência / Parentes</p>
+                       <div className="space-y-4">
+                         {/* Cônjuge */}
+                         <div className="grid grid-cols-2 gap-3 p-3 bg-white/5 rounded-2xl border border-white/5">
+                           <div className="col-span-2 text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Cônjuge</div>
+                           <div>
+                             <label className="text-[9px] font-semibold text-slate-400 mb-1 block">Nome</label>
+                             <input value={profileForm.conjuge_nome} onChange={e => setProfileForm({...profileForm, conjuge_nome: e.target.value})} className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-white focus:border-blue-500 focus:outline-none text-xs" />
+                           </div>
+                           <div>
+                             <label className="text-[9px] font-semibold text-slate-400 mb-1 block">Telefone</label>
+                             <input value={profileForm.conjuge_numero} onChange={e => setProfileForm({...profileForm, conjuge_numero: e.target.value.replace(/\D/g, '').slice(0, 9)})} className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-white focus:border-blue-500 focus:outline-none text-xs" />
+                           </div>
+                         </div>
+                         
+                         {/* Irmão */}
+                         <div className="grid grid-cols-2 gap-3 p-3 bg-white/5 rounded-2xl border border-white/5">
+                           <div className="col-span-2 text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Irmão(ã)</div>
+                           <div>
+                             <label className="text-[9px] font-semibold text-slate-400 mb-1 block">Nome</label>
+                             <input value={profileForm.irmao_nome} onChange={e => setProfileForm({...profileForm, irmao_nome: e.target.value})} className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-white focus:border-blue-500 focus:outline-none text-xs" />
+                           </div>
+                           <div>
+                             <label className="text-[9px] font-semibold text-slate-400 mb-1 block">Telefone</label>
+                             <input value={profileForm.irmao_numero} onChange={e => setProfileForm({...profileForm, irmao_numero: e.target.value.replace(/\D/g, '').slice(0, 9)})} className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-white focus:border-blue-500 focus:outline-none text-xs" />
+                           </div>
+                         </div>
+
+                         {/* Outro Familiar */}
+                         <div className="grid grid-cols-2 gap-3 p-3 bg-white/5 rounded-2xl border border-white/5">
+                           <div className="col-span-2 text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Outro Familiar</div>
+                           <div>
+                             <label className="text-[9px] font-semibold text-slate-400 mb-1 block">Nome</label>
+                             <input value={profileForm.parente_nome} onChange={e => setProfileForm({...profileForm, parente_nome: e.target.value})} className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-white focus:border-blue-500 focus:outline-none text-xs" />
+                           </div>
+                           <div>
+                             <label className="text-[9px] font-semibold text-slate-400 mb-1 block">Telefone</label>
+                             <input value={profileForm.parente_numero} onChange={e => setProfileForm({...profileForm, parente_numero: e.target.value.replace(/\D/g, '').slice(0, 9)})} className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-white focus:border-blue-500 focus:outline-none text-xs" />
+                           </div>
+                         </div>
+                       </div>
+                    </div>
 
                    <button disabled={createProfileEditMut.isPending} className="w-full bg-blue-600 text-white font-semibold flex justify-center py-4 rounded-xl mt-4 active:scale-95 transition-all">
                       {createProfileEditMut.isPending ? <Loader2 className="animate-spin w-5 h-5"/> : "Submeter Solicitação"}
@@ -626,4 +707,3 @@ export default function MemberDashboard() {
     </div>
   );
 }
-
