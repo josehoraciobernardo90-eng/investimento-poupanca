@@ -4,7 +4,7 @@ import { StatCard } from "@/components/ui/stat-card";
 import { cn, formatMT } from "@/lib/utils";
 import { PageLoader } from "@/components/ui/page-loader";
 import { Link } from "wouter";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAdmin } from "@/hooks/use-admin";
 import { ResetAppModal } from "@/components/admin/ResetAppModal";
 import { calcularStatusEmprestimo } from "@/lib/auto-freeze";
@@ -12,8 +12,8 @@ import { TechSlideshow } from "@/components/dashboard/TechSlideshow";
 import { BankingCharts } from "@/components/dashboard/BankingCharts";
 import { useSystemAudit } from "@/hooks/use-audit";
 import { useRequests, useAdminComissao } from "@/hooks/use-requests";
-import { Loader2, Wallet, Zap, TrendingUp, AlertCircle, ShieldAlert, Activity, Database, History, Coins, Clock, Settings, BarChart3, Building2, CheckCircle2 } from "lucide-react";
-import { ReactNode } from "react";
+import { Loader2, Wallet, Zap, TrendingUp, AlertCircle, ShieldAlert, Activity, Database, History, Coins, Clock, Settings, BarChart3, Building2, CheckCircle2, X } from "lucide-react";
+import React, { useState, ReactNode } from "react";
 import { dbStore } from "@/data/firebase-data";
 
 function CorporatePanel({ children, className }: { children: ReactNode; className?: string }) {
@@ -38,6 +38,7 @@ export default function DashboardPage() {
   const { isAdmin } = useAdmin();
   const { runAudit, isAuditing } = useSystemAudit();
   const comissao = useAdminComissao();
+  const [photoPreview, setPhotoPreview] = useState<{ url: string, name: string } | null>(null);
 
   if (isLoading) return <PageLoader />;
   if (isError || !data) return (
@@ -371,8 +372,20 @@ export default function DashboardPage() {
                     <div>
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3">
-                          <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center font-display font-medium text-lg shadow-inner", accentBg, accentText)}>
-                            {emp.tomador_foto || emp.tomador_nome[0]}
+                          <div 
+                            onClick={(e) => {
+                                if (emp.tomador_foto?.startsWith('data:image') || emp.tomador_foto?.startsWith('http')) {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setPhotoPreview({ url: emp.tomador_foto, name: emp.tomador_nome });
+                                }
+                            }}
+                            className={cn("w-10 h-10 rounded-xl flex items-center justify-center font-display font-medium text-lg shadow-inner overflow-hidden cursor-zoom-in group-hover:scale-110 transition-transform", accentBg, accentText)}>
+                            {emp.tomador_foto?.startsWith('data:image') || emp.tomador_foto?.startsWith('http') ? (
+                              <img src={emp.tomador_foto} className="w-full h-full object-cover" alt={emp.tomador_nome} />
+                            ) : (
+                              emp.tomador_foto || (emp.tomador_nome ? emp.tomador_nome[0] : "?")
+                            )}
                           </div>
                           <div>
                             <div className="font-medium text-white">{emp.tomador_nome}</div>
@@ -484,6 +497,42 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Modal de Previsualização de Foto */}
+      <AnimatePresence>
+        {photoPreview && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setPhotoPreview(null)}
+            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 cursor-zoom-out"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="relative max-w-2xl w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute -top-12 left-0 right-0 flex justify-between items-center text-white">
+                <span className="font-medium">{photoPreview.name}</span>
+                <button 
+                  onClick={() => setPhotoPreview(null)}
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <img 
+                src={photoPreview.url} 
+                className="w-full h-auto rounded-3xl shadow-2xl border-2 border-white/10" 
+                alt={photoPreview.name} 
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

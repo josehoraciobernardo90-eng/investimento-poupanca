@@ -75,8 +75,12 @@ export default function LoansPage() {
                   >
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center font-bold text-xs text-white">
-                          {loan.tomador_foto}
+                        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center font-bold text-xs text-white overflow-hidden">
+                          {loan.tomador_foto?.startsWith('data:image') || loan.tomador_foto?.startsWith('http') ? (
+                            <img src={loan.tomador_foto} className="w-full h-full object-cover" alt={loan.tomador_nome} />
+                          ) : (
+                            loan.tomador_foto
+                          )}
                         </div>
                         <div>
                           <span className="font-medium text-white">{loan.tomador_nome}</span>

@@ -18,10 +18,11 @@ import {
   AlertTriangle,
   History,
   Home,
-  UserCircle
+  UserCircle,
+  Camera
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, ReactNode } from "react";
+import { useState, ReactNode, useRef } from "react";
 import { useNotifications } from "@/hooks/use-notifications";
 import { generateMemberReport } from "@/lib/pdf-utils";
 import { useCreateLoanRequest, useCreateDepositRequest, useRequests, useCreateProfileEditRequest, useCreateLiquidationRequest, useApproveDeletionRequest, useRejectDeletionRequest } from "@/hooks/use-requests";
@@ -95,6 +96,8 @@ export default function MemberDashboard() {
     nuit: memberUser?.nuit || "",
   });
 
+  const [newPhoto, setNewPhoto] = useState<string | null>(null);
+
   if (!memberUser || !memberDetails) return null;
 
   const calculateLoanStatus = (loan: any) => {
@@ -152,6 +155,87 @@ export default function MemberDashboard() {
     } catch {}
   };
 
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isCapturingProfile, setIsCapturingProfile] = useState(false);
+  const [cameraStatus, setCameraStatus] = useState<"idle" | "requesting" | "active" | "error">("idle");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const startCamera = async () => {
+    setCameraStatus("requesting");
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setCameraStatus("error");
+      return;
+    }
+    try {
+      setIsCapturingProfile(true);
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 640 } } 
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().catch(() => {});
+          setCameraStatus("active");
+        };
+      }
+    } catch {
+      setCameraStatus("error");
+      setIsCapturingProfile(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(t => t.stop());
+      videoRef.current.srcObject = null;
+    }
+    setIsCapturingProfile(false);
+  };
+
+  const takePhoto = () => {
+    if (videoRef.current) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 600;
+      canvas.height = 600;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        const vid = videoRef.current;
+        const minDim = Math.min(vid.videoWidth, vid.videoHeight);
+        const startX = (vid.videoWidth - minDim) / 2;
+        const startY = (vid.videoHeight - minDim) / 2;
+        ctx.drawImage(vid, startX, startY, minDim, minDim, 0, 0, 600, 600);
+        setNewPhoto(canvas.toDataURL("image/jpeg", 0.7));
+        stopCamera();
+      }
+    }
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = 600;
+          canvas.height = 600;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            const minDim = Math.min(img.width, img.height);
+            const startX = (img.width - minDim) / 2;
+            const startY = (img.height - minDim) / 2;
+            ctx.drawImage(img, startX, startY, minDim, minDim, 0, 0, 600, 600);
+            setNewPhoto(canvas.toDataURL("image/jpeg", 0.7));
+          }
+        };
+        img.src = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const loanLimit = memberDetails.emCaixa * 1.50;
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -159,7 +243,13 @@ export default function MemberDashboard() {
     e.preventDefault();
     const dadosNaoVazios: any = {};
     Object.entries(profileForm).forEach(([k, v]) => { if (v && v.trim() !== "") dadosNaoVazios[k] = v.trim(); });
+    
+    if (newPhoto) {
+      dadosNaoVazios.foto = newPhoto;
+    }
+
     if (Object.keys(dadosNaoVazios).length === 0) return;
+    
     try {
       await createProfileEditMut.mutateAsync({
         data: { user_id: memberUser.id, user_nome: memberUser.nome, user_foto: memberUser.foto || '', ...dadosNaoVazios }
@@ -177,7 +267,11 @@ export default function MemberDashboard() {
         <header className="sticky top-0 z-40 bg-[#090D14]/90 backdrop-blur-lg px-5 pt-6 pb-4 flex justify-between items-center border-b border-white/5">
             <div className="flex items-center gap-3">
                <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-bold text-white shadow-lg overflow-hidden">
-                  {memberUser.foto ? <img src={memberUser.foto} className="w-full h-full object-cover"/> : <UserIcon className="w-6 h-6"/>}
+                  {memberUser.foto?.startsWith('data:image') || memberUser.foto?.startsWith('http') ? (
+                    <img src={memberUser.foto} className="w-full h-full object-cover" alt={memberUser.nome} />
+                  ) : (
+                    memberUser.foto || <UserIcon className="w-6 h-6"/>
+                  )}
                </div>
                <div>
                   <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Bem-vindo(a)</p>
@@ -732,6 +826,68 @@ export default function MemberDashboard() {
                   <button onClick={() => setIsProfileEditOpen(false)} type="button" className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors"><X className="w-5 h-5"/></button>
                 </div>
                 <form onSubmit={handleProfileSubmit} className="space-y-4">
+                   
+                   {/* Alterar Foto */}
+                   <div className={cn("relative w-full overflow-hidden bg-black border-2 transition-all duration-500", 
+                     isCapturingProfile ? "h-48 rounded-2xl border-blue-500/50 mb-4" : "h-0 rounded-0 border-transparent mb-0")}>
+                     <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover absolute inset-0 z-10" />
+                     {cameraStatus === "requesting" && (
+                       <div className="absolute inset-0 z-20 bg-black/60 flex items-center justify-center p-4">
+                         <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                       </div>
+                     )}
+                     {cameraStatus === "active" && (
+                       <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center">
+                         <div className="w-24 h-32 border-2 border-dashed border-blue-500/40 rounded-[2rem] animate-pulse"></div>
+                       </div>
+                     )}
+                     <div className="absolute bottom-3 left-0 right-0 z-20 flex justify-center gap-4">
+                       <button type="button" onClick={stopCamera} className="w-10 h-10 rounded-full bg-slate-800/80 text-white flex items-center justify-center hover:bg-rose-500 transition-colors backdrop-blur-md">
+                         <X className="w-5 h-5" />
+                       </button>
+                       <button type="button" onClick={takePhoto} className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl">
+                         <Camera className="w-5 h-5" />
+                       </button>
+                     </div>
+                   </div>
+
+                   {!isCapturingProfile && (
+                     <div className="flex items-center gap-4 bg-slate-800/20 p-4 rounded-2xl border border-white/5">
+                        <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-slate-700 bg-slate-900 flex-shrink-0 group">
+                           {newPhoto ? (
+                             <img src={newPhoto} className="w-full h-full object-cover" alt="Nova Foto" />
+                           ) : memberUser.foto?.startsWith('data:image') || memberUser.foto?.startsWith('http') ? (
+                             <img src={memberUser.foto} className="w-full h-full object-cover" alt="Foto Atual" />
+                           ) : memberUser.foto ? (
+                             <div className="w-full h-full flex items-center justify-center text-xl font-bold bg-primary/20 text-primary">{memberUser.foto}</div>
+                           ) : (
+                             <UserIcon className="w-6 h-6 m-auto text-slate-500 absolute inset-0" />
+                           )}
+                        </div>
+                        <div className="flex-1">
+                           <p className="text-sm font-semibold text-white mb-1">Foto de Perfil</p>
+                           <p className="text-[10px] text-slate-400 leading-tight mb-3 uppercase tracking-widest">Tire uma foto ou envie ficheiro.</p>
+                           <div className="flex gap-2">
+                             <button type="button" onClick={startCamera} className="flex-1 text-xs font-bold bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-500 transition-colors uppercase tracking-wider flex items-center justify-center gap-2">
+                               <Camera className="w-3.5 h-3.5" /> Câmara
+                             </button>
+                             <div className="relative flex-1">
+                               <button type="button" onClick={() => fileInputRef.current?.click()} className="w-full text-xs font-bold bg-slate-700 text-white py-2 rounded-lg hover:bg-slate-600 transition-colors uppercase tracking-wider text-center">
+                                  Galeria
+                               </button>
+                               <input 
+                                 ref={fileInputRef}
+                                 type="file" 
+                                 accept="image/*" 
+                                 className="hidden"
+                                 onChange={handlePhotoUpload}
+                               />
+                             </div>
+                           </div>
+                        </div>
+                     </div>
+                   )}
+
                    <div className="grid grid-cols-2 gap-3">
                      <div>
                        <label className="text-xs font-semibold text-slate-400 mb-1 block">Email</label>

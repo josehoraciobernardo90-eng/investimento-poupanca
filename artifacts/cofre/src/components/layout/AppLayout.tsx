@@ -179,41 +179,34 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
         {/* Page Content */}
         <div className="flex-1 overflow-y-auto p-5 md:p-8 pb-28 md:pb-8">
-          <AnimatePresence mode="wait">
-            {accessDenied ? (
-              <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="flex flex-col items-center justify-center h-[65vh] text-center gap-8"
-              >
-                <div className="relative">
-                  <div className="w-24 h-24 rounded border-2 flex items-center justify-center" style={{ borderColor: 'rgba(255,0,128,0.4)', background: 'rgba(255,0,128,0.05)', boxShadow: '0 0 40px rgba(255,0,128,0.15)' }}>
-                    <HudCorners size={10} color="rgba(255,0,128,0.6)" />
-                    <Lock className="w-8 h-8" style={{ color: 'rgba(255,0,128,0.7)', filter: 'drop-shadow(0 0 8px rgba(255,0,128,0.8))' }} />
-                  </div>
+          {accessDenied ? (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center h-[65vh] text-center gap-8"
+            >
+              <div className="relative">
+                <div className="w-24 h-24 rounded border-2 flex items-center justify-center" style={{ borderColor: 'rgba(255,0,128,0.4)', background: 'rgba(255,0,128,0.05)', boxShadow: '0 0 40px rgba(255,0,128,0.15)' }}>
+                  <HudCorners size={10} color="rgba(255,0,128,0.6)" />
+                  <Lock className="w-8 h-8" style={{ color: 'rgba(255,0,128,0.7)', filter: 'drop-shadow(0 0 8px rgba(255,0,128,0.8))' }} />
                 </div>
-                <div>
-                  <div style={{ fontFamily: "'Orbitron', monospace", fontSize: 20, fontWeight: 700, color: 'rgba(255,0,128,0.8)', textShadow: '0 0 20px rgba(255,0,128,0.4)', letterSpacing: '0.15em' }}>
-                    ACESSO NEGADO
-                  </div>
-                  <div style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 11, color: 'rgba(0,212,255,0.3)', marginTop: 8, letterSpacing: '0.1em' }}>
-                    // NÍVEL DE CLEARANCE INSUFICIENTE
-                  </div>
+              </div>
+              <div>
+                <div style={{ fontFamily: "'Orbitron', monospace", fontSize: 20, fontWeight: 700, color: 'rgba(255,0,128,0.8)', textShadow: '0 0 20px rgba(255,0,128,0.4)', letterSpacing: '0.15em' }}>
+                  ACESSO NEGADO
                 </div>
-                <button onClick={() => setShowAuth(true)} className="btn-primary">
-                  <Lock className="w-3.5 h-3.5" /> AUTENTICAR SISTEMA
-                </button>
-              </motion.div>
-            ) : (
-              <motion.div
-                key={location}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                {children}
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <div style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 11, color: 'rgba(0,212,255,0.3)', marginTop: 8, letterSpacing: '0.1em' }}>
+                  // NÍVEL DE CLEARANCE INSUFICIENTE
+                </div>
+              </div>
+              <button onClick={() => setShowAuth(true)} className="btn-primary">
+                <Lock className="w-3.5 h-3.5" /> AUTENTICAR SISTEMA
+              </button>
+            </motion.div>
+          ) : (
+            <div key={location} className="animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
+              {children}
+            </div>
+          )}
         </div>
 
         {/* Mobile Bottom Nav HUD */}

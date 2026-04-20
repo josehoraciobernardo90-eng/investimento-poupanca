@@ -1,4 +1,4 @@
-import { ref, onValue, set } from "firebase/database";
+import { ref, onValue, set, update } from "firebase/database";
 import { rtdb } from "@/lib/firebase";
 
 // --- STORE SYNC ---
@@ -29,6 +29,7 @@ export interface User {
   parente_nome?: string;
   parente_numero?: string;
   zona?: string;
+  needsProfileSetup?: boolean;
 }
 
 export interface UserDetails {
@@ -162,23 +163,23 @@ export async function factoryReset() {
   };
 
   try {
-    // Perform all resets
-    await Promise.all([
-      set(ref(rtdb, 'users'), null),
-      set(ref(rtdb, 'userDetails'), null),
-      set(ref(rtdb, 'loans'), null),
-      set(ref(rtdb, 'loanDetails'), null),
-      set(ref(rtdb, 'loanRequests'), null),
-      set(ref(rtdb, 'depositRequests'), null),
-      set(ref(rtdb, 'membershipRequests'), null),
-      set(ref(rtdb, 'deletionRequests'), null),
-      set(ref(rtdb, 'profileEditRequests'), null),
-      set(ref(rtdb, 'liquidationRequests'), null),
-      set(ref(rtdb, 'audit'), null),
-      set(ref(rtdb, 'notifications'), null),
-      set(ref(rtdb, 'adminComissao'), null),
-      set(ref(rtdb, 'dashboard'), resetDashboard)
-    ]);
+    const updates: any = {};
+    updates['users'] = null;
+    updates['userDetails'] = null;
+    updates['loans'] = null;
+    updates['loanDetails'] = null;
+    updates['loanRequests'] = null;
+    updates['depositRequests'] = null;
+    updates['membershipRequests'] = null;
+    updates['deletionRequests'] = null;
+    updates['profileEditRequests'] = null;
+    updates['liquidationRequests'] = null;
+    updates['audit'] = null;
+    updates['notifications'] = null;
+    updates['adminComissao'] = null;
+    updates['dashboard'] = resetDashboard;
+
+    await update(ref(rtdb), updates);
     
     console.log("[FACTORY RESET] Application data has been cleared successfully.");
     return true;

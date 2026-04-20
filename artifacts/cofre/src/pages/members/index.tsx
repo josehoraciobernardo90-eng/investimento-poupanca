@@ -3,7 +3,7 @@ import { useUsers, useDeleteUser } from "@/hooks/use-users";
 import { formatMT } from "@/lib/utils";
 import { PageLoader } from "@/components/ui/page-loader";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Search, Trash2 } from "lucide-react";
+import { Search, Trash2, X } from "lucide-react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -22,6 +22,8 @@ export default function MembersPage() {
   const deleteMut = useDeleteUser();
   const [search, setSearch] = useState("");
   const [userToDelete, setUserToDelete] = useState<{ id: string, nome: string } | null>(null);
+
+  const [photoPreview, setPhotoPreview] = useState<{ url: string, name: string } | null>(null);
 
   if (isLoading) return <PageLoader />;
 
@@ -70,8 +72,21 @@ export default function MembersPage() {
                 <div className="glass-panel rounded-2xl p-5 hover:-translate-y-1 hover:border-primary/30 transition-all duration-300 cursor-pointer group-hover:bg-white/5">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-bold text-lg shadow-md group-hover:scale-105 transition-transform">
-                        {user.foto}
+                      <div 
+                        onClick={(e) => {
+                          if (user.foto?.startsWith('data:image') || user.foto?.startsWith('http')) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setPhotoPreview({ url: user.foto, name: user.nome });
+                          }
+                        }}
+                        className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-bold text-lg shadow-md group-hover:scale-110 transition-transform overflow-hidden cursor-zoom-in"
+                      >
+                        {user.foto?.startsWith('data:image') || user.foto?.startsWith('http') ? (
+                          <img src={user.foto} className="w-full h-full object-cover" alt={user.nome} />
+                        ) : (
+                          user.foto
+                        )}
                       </div>
                       <div>
                         <h3 className="font-semibold text-white text-lg">{user.nome}</h3>
@@ -115,6 +130,7 @@ export default function MembersPage() {
         )}
       </div>
 
+      {/* Modal de confirmação de exclusão */}
       <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
         <AlertDialogContent className="glass-panel border-white/10 rounded-2xl">
           <AlertDialogHeader>
@@ -134,6 +150,42 @@ export default function MembersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal de Previsualização de Foto */}
+      <AnimatePresence>
+        {photoPreview && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setPhotoPreview(null)}
+            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 cursor-zoom-out"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="relative max-w-2xl w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute -top-12 left-0 right-0 flex justify-between items-center text-white">
+                <span className="font-medium">{photoPreview.name}</span>
+                <button 
+                  onClick={() => setPhotoPreview(null)}
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <img 
+                src={photoPreview.url} 
+                className="w-full h-auto rounded-3xl shadow-2xl border-2 border-white/10" 
+                alt={photoPreview.name} 
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

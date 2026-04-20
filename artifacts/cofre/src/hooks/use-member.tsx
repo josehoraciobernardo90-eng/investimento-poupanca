@@ -3,12 +3,16 @@ import { dbStore, type User, type UserDetails } from "@/data/firebase-data";
 import { useToast } from "@/hooks/use-toast";
 import { useMockDataSync } from "@/hooks/use-mock-store";
 
+import { ref, update } from "firebase/database";
+import { rtdb } from "@/lib/firebase";
+
 interface MemberContextType {
   isMember: boolean;
   memberUser: User | null;
   memberDetails: UserDetails | null;
   login: (phone: string, pin: string) => boolean;
   logout: () => void;
+  setupProfile: (photoUrl: string) => Promise<boolean>;
 }
 
 const MemberContext = createContext<MemberContextType | undefined>(undefined);
@@ -18,6 +22,16 @@ export function MemberProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [memberId, setMemberId] = useState(() => sessionStorage.getItem("member_id"));
   
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    import("@/data/firebase-data").then(({ storeEmitter }) => {
+      const handler = () => setTick(t => t + 1);
+      storeEmitter.addEventListener("change", handler);
+      return () => storeEmitter.removeEventListener("change", handler);
+    });
+  }, []);
+
   const memberUser = memberId ? dbStore.users.find(u => u.id === memberId) || null : null;
   const memberDetails = memberId ? dbStore.userDetails[memberId] || null : null;
   const isMember = !!memberUser;
@@ -60,8 +74,41 @@ export function MemberProvider({ children }: { children: ReactNode }) {
     sessionStorage.removeItem("member_id");
   };
 
+  const setupProfile = async (photoUrl: string) => {
+    if (!memberId) return false;
+    try {
+      const updates: any = {};
+      updates[`users/${memberId}/foto`] = photoUrl;
+      updates[`users/${memberId}/needsProfileSetup`] = null;
+      updates[`userDetails/${memberId}/user/foto`] = photoUrl;
+      updates[`userDetails/${memberId}/user/needsProfileSetup`] = null;
+      
+      await update(ref(rtdb), updates);
+
+      // Force local update before the Firebase listener catches it
+      // This prevents the React DOM from crashing during the transition
+      const u = dbStore.users.find(u => u.id === memberId);
+      if (u) {
+        u.foto = photoUrl;
+        delete u.needsProfileSetup;
+      }
+      if (dbStore.userDetails[memberId] && dbStore.userDetails[memberId].user) {
+        dbStore.userDetails[memberId].user.foto = photoUrl;
+        delete dbStore.userDetails[memberId].user.needsProfileSetup;
+      }
+      setTick(t => t + 1);
+
+      toast({ title: "Perfil Atualizado", description: "O seu perfil corporativo foi configurado com sucesso." });
+      return true;
+    } catch (err) {
+      console.error("[setupProfile] Erro:", err);
+      toast({ title: "Erro na Gravação", description: "Não foi possível salvar a sua foto.", variant: "destructive" });
+      return false;
+    }
+  };
+
   return (
-    <MemberContext.Provider value={{ isMember, memberUser, memberDetails, login, logout }}>
+    <MemberContext.Provider value={{ isMember, memberUser, memberDetails, login, logout, setupProfile }}>
       {children}
     </MemberContext.Provider>
   );

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { useRequests, useApproveLoanRequest, useRejectLoanRequest, useCreateDepositRequest, useApproveDepositRequest, useRejectDepositRequest, useCreateLoanRequest, useApproveMembershipRequest, useRejectMembershipRequest, useCreateDeletionRequest, useApproveProfileEditRequest, useRejectProfileEditRequest, useApproveLiquidationRequest, useRejectLiquidationRequest } from "@/hooks/use-requests";
 import { useUsers } from "@/hooks/use-users";
 import { formatMT, formatDateTime, parseInputMoney, cn } from "@/lib/utils";
@@ -74,6 +74,8 @@ export default function RequestsPage() {
   const displayReject = useRef<{ req: AnyRequest; type: "loan" | "deposit" | "membership" | "profileEdit" | "liquidation" } | null>(null);
   if (confirmApprove !== null) displayApprove.current = confirmApprove;
   if (confirmReject !== null) displayReject.current = confirmReject;
+
+  const [photoPreview, setPhotoPreview] = useState<{ url: string, name: string } | null>(null);
 
   if (isLoading) return <PageLoader />;
 
@@ -223,8 +225,23 @@ export default function RequestsPage() {
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold font-mono" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.15)', color: 'rgba(165,180,252,0.8)' }}>
-                    {req.user_foto}
+                  <div 
+                    onClick={() => {
+                        let photoUrl = req.user_foto;
+                        if (tab === "profileEdits" && (req as any).foto) photoUrl = (req as any).foto;
+                        if (photoUrl?.startsWith('data:image') || photoUrl?.startsWith('http')) {
+                          setPhotoPreview({ url: photoUrl, name: req.user_nome });
+                        }
+                    }}
+                    className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold font-mono overflow-hidden cursor-zoom-in group-hover:scale-110 transition-transform" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.15)', color: 'rgba(165,180,252,0.8)' }}
+                  >
+                    {req.user_foto?.startsWith('data:image') || req.user_foto?.startsWith('http') ? (
+                      <img src={req.user_foto} className="w-full h-full object-cover" alt={req.user_nome} />
+                    ) : tab === "profileEdits" && (req as any).foto ? (
+                      <img src={(req as any).foto} className="w-full h-full object-cover" />
+                    ) : (
+                      req.user_foto
+                    )}
                   </div>
                   <div>
                     <h4 className="text-sm font-semibold text-white">{req.user_nome}</h4>
@@ -306,7 +323,24 @@ export default function RequestsPage() {
                       onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = ''}>
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold font-mono" style={{ background: 'rgba(99,102,241,0.08)', color: 'rgba(165,180,252,0.7)' }}>{req.user_foto}</div>
+                          <div 
+                            onClick={() => {
+                                let photoUrl = req.user_foto;
+                                if (tab === "profileEdits" && (req as any).foto) photoUrl = (req as any).foto;
+                                if (photoUrl?.startsWith('data:image') || photoUrl?.startsWith('http')) {
+                                  setPhotoPreview({ url: photoUrl, name: req.user_nome });
+                                }
+                            }}
+                            className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold font-mono overflow-hidden cursor-zoom-in" style={{ background: 'rgba(99,102,241,0.08)', color: 'rgba(165,180,252,0.7)' }}
+                          >
+                            {req.user_foto?.startsWith('data:image') || req.user_foto?.startsWith('http') ? (
+                              <img src={req.user_foto} className="w-full h-full object-cover" alt={req.user_nome} />
+                            ) : tab === "profileEdits" && (req as any).foto ? (
+                              <img src={(req as any).foto} className="w-full h-full object-cover" />
+                            ) : (
+                              req.user_foto
+                            )}
+                          </div>
                           <div>
                             <p className="text-sm font-medium text-white">{req.user_nome}</p>
                             <p className="text-[9px] font-mono" style={{ color: 'rgba(255,255,255,0.2)' }}>{formatDateTime(req.ts)}</p>
@@ -353,10 +387,33 @@ export default function RequestsPage() {
             </AlertDialogHeader>
             <div className="flex items-center justify-between p-3 rounded-lg my-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold font-mono" style={{ background: 'rgba(99,102,241,0.1)', color: 'rgba(165,180,252,0.7)' }}>{displayApprove.current?.req?.user_foto}</div>
+                <div 
+                  onClick={() => {
+                        let photoUrl = displayApprove.current?.req?.user_foto;
+                        if (displayApprove.current?.type === "profileEdit" && (displayApprove.current?.req as any)?.foto) photoUrl = (displayApprove.current?.req as any).foto;
+                        if (photoUrl?.startsWith('data:image') || photoUrl?.startsWith('http')) {
+                          setPhotoPreview({ url: photoUrl, name: displayApprove.current?.req?.user_nome || "Membro" });
+                        }
+                  }}
+                  className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold font-mono overflow-hidden cursor-zoom-in" style={{ background: 'rgba(99,102,241,0.1)', color: 'rgba(165,180,252,0.7)' }}
+                >
+                   {displayApprove.current?.req?.user_foto?.startsWith('data:image') || displayApprove.current?.req?.user_foto?.startsWith('http') ? (
+                      <img src={displayApprove.current.req.user_foto} className="w-full h-full object-cover" />
+                   ) : displayApprove.current?.type === "profileEdit" && (displayApprove.current?.req as any)?.foto ? (
+                      <img src={(displayApprove.current?.req as any).foto} className="w-full h-full object-cover" />
+                   ) : (
+                      displayApprove.current?.req?.user_foto
+                   )}
+                </div>
                 <p className="text-sm font-semibold text-white">{displayApprove.current?.req?.user_nome}</p>
               </div>
-              <p className="text-sm font-bold font-mono" style={{ color: 'hsl(160 84% 44%)' }}>{formatMT(displayApprove.current?.req?.valor || 0)}</p>
+              <div className="text-right">
+                 {displayApprove.current?.type === "profileEdit" ? (
+                   <span className="text-xs font-bold font-mono" style={{ color: 'hsl(160 84% 44%)' }}>Actualização de Perfil</span>
+                 ) : (
+                   <p className="text-sm font-bold font-mono" style={{ color: 'hsl(160 84% 44%)' }}>{formatMT(displayApprove.current?.req?.valor || 0)}</p>
+                 )}
+              </div>
             </div>
             <AlertDialogFooter className="gap-2">
               <AlertDialogCancel className="rounded-lg h-10 text-xs font-medium px-4" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.07)' }}>Cancelar</AlertDialogCancel>
@@ -443,6 +500,42 @@ export default function RequestsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Previsualização de Foto */}
+      <AnimatePresence>
+        {photoPreview && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setPhotoPreview(null)}
+            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 cursor-zoom-out"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="relative max-w-2xl w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute -top-12 left-0 right-0 flex justify-between items-center text-white">
+                <span className="font-medium">{photoPreview.name}</span>
+                <button 
+                  onClick={() => setPhotoPreview(null)}
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <img 
+                src={photoPreview.url} 
+                className="w-full h-auto rounded-3xl shadow-2xl border-2 border-white/10" 
+                alt={photoPreview.name} 
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

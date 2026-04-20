@@ -6,6 +6,7 @@ import { Component, ReactNode, useState } from "react";
 import { AdminProvider } from "@/hooks/use-admin";
 import { MemberProvider, useMember } from "@/hooks/use-member";
 import MemberDashboard from "@/pages/members/dashboard";
+import { ProfileSetupScreen } from "@/components/members/ProfileSetupScreen";
 
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SplashScreen } from "@/components/layout/SplashScreen";
@@ -90,7 +91,7 @@ function Router() {
 
 function AppContent() {
   const { isAdmin } = useAdmin();
-  const { isMember } = useMember();
+  const { isMember, memberUser } = useMember();
   
   if (isAdmin) {
     return (
@@ -101,7 +102,10 @@ function AppContent() {
   }
 
   if (isMember) {
-    return <MemberDashboard />;
+    if (memberUser?.needsProfileSetup) {
+      return <ProfileSetupScreen key="setup-screen" />;
+    }
+    return <MemberDashboard key="main-dashboard" />;
   }
 
   return <LandingPage />;

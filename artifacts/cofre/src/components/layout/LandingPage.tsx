@@ -1,12 +1,11 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState } from "react";
 import { useAdmin } from "@/hooks/use-admin";
 import { useMember } from "@/hooks/use-member";
 import { useToast } from "@/hooks/use-toast";
 import { MembershipRegistrationModal } from "@/components/members/MembershipRegistrationModal";
 import { 
-  ShieldCheck, Wallet, UserPlus, Users, ArrowRight, Lock, Eye, EyeOff, 
-  BarChart3, Banknote, Building, ChevronRight, CheckCircle2
+  ShieldCheck, Wallet, UserPlus, Lock, Eye, EyeOff, 
+  BarChart3, Building, ChevronRight, ArrowRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -60,7 +59,6 @@ export function LandingPage() {
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-[#0A0F1C] text-slate-100 flex flex-col justify-center items-center">
-      {/* ── Corporate Background Layers ── */}
       <div className="pointer-events-none fixed inset-0 -z-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]" />
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute top-0 right-0 w-3/4 h-3/4 bg-blue-500/10 mix-blend-screen blur-[120px] rounded-full translate-x-1/4 -translate-y-1/4" />
@@ -68,253 +66,115 @@ export function LandingPage() {
       </div>
 
       <div className="w-full min-h-screen flex flex-col items-center justify-center p-6 md:p-12 relative z-20 overflow-x-hidden">
-        <AnimatePresence mode="wait">
-
-          {/* ═══════ CORPORATE MAIN LANDING ═══════ */}
           {view === "landing" && (
-            <motion.div
-              key="landing"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }}
-              exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.3 } }}
-              className="w-full max-w-5xl mx-auto space-y-8 md:space-y-16"
-            >
-              {/* ── Brand & Typography ── */}
+            <div className="w-full max-w-5xl mx-auto space-y-8 md:space-y-16">
               <div className="text-center space-y-4 md:space-y-8">
-                <motion.div 
-                  initial={{ rotateY: -90, scale: 0.6, opacity: 0 }} 
-                  animate={{ rotateY: 0, scale: 1, opacity: 1 }} 
-                  transition={{ type: "spring", damping: 15, stiffness: 100, duration: 1.2 }}
-                  className="mx-auto w-24 h-24 sm:w-40 sm:h-40 relative drop-shadow-[0_0_40px_rgba(37,99,235,0.4)] hover:scale-105 transition-transform duration-500"
-                >
-                  <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <div className="mx-auto w-24 h-24 sm:w-40 sm:h-40 relative drop-shadow-[0_0_40px_rgba(37,99,235,0.4)]">
+                  <svg viewBox="0 0 100 100" className="w-full h-full" fill="none">
                     <defs>
                       <linearGradient id="landing-gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stopColor="#FFF1B8" />
                         <stop offset="50%" stopColor="#EBB320" />
                         <stop offset="100%" stopColor="#9E7606" />
                       </linearGradient>
-                      <linearGradient id="landing-blue-grad" x1="0%" y1="100%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#1E3A8A" /> {/* Blue-900 */}
-                        <stop offset="100%" stopColor="#2563EB" /> {/* Blue-600 */}
-                      </linearGradient>
-                      <filter id="landing-glow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feGaussianBlur stdDeviation="6" result="blur" />
-                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                      </filter>
                     </defs>
-                    
-                    {/* Outer Gold Ring */}
-                    <circle cx="50" cy="50" r="46" fill="url(#landing-gold-grad)" stroke="#FFFFFF" strokeWidth="1" filter="url(#landing-glow)"/>
-                    
-                    {/* Inner Rich Blue Base */}
-                    <circle cx="50" cy="50" r="39" fill="url(#landing-blue-grad)" />
-                    
-                    {/* Inner Gold Shield Base */}
+                    <circle cx="50" cy="50" r="46" fill="url(#landing-gold-grad)" />
+                    <circle cx="50" cy="50" r="39" fill="#1E3A8A" />
                     <path d="M50 22 L76 34 L76 56 C76 78 50 88 50 88 C50 88 24 78 24 56 L24 34 L50 22 Z" fill="url(#landing-gold-grad)" />
-                    
-                    {/* Shield Cutout (Dark Blue Core) */}
-                    <path d="M50 28 L69 38 L69 54 C69 70 50 80 50 80 C50 80 31 70 31 54 L31 38 L50 28 Z" fill="#0A0F1C" />
-                    
-                    {/* Keyhole */}
-                    <circle cx="50" cy="46" r="7" fill="url(#landing-gold-grad)" />
-                    <path d="M45 48 L55 48 L53 66 L47 66 Z" fill="url(#landing-gold-grad)" />
-                    <circle cx="50" cy="64" r="2" fill="#0A0F1C" />
                   </svg>
-                </motion.div>
-
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] sm:text-sm font-semibold tracking-wide shadow-sm">
-                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-blue-500 animate-pulse" />
-                  Plataforma de Gestão Fiduciária
                 </div>
-
-                <div>
-                  <h1 className="font-display font-semibold text-5xl whitespace-nowrap sm:text-7xl md:text-[5.5rem] tracking-tight leading-tight drop-shadow-lg">
-                    <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-300">Cofre</span>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-tr from-[#EBB320] via-[#FFF1B8] to-[#9E7606] font-light ml-1">Capital</span>
+                <div className="space-y-2 md:space-y-4">
+                  <h1 className="text-4xl sm:text-6xl md:text-8xl font-black italic tracking-tighter uppercase leading-[0.85] text-white">
+                    Cofre <span className="text-blue-500">Elite</span>
                   </h1>
-                  <p className="mt-4 md:mt-6 text-slate-400 font-sans text-xs sm:text-lg max-w-2xl mx-auto font-light leading-relaxed px-4">
-                    A excelência em gestão de poupanças e investimentos institucionais. Simplificamos o crescimento do seu capital através de governança transparente e tecnologia de ponta.
+                  <p className="text-[10px] sm:text-xs md:text-sm font-black uppercase tracking-[0.4em] text-blue-400">
+                    Sistemas de Gestão de Capital e Investimento
                   </p>
                 </div>
               </div>
 
-              {/* ── Ações Corporativas Premium ── */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 px-6">
-                <motion.button
-                  whileHover={{ y: -3, scale: 1.02 }} whileTap={{ y: 0, scale: 0.98 }}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                <button
                   onClick={() => setView("member-login")}
-                  className="relative group w-full sm:w-auto py-4 px-10 text-base sm:text-lg font-semibold rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-2xl shadow-blue-500/30 overflow-hidden border border-white/10"
+                  className="group relative overflow-hidden glass-panel border-white/5 hover:border-blue-500/30 p-6 md:p-8 rounded-[2rem] transition-all text-left"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
-                  <span className="flex items-center justify-center relative z-10">
-                    <Wallet className="w-5 h-5 mr-3 drop-shadow-md" />
-                    Acesso à Conta
-                  </span>
-                </motion.button>
-
-                <motion.button
-                  whileHover={{ y: -3, backgroundColor: "rgba(255,255,255,0.05)" }} whileTap={{ y: 0 }}
-                  onClick={() => setIsRegisterOpen(true)}
-                  className="w-full sm:w-auto py-4 px-10 text-base sm:text-lg rounded-2xl border border-slate-700/50 bg-slate-800/30 text-slate-300 hover:text-white backdrop-blur-md transition-all shadow-xl shadow-black/20"
-                >
-                  <span className="flex items-center justify-center">
-                    <UserPlus className="w-5 h-5 mr-3 text-[#EBB320]" />
-                    Abrir Conta Institucional
-                  </span>
-                </motion.button>
-              </div>
-
-              {/* ── Value Proposition Cards ── */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-1 md:gap-6 pt-4 md:pt-12 border-t border-white/5">
-                {feats.map((f, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0, transition: { delay: 0.4 + i * 0.1 } }}
-                    className="bg-transparent md:glass-panel p-1.5 md:p-8 group hover:bg-white/5 transition-all text-left flex flex-row md:flex-col items-center md:items-start gap-2 md:gap-0"
-                  >
-                    <div className="w-6 h-6 md:w-10 md:h-10 shrink-0 rounded-md md:rounded-xl bg-blue-500/10 flex items-center justify-center md:mb-5 border border-blue-500/20 group-hover:scale-110 transition-transform duration-500">
-                      <f.icon className="w-3.5 h-3.5 md:w-5 md:h-5 text-blue-400" strokeWidth={1.5} />
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20">
+                        <Wallet className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-black uppercase tracking-widest opacity-40">Área do Investidor</div>
+                        <div className="text-xl font-bold text-white">Entrar no Cofre</div>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-display text-[11px] md:text-xl font-medium text-slate-100 mb-0 md:mb-3">{f.label}</h3>
-                      <p className="font-sans text-[8.5px] md:text-sm text-slate-400 leading-tight md:leading-relaxed font-light">{f.desc}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+                </button>
 
-              {/* ── Link Admin Gestão ── */}
-              <div className="pt-8 flex justify-center">
                 <button
                   onClick={() => setView("admin-login")}
-                  className="flex items-center gap-2 text-slate-500 hover:text-slate-300 font-sans text-xs tracking-widest uppercase transition-colors"
+                  className="group relative overflow-hidden glass-panel border-white/5 hover:border-indigo-500/30 p-6 md:p-8 rounded-[2rem] transition-all text-left bg-indigo-500/5"
                 >
-                  <Lock className="w-3.5 h-3.5" />
-                  Portal Restrito para Gestão
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 border border-indigo-500/20">
+                        <Lock className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-black uppercase tracking-widest opacity-40">Gestão Superior</div>
+                        <div className="text-xl font-bold text-white">Painel Gestor</div>
+                      </div>
+                    </div>
                 </button>
               </div>
-            </motion.div>
+
+              <div className="text-center pt-8">
+                 <button 
+                  onClick={() => setIsRegisterOpen(true)}
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-white text-black font-black uppercase text-[10px] tracking-[0.2em] rounded-2xl hover:scale-105 transition-all shadow-xl"
+                 >
+                   <UserPlus className="w-4 h-4" /> Solicitar Abertura de Conta
+                 </button>
+              </div>
+            </div>
           )}
 
-          {/* ═══════ LOGIN FORMS ═══════ */}
           {(view === "admin-login" || view === "member-login") && (
-            <motion.div
-              key={view}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }}
-              exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.25 } }}
-              className="w-full max-w-md"
-            >
-              <div className={cn(
-                "glass-card-elite p-8 sm:p-12 relative overflow-hidden",
-                error && "border-rose-500/30 shadow-2xl shadow-rose-500/10"
-              )}>
-                
-                {/* ── Decorator ── */}
-                <div className={cn(
-                  "absolute top-0 left-0 w-full h-1",
-                  view === "admin-login" ? "bg-gradient-to-r from-transparent via-indigo-500 to-transparent" : "bg-gradient-to-r from-transparent via-blue-500 to-transparent"
-                )} />
-
+            <div className="w-full max-w-md mx-auto px-4">
+              <div className="glass-panel rounded-[3rem] p-8 md:p-12 border-white/10 shadow-2xl relative overflow-hidden backdrop-blur-3xl text-left">
                 <button
                   onClick={() => { setView("landing"); setError(false); }}
-                  className="mb-10 flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-sans text-sm font-medium"
+                  className="mb-8 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-white/30 hover:text-white"
                 >
-                  <ChevronRight className="w-4 h-4 rotate-180" />
-                  Voltar ao Portal
+                  <ChevronRight className="w-4 h-4 rotate-180" /> Voltar
                 </button>
 
-                <div className="text-center mb-10">
-                  <div className={cn(
-                    "w-16 h-16 rounded-2xl mx-auto flex items-center justify-center mb-6 shadow-lg",
-                    view === "admin-login" ? "bg-indigo-500/10 border border-indigo-500/20 text-indigo-400" : "bg-blue-500/10 border border-blue-500/20 text-blue-400"
-                  )}>
-                    {view === "admin-login" ? <Lock className="w-8 h-8" strokeWidth={1.5} /> : <Users className="w-8 h-8" strokeWidth={1.5} />}
-                  </div>
-                  <h2 className="font-display text-2xl font-semibold text-white mb-2">
-                    {view === "admin-login" ? "Gestão Corporativa" : "Portal do Cliente"}
-                  </h2>
-                  <p className="font-sans text-sm text-slate-400 font-light">
-                    {view === "admin-login" ? "Acesso reservado para administradores credenciados." : "Aceda à sua área pessoal de investimentos e poupanças."}
-                  </p>
-                </div>
-
                 <form onSubmit={view === "admin-login" ? handleAdminSubmit : handleMemberSubmit} className="space-y-5">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
-                      {view === "admin-login" ? "ID Institucional" : "Telefone de Registo"}
-                    </label>
-                    <input
-                      autoFocus
-                      type="text"
-                      required
-                      value={view === "admin-login" ? adminId : memberPhone}
-                      onChange={e => { view === "admin-login" ? setAdminId(e.target.value) : setMemberPhone(e.target.value); setError(false); }}
-                      className={cn("input-elite font-sans font-medium", error && "border-rose-500/40 bg-rose-500/5")}
-                      placeholder={view === "admin-login" ? "ex: ADM-2024" : "ex: 840000000"}
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
-                      {view === "admin-login" ? "Palavra-passe" : "Protocolo PIN"}
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showMemberPin ? "text" : "password"}
-                        required
-                        maxLength={view === "member-login" ? 6 : 30}
-                        value={view === "admin-login" ? password : memberPin}
-                        onChange={e => { view === "admin-login" ? setPassword(e.target.value) : setMemberPin(e.target.value); setError(false); }}
-                        className={cn("input-elite tracking-widest pr-14 font-medium", error && "border-rose-500/40 bg-rose-500/5")}
-                        placeholder="••••••"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowMemberPin(!showMemberPin)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
-                      >
-                        {showMemberPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
+                  {view === "admin-login" ? (
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">ID Corporativo</label>
+                        <input type="text" value={adminId} onChange={(e) => setAdminId(e.target.value)} className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Senha Mestra</label>
+                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white" />
+                      </div>
                     </div>
-                  </div>
-
-                  <AnimatePresence>
-                    {error && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="text-rose-400 text-xs font-medium text-center bg-rose-500/10 py-2 rounded-lg border border-rose-500/20">
-                        Credenciais não reconhecidas. Tente novamente.
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <button
-                    type="submit"
-                    className="w-full btn-primary mt-4 py-4"
-                  >
-                    <CheckCircle2 className="w-5 h-5 mr-2" />
-                    Autenticar e Entrar
-                  </button>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">Telefone</label>
+                        <input type="tel" value={memberPhone} onChange={(e) => setMemberPhone(e.target.value)} className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-white/30 tracking-widest">PIN</label>
+                        <input type="password" value={memberPin} maxLength={6} onChange={(e) => setMemberPin(e.target.value)} className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white text-center tracking-[0.5em]" />
+                      </div>
+                    </div>
+                  )}
+                  <button type="submit" className="w-full py-4 bg-blue-600 text-white rounded-2xl font-black uppercase text-xs">Confirmar</button>
                 </form>
-
-                {view === "member-login" && (
-                  <p className="text-center mt-8 font-sans text-sm font-light text-slate-400">
-                    Ainda não possui conta corporativa?{" "}
-                    <button
-                      type="button"
-                      onClick={() => { setView("landing"); setTimeout(() => setIsRegisterOpen(true), 300); }}
-                      className="text-blue-400 font-semibold hover:text-blue-300 transition-colors"
-                    >
-                      Solicitar Abertura
-                    </button>
-                  </p>
-                )}
               </div>
-            </motion.div>
+            </div>
           )}
-
-        </AnimatePresence>
       </div>
 
       <MembershipRegistrationModal

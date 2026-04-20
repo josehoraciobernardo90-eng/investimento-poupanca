@@ -154,8 +154,12 @@ export default function MemberDetailPage() {
             <Link key={i} href={`/emprestimos/${item.loan_id}`}>
               <div className="glass-panel rounded-2xl p-5 hover:border-primary/30 transition-all group cursor-pointer h-full">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white">
-                    {item.tomador_foto}
+                  <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white overflow-hidden">
+                    {item.tomador_foto?.startsWith('data:image') || item.tomador_foto?.startsWith('http') ? (
+                      <img src={item.tomador_foto} className="w-full h-full object-cover" alt={item.tomador_nome} />
+                    ) : (
+                      item.tomador_foto
+                    )}
                   </div>
                   <div>
                     <h4 className="font-semibold text-white">Mutuário: {item.tomador_nome}</h4>

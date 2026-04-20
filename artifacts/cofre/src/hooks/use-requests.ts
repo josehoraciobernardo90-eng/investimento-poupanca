@@ -512,7 +512,8 @@ export function useApproveMembershipRequest() {
           cidade: req.cidade,
           endereco: req.endereco,
           nuit: req.nuit,
-          pin: req.pin || ""
+          pin: req.pin || "",
+          needsProfileSetup: true
         };
         
         updates[`users/${newUserId}`] = newUser;
