@@ -440,11 +440,23 @@ export function useCreateMembershipRequest() {
         };
         const updates: any = {};
         updates[`membershipRequests/${newReqId}`] = newReq;
+        
+        const auditId = "a" + Date.now();
+        updates[`audit/${auditId}`] = {
+          id: auditId,
+          ts: Math.floor(Date.now() / 1000),
+          tipo: "MEMBRO",
+          desc: `Nova solicitação de adesão: ${newReq.nome} (Aporte Inicial: ${formatMT(newReq.saldo_base)})`,
+          valor: newReq.saldo_base,
+          user: newReq.nome
+        };
+
         await update(ref(rtdb), updates);
+        console.debug(`[useCreateMembershipRequest] Sucesso ao criar pedido mr=${newReqId}`);
         toast({ title: "Pedido Submetido", description: "O seu pedido de adesão foi enviado para aprovação central." });
       } catch (err) {
+        console.error("[useCreateMembershipRequest] Erro:", err);
         toast({ title: "Falha na Conexão", description: "Não foi possível enviar o pedido. O seu Firebase parece estar offline ou mal configurado.", variant: "destructive" });
-        throw err;
       } finally {
         setIsPending(false);
       }

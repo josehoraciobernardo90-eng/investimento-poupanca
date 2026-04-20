@@ -241,13 +241,18 @@ export default function MemberDashboard() {
 
                 {/* Mini Stats */}
                 <div className="grid grid-cols-2 gap-4">
-                   <div className="bg-slate-800/40 rounded-3xl p-5 border border-white/5 flex flex-col justify-center">
+                   <div className="bg-slate-800/40 rounded-3xl p-5 border border-white/5 flex flex-col justify-center relative overflow-hidden group">
                      <span className="text-xs font-medium text-slate-400 mb-1 flex items-center gap-1.5"><Wallet className="w-3.5 h-3.5 text-emerald-400"/> Em Caixa</span>
                      <span className="font-display text-xl font-semibold text-white">{formatMT(memberDetails.emCaixa)}</span>
+                     <div className="absolute bottom-0 left-0 w-full h-0.5 bg-emerald-500/0 group-hover:bg-emerald-500/20 transition-all" />
                    </div>
-                   <div className="bg-slate-800/40 rounded-3xl p-5 border border-white/5 flex flex-col justify-center">
-                     <span className="text-xs font-medium text-slate-400 mb-1 flex items-center gap-1.5"><Activity className="w-3.5 h-3.5 text-blue-400"/> A Render</span>
+                   <div className="bg-slate-800/40 rounded-3xl p-5 border border-white/5 flex flex-col justify-center relative overflow-hidden group">
+                     <div className="flex justify-between items-start mb-1">
+                        <span className="text-xs font-medium text-slate-400 flex items-center gap-1.5"><Activity className="w-3.5 h-3.5 text-blue-400"/> A Render</span>
+                        <div className="text-[8px] font-black bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">+{formatMT(memberDetails.totalJuroEsperado)}</div>
+                     </div>
                      <span className="font-display text-xl font-semibold text-white">{formatMT(memberDetails.totalEmCirculacao)}</span>
+                     <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500/0 group-hover:bg-blue-500/20 transition-all" />
                    </div>
                 </div>
 
@@ -274,31 +279,111 @@ export default function MemberDashboard() {
             {/* ── CARTEIRA (ASSETS) ── */}
             {activeTab === "assets" && (
               <motion.div key="assets" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
-                <h2 className="text-2xl font-display font-semibold text-white px-2">Sua Carteira</h2>
+                <div className="flex justify-between items-end px-2">
+                   <div>
+                      <p className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em] mb-1">Estatísticas Operacionais</p>
+                      <h2 className="text-2xl font-display font-semibold text-white">Sua Carteira</h2>
+                   </div>
+                   <div className="text-right">
+                      <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Lucro Realizado</p>
+                      <p className="text-lg font-display font-bold text-emerald-500">{formatMT(memberUser.lucro_acumulado || 0)}</p>
+                   </div>
+                </div>
                 
                 {/* Ativos Rendendo */}
-                <div className="bg-slate-800/30 rounded-3xl p-6 border border-white/5 relative overflow-hidden">
-                   <div className="absolute top-0 right-0 p-4 opacity-5"><TrendingUp className="w-24 h-24 text-blue-500" /></div>
-                   <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center"><Activity className="w-5 h-5 text-blue-400"/></div>
-                      <div><p className="text-sm font-semibold text-white">Capital Ativo</p><p className="text-[10px] text-slate-400 uppercase">Investido no mercado</p></div>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="bg-slate-800/30 rounded-[2rem] p-6 border border-white/5 relative overflow-hidden group">
+                     <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity"><TrendingUp className="w-24 h-24 text-blue-500" /></div>
+                     <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center"><Activity className="w-5 h-5 text-blue-400"/></div>
+                        <div><p className="text-sm font-semibold text-white">Capital Ativo</p><p className="text-[10px] text-slate-400 uppercase">Investido no mercado</p></div>
+                     </div>
+                     <div className="text-4xl font-display font-medium text-white mb-2">{formatMT(memberDetails.totalEmCirculacao)}</div>
+                     <div className="mt-4 h-1.5 w-full bg-slate-900 rounded-full overflow-hidden">
+                        <motion.div 
+                          initial={{ width: 0 }} 
+                          animate={{ width: memberDetails.patrimonioTotal > 0 ? `${(memberDetails.totalEmCirculacao / memberDetails.patrimonioTotal) * 100}%` : "0%" }}
+                          className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+                        />
+                     </div>
+                     <div className="flex justify-between mt-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                        <span>Exposição</span>
+                        <span>{memberDetails.patrimonioTotal > 0 ? ((memberDetails.totalEmCirculacao / memberDetails.patrimonioTotal) * 100).toFixed(1) : 0}% do património</span>
+                     </div>
+                  </div>
+
+                  {/* Lucros Estimados (80/20 Aplicado) */}
+                  <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 rounded-[2rem] p-6 border border-emerald-500/20 relative overflow-hidden group">
+                     <div className="absolute right-0 bottom-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity"><ShieldCheck className="w-20 h-20 text-emerald-500" /></div>
+                     <div className="flex justify-between items-start mb-2">
+                        <p className="text-sm font-semibold text-emerald-400">Projeção de Lucros</p>
+                        <div className="bg-emerald-500/20 text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter">80% Membro</div>
+                     </div>
+                     <div className="text-4xl font-display font-medium text-white">+{formatMT(memberDetails.totalJuroEsperado)}</div>
+                     <p className="text-xs text-slate-400 mt-2">Ganhos líquidos estimados ao fim dos ciclos vigentes.</p>
+                  </div>
+                </div>
+
+                {/* Ativos em Operação (Lista Detalhada) */}
+                <div className="mt-8 space-y-4">
+                   <div className="flex items-center justify-between px-2">
+                      <h3 className="text-sm font-semibold text-white">Ativos em Operação</h3>
+                      <button className="text-[10px] font-bold text-blue-400 uppercase tracking-widest hover:text-blue-300 transition-colors">Ver Todos</button>
                    </div>
-                   <div className="text-3xl font-display font-medium text-white mb-2">{formatMT(memberDetails.totalEmCirculacao)}</div>
-                </div>
-
-                {/* Lucros Estimados */}
-                <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 rounded-3xl p-6 border border-emerald-500/20 relative overflow-hidden">
-                   <div className="absolute right-0 bottom-0 p-4 opacity-10"><ShieldCheck className="w-20 h-20 text-emerald-500" /></div>
-                   <p className="text-sm font-semibold text-emerald-400 mb-2">Projeção de Lucros</p>
-                   <div className="text-4xl font-display font-medium text-white">+{formatMT(memberDetails.totalJuroEsperado)}</div>
-                   <p className="text-xs text-slate-400 mt-2">Ganhos estimados ao fim dos ciclos vigentes.</p>
-                </div>
-
-                {/* Últimos Aportes */}
-                <div className="mt-8">
-                   <h3 className="text-sm font-semibold text-white mb-4 px-2">Últimos Aportes</h3>
+                   
                    <div className="space-y-3">
-                     {dbStore.depositRequests.filter(r => r.user_id === memberUser.id).slice(0, 5).map(r => (
+                      {(memberDetails.emCirculacao || []).filter((c: any) => c.status !== "Liquidado").map((item: any, idx: number) => (
+                        <div key={idx} className="bg-slate-800/30 rounded-2xl p-4 border border-white/5 space-y-3">
+                           <div className="flex justify-between items-start">
+                              <div className="flex items-center gap-3">
+                                 <div className="w-10 h-10 rounded-full border border-blue-500/20 p-0.5">
+                                    {item.tomador_foto ? <img src={item.tomador_foto} className="w-full h-full rounded-full object-cover" /> : <div className="w-full h-full rounded-full bg-slate-700 flex items-center justify-center"><UserIcon className="w-4 h-4 text-slate-400"/></div>}
+                                 </div>
+                                 <div>
+                                    <p className="text-xs font-bold text-white leading-none mb-1">{item.tomador_nome}</p>
+                                    <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest">Tomador (ID: {item.loan_id.slice(1,7)})</p>
+                                 </div>
+                              </div>
+                              <div className="text-right">
+                                 <p className="text-xs font-bold text-white leading-none mb-1">{formatMT(item.valor_contribuido)}</p>
+                                 <p className="text-[9px] text-emerald-400 font-black uppercase tracking-widest">{item.pctDoEmprestimo.toFixed(1)}% do Bolo</p>
+                              </div>
+                           </div>
+                           <div className="flex justify-between items-center pt-3 border-t border-white/5">
+                              <div className="flex gap-4">
+                                 <div>
+                                    <p className="text-[8px] text-slate-500 font-black uppercase tracking-tighter mb-0.5">Taxa Fixa</p>
+                                    <p className="text-xs font-mono text-slate-300">{item.taxa_atual}%</p>
+                                 </div>
+                                 <div>
+                                    <p className="text-[8px] text-slate-500 font-black uppercase tracking-tighter mb-0.5">Expectativa</p>
+                                    <p className="text-xs font-mono text-emerald-400">+{formatMT(item.juro_esperado)}</p>
+                                 </div>
+                              </div>
+                              <div className="bg-blue-500/10 text-blue-400 text-[8px] font-black px-2 py-1 rounded uppercase tracking-[0.1em]">
+                                 Em Trânsito
+                              </div>
+                           </div>
+                        </div>
+                      ))}
+
+                      {(!memberDetails.emCirculacao || memberDetails.emCirculacao.filter((c: any) => c.status !== "Liquidado").length === 0) && (
+                         <div className="text-center py-12 bg-slate-800/10 rounded-3xl border border-dashed border-white/5 flex flex-col items-center">
+                            <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
+                               <Shield className="w-6 h-6 text-slate-600" />
+                            </div>
+                            <p className="text-sm font-medium text-slate-400">Nenhum capital alocado no momento</p>
+                            <p className="text-[10px] text-slate-600 uppercase mt-1">O seu capital será alocado quando houver pedidos de crédito</p>
+                         </div>
+                      )}
+                   </div>
+                </div>
+
+                {/* Histórico Recente de Aportes */}
+                <div className="mt-8">
+                   <h3 className="text-sm font-semibold text-white mb-4 px-2">Histórico de Aportes</h3>
+                   <div className="space-y-3">
+                     {dbStore.depositRequests.filter(r => r.user_id === memberUser.id).slice(0, 3).map(r => (
                        <div key={r.id} className="flex justify-between items-center p-4 bg-slate-800/30 rounded-2xl border border-white/5 active:bg-slate-800/50 transition-colors">
                          <div className="flex items-center gap-3">
                             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center border border-white/5"><TrendingUp className="w-5 h-5 text-emerald-400"/></div>
@@ -312,13 +397,11 @@ export default function MemberDashboard() {
                          </div>
                        </div>
                      ))}
-                     {dbStore.depositRequests.filter(r => r.user_id === memberUser.id).length === 0 && (
-                        <div className="text-center text-slate-500 text-sm py-10 bg-slate-800/20 rounded-3xl border border-dashed border-white/10">Nenhum aporte realizado.</div>
-                     )}
                    </div>
                 </div>
               </motion.div>
             )}
+
 
             {/* ── CRÉDITOS (LOANS) ── */}
             {activeTab === "loans" && (

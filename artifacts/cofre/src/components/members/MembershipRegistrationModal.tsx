@@ -87,10 +87,13 @@ export function MembershipRegistrationModal({ isOpen, onClose }: { isOpen: boole
         }
       });
 
+      // Sucesso na nuvem: Transição Profissional
       setIsSubmitted(true);
-      setTimeout(() => {
+      
+      // Timer tático para fechar e limpar
+      const timerClose = setTimeout(() => {
         onClose();
-        setTimeout(() => {
+        const timerReset = setTimeout(() => {
           setStep(1);
           setIsSubmitted(false);
           setFormData({ 
@@ -98,9 +101,12 @@ export function MembershipRegistrationModal({ isOpen, onClose }: { isOpen: boole
             nuit: "", saldo_base: "1000", pin: "", confirmPin: "" 
           });
         }, 500);
+        return () => clearTimeout(timerReset);
       }, 3000);
-    } catch {
-       // O erro já é tratado pelo hook/toast
+      
+      return () => clearTimeout(timerClose);
+    } catch (err) {
+       console.error("[MembershipModal] Erro no fluxo de submissão:", err);
     }
   };
 
