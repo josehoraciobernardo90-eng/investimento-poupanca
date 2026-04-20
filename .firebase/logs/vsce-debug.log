@@ -1857,3 +1857,60 @@ Generated sources: .guides/setup.md [584B] index.d.ts [8350B] esm\index.esm.js [
  {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0419 18:10:23.889903   21744 load.go:109] Finished reloading\n"}}
 [debug] [2026-04-19T16:10:25.012Z] I0419 18:10:25.011742   21744 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:50001
  {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0419 18:10:25.011742   21744 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:50001\n"}}
+[info] [Firebase Plugin] Stopping SQL Connect toolkit
+[debug] [2026-04-20T07:10:31.023Z] [Firebase Plugin] Activating Firebase extension.
+[debug] [2026-04-20T07:11:01.603Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2026-04-20T07:11:01.610Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-20T07:11:01.615Z] > authorizing via signed-in user (josehoraciobernardo90@gmail.com)
+[debug] [2026-04-20T07:11:01.649Z] Checked if tokens are valid: false, expires at: 1776618555218
+[debug] [2026-04-20T07:11:01.651Z] Checked if tokens are valid: false, expires at: 1776618555218
+[debug] [2026-04-20T07:11:01.652Z] > refreshing access token with scopes: []
+[debug] [2026-04-20T07:11:01.658Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-04-20T07:11:01.660Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-04-20T07:11:01.713Z] [Firebase Plugin] VSCode notification server listening on port 40001
+[debug] [2026-04-20T07:11:47.055Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-04-20T07:11:47.057Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-04-20T07:11:47.086Z] [Firebase Plugin] User found:  josehoraciobernardo90@gmail.com
+[info] [Firebase Plugin] (Core:Project) New user detected, fetching projects
+[debug] [2026-04-20T07:11:47.092Z] Checked if tokens are valid: true, expires at: 1776672706057
+[debug] [2026-04-20T07:11:47.101Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[info] [Firebase Plugin] Starting SQL Connect toolkit (version 3.4.5) on port 50001
+[debug] [2026-04-20T07:11:58.071Z] I0420 09:11:57.870206   21948 control.go:100] [projects/emulator/locations/emulator/services/investimentopoupanca 7fac] UpdateResources(): done
+Main schema: sources: schema\schema.gql [2044B] 
+Connector "example": sources: example\mutations.gql [1276B] example\queries.gql [1879B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0420 09:11:57.870206   21948 control.go:100] [projects/emulator/locations/emulator/services/investimentopoupanca 7fac] UpdateResources(): done\nMain schema: sources: schema\\schema.gql [2044B] \nConnector \"example\": sources: example\\mutations.gql [1276B] example\\queries.gql [1879B] \n"}}
+[debug] [2026-04-20T07:11:58.074Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"dataconnect"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2026-04-20T07:11:58.074Z] Ignoring unsupported arg: port {"metadata":{"emulator":{"name":"dataconnect"},"message":"Ignoring unsupported arg: port"}}
+[debug] [2026-04-20T07:11:58.075Z] Starting SQL Connect Emulator with command {"binary":"C:\\Users\\DELL\\.cache\\firebase\\emulators\\dataconnect-emulator-3.4.5.exe","args":["--logtostderr","-v=2","dev","--listen=localhost:50001","--config_dir=c:\\Users\\DELL\\investimento-poupanca\\dataconnect","--enable_output_schema_extensions=true","--enable_output_generated_sdk=true"],"optionalArgs":["listen","config_dir","enable_output_schema_extensions","enable_output_generated_sdk"],"joinArgs":true,"shell":false,"port":9399} {"metadata":{"emulator":{"name":"dataconnect"},"message":"Starting SQL Connect Emulator with command {\"binary\":\"C:\\\\Users\\\\DELL\\\\.cache\\\\firebase\\\\emulators\\\\dataconnect-emulator-3.4.5.exe\",\"args\":[\"--logtostderr\",\"-v=2\",\"dev\",\"--listen=localhost:50001\",\"--config_dir=c:\\\\Users\\\\DELL\\\\investimento-poupanca\\\\dataconnect\",\"--enable_output_schema_extensions=true\",\"--enable_output_generated_sdk=true\"],\"optionalArgs\":[\"listen\",\"config_dir\",\"enable_output_schema_extensions\",\"enable_output_generated_sdk\"],\"joinArgs\":true,\"shell\":false,\"port\":9399}"}}
+[info] i  dataconnect: SQL Connect Emulator logging to dataconnect-debug.log {"metadata":{"emulator":{"name":"dataconnect"},"message":"SQL Connect Emulator logging to \u001b[1mdataconnect-debug.log\u001b[22m"}}
+[debug] [2026-04-20T07:11:59.506Z] I0420 09:11:58.529902   41112 load.go:31] Reloading schema and connectors...
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0420 09:11:58.529902   41112 load.go:31] Reloading schema and connectors...\n"}}
+[debug] [2026-04-20T07:11:59.643Z] I0420 09:11:59.549248   41112 control.go:100] [projects/emulator/locations/emulator/services/investimentopoupanca 765d] UpdateResources(): done
+Main schema: sources: schema\schema.gql [2044B] 
+Connector "example": sources: example\mutations.gql [1276B] example\queries.gql [1879B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0420 09:11:59.549248   41112 control.go:100] [projects/emulator/locations/emulator/services/investimentopoupanca 765d] UpdateResources(): done\nMain schema: sources: schema\\schema.gql [2044B] \nConnector \"example\": sources: example\\mutations.gql [1276B] example\\queries.gql [1879B] \n"}}
+[debug] [2026-04-20T07:12:00.694Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2026-04-20T07:12:00.695Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[debug] [2026-04-20T07:12:01.128Z] I0420 09:12:01.121632   41112 codegen.go:101] [connector "example" javascriptSdk] Generating sources into "c:\\Users\\DELL\\investimento-poupanca\\src\\dataconnect-generated"
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0420 09:12:01.121632   41112 codegen.go:101] [connector \"example\" javascriptSdk] Generating sources into \"c:\\\\Users\\\\DELL\\\\investimento-poupanca\\\\src\\\\dataconnect-generated\"\n"}}
+[debug] [2026-04-20T07:12:02.939Z] I0420 09:12:02.941409   41112 codegen.go:101] [connector "example" javascriptSdk] Generating sources into "c:\\Users\\DELL\\investimento-poupanca\\lib\\db\\src\\dataconnect-generated"
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0420 09:12:02.941409   41112 codegen.go:101] [connector \"example\" javascriptSdk] Generating sources into \"c:\\\\Users\\\\DELL\\\\investimento-poupanca\\\\lib\\\\db\\\\src\\\\dataconnect-generated\"\n"}}
+[debug] [2026-04-20T07:12:03.653Z] I0420 09:12:03.657245   41112 collector.go:107] schema extensions wrote into "c:\\Users\\DELL\\investimento-poupanca\\dataconnect\\.dataconnect\\schema"
+Generated sources: main\mutation.gql [13679B] prelude.gql [82799B] main\implicit.gql [1261B] main\input.gql [28927B] main\relation.gql [14318B] main\query.gql [5099B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0420 09:12:03.657245   41112 collector.go:107] schema extensions wrote into \"c:\\\\Users\\\\DELL\\\\investimento-poupanca\\\\dataconnect\\\\.dataconnect\\\\schema\"\nGenerated sources: main\\mutation.gql [13679B] prelude.gql [82799B] main\\implicit.gql [1261B] main\\input.gql [28927B] main\\relation.gql [14318B] main\\query.gql [5099B] \n"}}
+[debug] [2026-04-20T07:12:03.918Z] I0420 09:12:03.922043   41112 collector.go:107] connector "example" javascriptSdk wrote into "c:\\Users\\DELL\\investimento-poupanca\\src\\dataconnect-generated"
+Generated sources: index.d.ts [8350B] esm\index.esm.js [5145B] index.cjs.js [5645B] README.md [41108B] .guides/usage.md [1705B] .guides/config.json [236B] esm\package.json [17B] package.json [615B] .guides/setup.md [584B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0420 09:12:03.922043   41112 collector.go:107] connector \"example\" javascriptSdk wrote into \"c:\\\\Users\\\\DELL\\\\investimento-poupanca\\\\src\\\\dataconnect-generated\"\nGenerated sources: index.d.ts [8350B] esm\\index.esm.js [5145B] index.cjs.js [5645B] README.md [41108B] .guides/usage.md [1705B] .guides/config.json [236B] esm\\package.json [17B] package.json [615B] .guides/setup.md [584B] \n"}}
+[debug] [2026-04-20T07:12:05.367Z] I0420 09:12:05.371735   41112 installsdk.go:86] Running command: C:\Users\DELL\AppData\Roaming\npm\pnpm.cmd link src\dataconnect-generated
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0420 09:12:05.371735   41112 installsdk.go:86] Running command: C:\\Users\\DELL\\AppData\\Roaming\\npm\\pnpm.cmd link src\\dataconnect-generated\n"}}
+[debug] [2026-04-20T07:12:17.369Z] I0420 09:12:17.373494   41112 collector.go:107] connector "example" javascriptSdk wrote into "c:\\Users\\DELL\\investimento-poupanca\\lib\\db\\src\\dataconnect-generated"
+Generated sources: .guides/config.json [236B] index.d.ts [8350B] index.cjs.js [5645B] package.json [615B] esm\index.esm.js [5145B] esm\package.json [17B] README.md [41108B] .guides/usage.md [1705B] .guides/setup.md [584B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0420 09:12:17.373494   41112 collector.go:107] connector \"example\" javascriptSdk wrote into \"c:\\\\Users\\\\DELL\\\\investimento-poupanca\\\\lib\\\\db\\\\src\\\\dataconnect-generated\"\nGenerated sources: .guides/config.json [236B] index.d.ts [8350B] index.cjs.js [5645B] package.json [615B] esm\\index.esm.js [5145B] esm\\package.json [17B] README.md [41108B] .guides/usage.md [1705B] .guides/setup.md [584B] \n"}}
+[debug] [2026-04-20T07:12:17.387Z] I0420 09:12:17.392017   41112 installsdk.go:86] Running command: C:\Program Files\nodejs\npm.cmd install file:src\dataconnect-generated
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0420 09:12:17.392017   41112 installsdk.go:86] Running command: C:\\Program Files\\nodejs\\npm.cmd install file:src\\dataconnect-generated\n"}}
+[debug] [2026-04-20T07:12:29.119Z] E0420 09:12:29.122621   41112 installsdk.go:88] Failed to install package: exit status 1
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"E0420 09:12:29.122621   41112 installsdk.go:88] Failed to install package: exit status 1\n"}}
+[debug] [2026-04-20T07:12:29.121Z] I0420 09:12:29.122621   41112 load.go:109] Finished reloading
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0420 09:12:29.122621   41112 load.go:109] Finished reloading\n"}}
+[debug] [2026-04-20T07:12:29.272Z] I0420 09:12:29.276742   41112 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:50001
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0420 09:12:29.276742   41112 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:50001\n"}}
