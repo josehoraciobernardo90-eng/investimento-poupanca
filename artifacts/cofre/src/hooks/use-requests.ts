@@ -964,6 +964,7 @@ export function useCreateLiquidationRequest() {
       } catch (err: any) {
         console.error(err);
         toast({ title: "Erro na Solicitação", description: "Não foi possível criar o pedido de liquidação.", variant: "destructive" });
+        return false;
       } finally {
         setIsPending(false);
       }

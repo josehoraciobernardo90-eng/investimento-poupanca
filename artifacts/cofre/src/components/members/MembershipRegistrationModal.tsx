@@ -91,9 +91,9 @@ export function MembershipRegistrationModal({ isOpen, onClose }: { isOpen: boole
       setIsSubmitted(true);
       
       // Timer tático para fechar e limpar
-      const timerClose = setTimeout(() => {
+      setTimeout(() => {
         onClose();
-        const timerReset = setTimeout(() => {
+        setTimeout(() => {
           setStep(1);
           setIsSubmitted(false);
           setFormData({ 
@@ -101,10 +101,8 @@ export function MembershipRegistrationModal({ isOpen, onClose }: { isOpen: boole
             nuit: "", saldo_base: "1000", pin: "", confirmPin: "" 
           });
         }, 500);
-        return () => clearTimeout(timerReset);
       }, 3000);
-      
-      return () => clearTimeout(timerClose);
+
     } catch (err) {
        console.error("[MembershipModal] Erro no fluxo de submissão:", err);
     }
