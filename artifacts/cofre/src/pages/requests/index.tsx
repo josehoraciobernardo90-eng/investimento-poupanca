@@ -62,6 +62,7 @@ export default function RequestsPage() {
   const [userId, setUserId] = useState("");
   const [valor, setValor] = useState("");
   const [motivo, setMotivo] = useState("");
+  const [indicadorId, setIndicadorId] = useState("");
 
   const createDelReqMut = useCreateDeletionRequest();
   const [confirmDelete, setConfirmDelete] = useState<{ req: AnyRequest; type: "loan" | "deposit" | "membership" | "liquidation" } | null>(null);
@@ -100,13 +101,13 @@ export default function RequestsPage() {
     if (!userId || val <= 0) return;
     try {
       if (createType === "loan") {
-        await createLoanMut.mutateAsync({ data: { user_id: userId, valor: val, motivo } });
+        await createLoanMut.mutateAsync({ data: { user_id: userId, valor: val, motivo, indicador_id: indicadorId } });
       } else {
         await createDepMut.mutateAsync({ data: { user_id: userId, valor: val } });
       }
       setTimeout(() => {
         setCreateType(null);
-        setUserId(""); setValor(""); setMotivo("");
+        setUserId(""); setValor(""); setMotivo(""); setIndicadorId("");
       }, 100);
     } catch {}
   };
@@ -164,9 +165,9 @@ export default function RequestsPage() {
         <div>
           <div className="flex items-center gap-2 mb-2">
             <ShieldCheck className="w-3.5 h-3.5" style={{ color: 'hsl(160 84% 44%)' }} />
-            <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(16,185,129,0.6)' }}>Gestão Fiduciária · Chimoio</span>
+            <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(16,185,129,0.6)' }}>Gestão das Contas · Chimoio</span>
           </div>
-          <h1 className="font-display text-3xl font-bold text-white">Solicitações</h1>
+          <h1 className="font-display text-3xl font-bold text-white">Pedidos dos Membros</h1>
           <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Pedidos pendentes de aprovação e histórico de movimentações.</p>
         </div>
         <div className="flex gap-2">
@@ -258,7 +259,7 @@ export default function RequestsPage() {
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold transition-all"
                   style={{ background: 'rgba(16,185,129,0.08)', color: 'rgba(16,185,129,0.8)', border: '1px solid rgba(16,185,129,0.15)' }}
                 >
-                  <Check className="w-3.5 h-3.5" /> Aprovar
+                  <Check className="w-3.5 h-3.5" /> Aceitar
                 </button>
                 <button
                   onClick={() => setConfirmReject({ req: req as AnyRequest, type: tab === "memberships" ? "membership" : tab === "loans" ? "loan" : tab === "profileEdits" ? "profileEdit" : tab === "liquidations" ? "liquidation" : "deposit" })}
@@ -266,7 +267,7 @@ export default function RequestsPage() {
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold transition-all"
                   style={{ background: 'rgba(239,68,68,0.06)', color: 'rgba(239,68,68,0.7)', border: '1px solid rgba(239,68,68,0.12)' }}
                 >
-                  <X className="w-3.5 h-3.5" /> Rejeitar
+                  <X className="w-3.5 h-3.5" /> Recusar
                 </button>
               </div>
             </motion.div>
@@ -421,7 +422,23 @@ export default function RequestsPage() {
           <form onSubmit={handleCreate} className="space-y-6">
             <div><label className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-2 block px-1">Membro Titular</label><select required value={userId} onChange={e => setUserId(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary transition-all appearance-none"><option value="" className="bg-black">Seleccionar Membro...</option>{users?.filter(u => u.status === 'Ativo').map(u => (<option key={u.id} value={u.id} className="bg-black">{u.nome}</option>))}</select></div>
             <div><label className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-2 block px-1">Valor Unitário (MT)</label><input required value={valor} onChange={e => setValor(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-2xl font-black text-white focus:outline-none focus:border-primary text-center italic tracking-tighter" placeholder="0.00" /></div>
-            {createType === "loan" && (<div><label className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-2 block px-1">Justificativa de Crédito</label><textarea value={motivo} onChange={e => setMotivo(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary min-h-[100px] resize-none" placeholder="Ex: Investimento em gado" /></div>)}
+            {createType === "loan" && (
+              <>
+                <div>
+                  <label className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-2 block px-1">Membro Indicador (Ganha 20%)</label>
+                  <select value={indicadorId} onChange={e => setIndicadorId(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary transition-all appearance-none">
+                    <option value="" className="bg-black text-white/40 italic text-[10px]">Sem indicador (Opcional)</option>
+                    {users?.filter(u => u.status === 'Ativo').map(u => (
+                      <option key={`ind-${u.id}`} value={u.id} className="bg-black">{u.nome}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-2 block px-1">Justificativa de Crédito</label>
+                  <textarea value={motivo} onChange={e => setMotivo(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary min-h-[100px] resize-none" placeholder="Ex: Investimento em gado" />
+                </div>
+              </>
+            )}
             <button disabled={createLoanMut.isPending || createDepMut.isPending} className="w-full bg-white text-black py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3">{(createLoanMut.isPending || createDepMut.isPending) ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Check className="w-5 h-5" /> Confirmar Lançamento</>}</button>
           </form>
         </DialogContent>

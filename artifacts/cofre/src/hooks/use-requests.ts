@@ -26,7 +26,7 @@ export function useCreateLoanRequest() {
   const { toast } = useToast();
   return {
     isPending,
-    mutateAsync: async ({ data }: { data: { user_id: string; valor: number; motivo: string } }) => {
+    mutateAsync: async ({ data }: { data: { user_id: string; valor: number; motivo: string; indicador_id?: string } }) => {
       setIsPending(true);
       try {
         const userDetail = dbStore.userDetails[data.user_id];
@@ -54,6 +54,7 @@ export function useCreateLoanRequest() {
           user_foto: userDetail.user.foto || "??",
           valor: data.valor,
           motivo: data.motivo,
+          indicador_id: data.indicador_id || "",
           ts: Math.floor(Date.now() / 1000),
           status: "Pendente" as const
         };
@@ -177,6 +178,7 @@ export function useApproveLoanRequest() {
           taxa_atual: 10,
           status: "Ativo",
           valor_pago: 0,
+          indicador_id: (req as any).indicador_id || "",
           dias: 0,
           juro_total: req.valor * 0.1,
           total_devido: req.valor * 1.1,
@@ -683,7 +685,6 @@ export function useCreateDeletionRequest() {
     }
   };
 }
-
 export function useApproveDeletionRequest() {
   const [isPending, setIsPending] = useState(false);
   const { toast } = useToast();
@@ -696,23 +697,46 @@ export function useApproveDeletionRequest() {
         if (!delReq) return;
 
         const updates: any = {};
-        // Delete original request
         const path = delReq.target_type === "membership" ? "membershipRequests" : 
                      delReq.target_type === "loan" ? "loanRequests" : "depositRequests";
+        
+        // Buscar o registro original para saber se estava aprovado
+        const originalList = delReq.target_type === "membership" ? dbStore.membershipRequests :
+                             delReq.target_type === "loan" ? dbStore.loanRequests : dbStore.depositRequests;
+        const originalItem: any = originalList.find(i => i.id === delReq.target_id);
+
+        if (originalItem && originalItem.status === "Aprovado") {
+            // Se for um aporte, estornamos o valor líquido que entrou na conta
+            const valorParaEstornar = delReq.target_type === "deposit" ? (originalItem.valor_liquido || originalItem.valor) : 0;
+            
+            if (valorParaEstornar > 0) {
+                const u = dbStore.userDetails[delReq.user_id];
+                if (u) {
+                    const novaCaixa = Math.max(0, u.emCaixa - valorParaEstornar);
+                    updates[`userDetails/${delReq.user_id}/emCaixa`] = novaCaixa;
+                    updates[`users/${delReq.user_id}/saldo_base`] = novaCaixa;
+                    updates[`userDetails/${delReq.user_id}/patrimonioTotal`] = novaCaixa + (u.totalEmCirculacao || 0) + (u.totalJuroEsperado || 0);
+                    
+                    updates[`dashboard/caixa`] = Math.max(0, dbStore.dashboard.caixa - valorParaEstornar);
+                    updates[`dashboard/total`] = Math.max(0, dbStore.dashboard.total - valorParaEstornar);
+                }
+            }
+        }
+
         updates[`${path}/${delReq.target_id}`] = null;
-        // Delete deletion request
         updates[`deletionRequests/${requestId}`] = null;
 
         const auditId = "a" + Date.now();
         updates[`audit/${auditId}`] = {
           id: auditId, ts: Math.floor(Date.now() / 1000), tipo: "EXCLUSAO", 
-          desc: `Exclusão confirmada pelo membro ${delReq.user_nome}. Registro removido do histórico.`, 
+          desc: `Exclusão e ESTORNO confirmados pelo membro ${delReq.user_nome}. Saldo recalibrado automaticamente.`, 
           valor: delReq.details.valor || 0, user: delReq.user_nome
         };
 
         await update(ref(rtdb), updates);
-        toast({ title: "Exclusão concluída", description: "O registro foi removido permanentemente." });
-      } catch {
+        toast({ title: "Exclusão e Estorno concluídos", description: "O registro foi removido e o saldo ajustado." });
+      } catch (err) {
+        console.error(err);
         toast({ title: "Erro", description: "Não foi possível processar a exclusão.", variant: "destructive" });
       } finally {
         setIsPending(false);
@@ -999,7 +1023,7 @@ export function useApproveLiquidationRequest() {
         const juroMutuario = juros * 0.2;
         const juroInvestidores = juros * 0.8;
 
-        // 1. Distribuir para Investidores
+        // 1. Distribuir para Investidores (80% do Juro)
         const updatedTraces = [...detail.traces];
         updatedTraces.forEach((trace: any) => {
           const juroGanho = juroInvestidores * (trace.pctReal / 100);
@@ -1034,16 +1058,45 @@ export function useApproveLiquidationRequest() {
           }
         });
 
-        // 2. Atualizar Comissão do Produtor (20%)
-        const juroProdutor = juros * 0.2;
-        const comissaoId = "com" + Date.now();
-        const comissaoAtual = (dbStore as any).adminComissao || { total: 0, registros: [] };
-        updates[`adminComissao/total`] = (comissaoAtual.total || 0) + juroProdutor;
-        updates[`adminComissao/registros/${comissaoId}`] = {
-             id: comissaoId, ts: Math.floor(Date.now() / 1000),
-             origem: `Receita Direta Produtor (Aprov. Manual #${loanId.slice(0,6)})`,
-             valor: juroProdutor, loan_id: loanId
-        };
+        // 2. Atualizar Comissão de Indicação (20% do Juro)
+        const juroIndicador = juros * 0.2;
+        // Se não houver indicador explícito, mas o membro usou 100% do seu próprio dinheiro, os 20% vão para ele.
+        let indicadorId = (detail as any).loan.indicador_id;
+        
+        // Lógica de Autossuficiência: Se o membro foi o único investidor, ele ganha os 20% também.
+        const isSelfFunded = updatedTraces.length === 1 && updatedTraces[0].owner_id === (detail as any).loan.user_id;
+        if (!indicadorId && isSelfFunded) {
+          indicadorId = (detail as any).loan.user_id;
+        }
+        
+        if (indicadorId) {
+           const indUser = dbStore.userDetails[indicadorId];
+           if (indUser) {
+             const novaCaixaInd = (updates[`userDetails/${indicadorId}/emCaixa`] || indUser.emCaixa) + juroIndicador;
+             updates[`userDetails/${indicadorId}/emCaixa`] = novaCaixaInd;
+             updates[`users/${indicadorId}/saldo_base`] = novaCaixaInd;
+             
+             const baseInd = dbStore.users.find(u => u.id === indicadorId);
+             if (baseInd) {
+               updates[`users/${indicadorId}/lucro_acumulado`] = (updates[`users/${indicadorId}/lucro_acumulado`] || baseInd.lucro_acumulado || 0) + juroIndicador;
+             }
+
+             // Notificação Explicita
+             const nId = "ntf" + Date.now();
+             const isBorrower = indicadorId === (detail as any).loan.user_id;
+             updates[`notifications/${nId}`] = {
+               id: nId, user_id: indicadorId, ts: Math.floor(Date.now() / 1000),
+               tipo: "LUCRO", 
+               titulo: isBorrower && isSelfFunded ? "Autofinanciamento Concluído! 🏆" : "Comissão de Indicação! 💸",
+               mensagem: isBorrower && isSelfFunded 
+                 ? `Como você usou seu próprio capital, 100% dos juros (${formatMT(juros)}) retornaram para você!`
+                 : `Você recebeu ${formatMT(juroIndicador)} pela indicação deste contrato liquidado.`,
+               lida: false
+             };
+           }
+        }
+        
+        // Admin não recebe mais percentagem sobre juros
 
         // 3. Atualizar Estado do Empréstimo e Dashboard
         updates[`liquidationRequests/${requestId}/status`] = "Aprovado";
@@ -1053,7 +1106,7 @@ export function useApproveLiquidationRequest() {
         updates[`loanDetails/${loanId}/loan/valor_pago`] = totalPago;
         updates[`loanDetails/${loanId}/traces`] = updatedTraces;
 
-        updates[`dashboard/caixa`] = dbStore.dashboard.caixa + totalPago - juroProdutor;
+        updates[`dashboard/caixa`] = dbStore.dashboard.caixa + totalPago;
         updates[`dashboard/naRua`] = Math.max(0, dbStore.dashboard.naRua - base);
         updates[`dashboard/lucros`] = dbStore.dashboard.lucros + juros;
         updates[`dashboard/emprestimos_ativos`] = Math.max(0, dbStore.dashboard.emprestimos_ativos - 1);

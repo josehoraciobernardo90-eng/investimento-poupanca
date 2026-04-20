@@ -131,8 +131,8 @@ export function MembershipRegistrationModal({ isOpen, onClose }: { isOpen: boole
             {/* Cabeçalho Profissional */}
             <div className="p-8 pb-6 flex justify-between items-center bg-white/5 border-b border-white/5">
               <div>
-                <h2 className="text-2xl font-black text-white italic tracking-tighter uppercase">Ficha de Adesão</h2>
-                <p className="text-[10px] text-primary font-black uppercase tracking-[0.3em] mt-1">Protocolo de Segurança Ativo • Chimoio</p>
+                <h2 className="text-2xl font-black text-white italic tracking-tighter uppercase">Criar Minha Conta</h2>
+                <p className="text-[10px] text-primary font-black uppercase tracking-[0.3em] mt-1">Portal Seguro • Chimoio</p>
               </div>
               <button onClick={onClose} className="text-white/40 hover:text-white bg-white/5 rounded-full p-2.5 transition-colors">
                 <X className="w-5 h-5" />
@@ -155,10 +155,10 @@ export function MembershipRegistrationModal({ isOpen, onClose }: { isOpen: boole
                 ))}
               </div>
               <div className="flex justify-between mt-4 text-[8px] font-black uppercase tracking-[0.2em] text-white/40 px-1">
-                <span className={step >= 1 ? "text-primary" : ""}>Dados Pessoais</span>
-                <span className={step >= 2 ? "text-primary" : ""}>Localização</span>
-                <span className={step >= 3 ? "text-primary" : ""}>Capital Inicial</span>
-                <span className={step >= 4 ? "text-primary" : ""}>Segurança PIN</span>
+                <span className={step >= 1 ? "text-primary" : ""}>Quem é Você</span>
+                <span className={step >= 2 ? "text-primary" : ""}>Onde Vive</span>
+                <span className={step >= 3 ? "text-primary" : ""}>Quanto vai Guardar</span>
+                <span className={step >= 4 ? "text-primary" : ""}>Senha Digital</span>
               </div>
             </div>
 
@@ -174,11 +174,11 @@ export function MembershipRegistrationModal({ isOpen, onClose }: { isOpen: boole
                     <CheckCircle2 className="w-12 h-12" />
                   </div>
                   <div>
-                    <h3 className="text-3xl font-black text-white italic tracking-tighter uppercase">Pedido Enviado</h3>
+                    <h3 className="text-3xl font-black text-white italic tracking-tighter uppercase">Tudo Pronto!</h3>
                     <p className="text-xs text-white/40 max-w-xs mx-auto mt-3 leading-relaxed uppercase font-black">
-                      O seu registo está na nuvem aguardando aprovação fiduciária do Administrador.
+                      O seu pedido foi enviado. Agora o patrão do Cofre vai validar a sua conta.
                       <br/><br/>
-                      <span className="text-primary tracking-widest">NÃO FAÇA LOGIN AINDA!</span> Aguarde confirmação.
+                      <span className="text-primary tracking-widest">AGUARDE UM POUCO!</span> Não tente entrar agora, espere a confirmação.
                     </p>
                   </div>
                 </motion.div>
@@ -223,12 +223,12 @@ export function MembershipRegistrationModal({ isOpen, onClose }: { isOpen: boole
                         <input required name="nuit" maxLength={9} value={formData.nuit} onChange={handleChange} className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-sm font-bold text-white focus:outline-none focus:border-primary/40 text-center tracking-widest" placeholder="400111222" />
                       </div>
                       <div className="bg-primary/5 border border-primary/20 rounded-[2rem] p-8 text-center">
-                        <label className="block text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-4">Capital para Iniciar (MT)</label>
+                        <label className="block text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-4">Dinheiro para começar (MT)</label>
                         <div className="relative max-w-[240px] mx-auto">
                           <input required type="number" step="0.01" name="saldo_base" value={formData.saldo_base} onChange={handleChange} className="w-full bg-black/40 border-b-2 border-primary/40 rounded-none px-4 py-3 text-4xl font-black text-white focus:outline-none focus:border-primary text-center" placeholder="1000" />
                         </div>
                         <p className="text-[10px] text-primary/40 mt-6 font-bold leading-relaxed italic">
-                          O valor deve estar disponível para depósito imediato após a aprovação da sua conta.
+                          Tenha este valor pronto para depositar assim que a conta for aberta.
                         </p>
                       </div>
                     </div>
@@ -239,7 +239,7 @@ export function MembershipRegistrationModal({ isOpen, onClose }: { isOpen: boole
                       <div className="bg-secondary/5 border border-secondary/20 p-5 rounded-2xl flex items-start gap-4">
                          <ShieldAlert className="w-6 h-6 text-secondary flex-shrink-0" />
                          <p className="text-[10px] text-white/60 leading-relaxed font-bold uppercase tracking-wider">
-                            Defina um PIN de <b>6 dígitos numéricos</b>. Este será o seu código de acesso exclusivo ao Cofre. Não use datas de nascimento.
+                            Crie um código de <b>6 números</b>. Esta será a sua chave secreta para entrar no Cofre. Não use datas de nascimento.
                          </p>
                       </div>
                       

@@ -219,59 +219,92 @@ export default function MemberDashboard() {
                    </div>
                 )}
                 
-                {/* Hero Balance Card */}
-                <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-[2rem] p-6 shadow-2xl shadow-blue-900/40 text-white relative overflow-hidden">
-                   <div className="absolute top-0 right-0 opacity-10 transform translate-x-4 -translate-y-4"><ShieldCheck className="w-40 h-40"/></div>
-                   <p className="text-sm text-blue-100/80 font-medium mb-1">Património Total</p>
-                   <h2 className="text-4xl md:text-5xl font-display font-semibold tracking-tight mb-8">
-                     {formatMT(memberDetails.patrimonioTotal)}
-                   </h2>
+                {/* ── HERO BALANCE: PATRIMÓNIO ABSOLUTO ── */}
+                <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 relative overflow-hidden group">
+                   <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-700"><ShieldCheck className="w-48 h-48 text-white"/></div>
+                   <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px]" />
                    
-                   <div className="flex gap-4 relative z-10">
-                      <button onClick={() => setIsDepositOpen(true)} className="flex-1 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl py-3.5 flex flex-col items-center gap-2 transition-all active:scale-95 border border-white/10">
-                          <div className="bg-white/20 p-2 rounded-full"><ArrowDownRight className="w-5 h-5" /></div>
-                          <span className="text-xs font-semibold tracking-wide">Aportar</span>
-                      </button>
-                      <button onClick={() => setIsLoanOpen(true)} className="flex-1 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-2xl py-3.5 flex flex-col items-center gap-2 transition-all active:scale-95 border border-white/10">
-                          <div className="bg-white/20 p-2 rounded-full"><ArrowUpRight className="w-5 h-5" /></div>
-                          <span className="text-xs font-semibold tracking-wide">Crédito</span>
-                      </button>
+                   <div className="relative z-10">
+                      <div className="flex items-center gap-2 mb-4">
+                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                         <span className="text-[10px] font-black text-blue-300 uppercase tracking-[0.3em]">Património Total Calculado</span>
+                      </div>
+                      <div className="font-display text-5xl font-black text-white tracking-tighter italic mb-2">
+                        {formatMT(memberDetails.emCaixa + memberDetails.totalEmCirculacao + (memberUser.lucro_acumulado || 0) + memberDetails.totalJuroEsperado)}
+                      </div>
+                      <p className="text-xs text-blue-200/50 font-medium uppercase tracking-widest mb-8">Valor total com Juros Inclusos</p>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                         <button onClick={() => setIsDepositOpen(true)} className="bg-white text-black rounded-2xl py-4 flex items-center justify-center gap-3 font-black text-[10px] uppercase tracking-widest hover:bg-blue-400 transition-all active:scale-95 shadow-xl">
+                            <ArrowDownRight className="w-4 h-4" /> Aportar
+                         </button>
+                         <button onClick={() => setIsLoanOpen(true)} className="bg-white/10 border border-white/10 backdrop-blur-md text-white rounded-2xl py-4 flex items-center justify-center gap-3 font-black text-[10px] uppercase tracking-widest hover:bg-white/20 transition-all active:scale-95">
+                            <ArrowUpRight className="w-4 h-4" /> Crédito
+                         </button>
+                      </div>
                    </div>
                 </div>
 
-                {/* Mini Stats */}
-                <div className="grid grid-cols-2 gap-4">
-                   <div className="bg-slate-800/40 rounded-3xl p-5 border border-white/5 flex flex-col justify-center relative overflow-hidden group">
-                     <span className="text-xs font-medium text-slate-400 mb-1 flex items-center gap-1.5"><Wallet className="w-3.5 h-3.5 text-emerald-400"/> Em Caixa</span>
-                     <span className="font-display text-xl font-semibold text-white">{formatMT(memberDetails.emCaixa)}</span>
-                     <div className="absolute bottom-0 left-0 w-full h-0.5 bg-emerald-500/0 group-hover:bg-emerald-500/20 transition-all" />
+                {/* ── MÉTRICAS INDIVIDUAIS (TECNOLOGIA DE PONTA) ── */}
+                <div className="grid grid-cols-1 gap-4">
+                   <div className="bg-slate-900/40 rounded-3xl p-6 border border-white/5 relative overflow-hidden group">
+                      <div className="flex justify-between items-start mb-6">
+                         <div>
+                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Meus Juros Totais</h3>
+                            <p className="text-2xl font-black text-emerald-400 italic">+{formatMT((memberUser.lucro_acumulado || 0) + memberDetails.totalJuroEsperado)}</p>
+                         </div>
+                         <div className="bg-emerald-500/10 p-3 rounded-2xl"><TrendingUp className="w-6 h-6 text-emerald-400"/></div>
+                      </div>
+                      <div className="flex gap-6 border-t border-white/5 pt-4">
+                         <div>
+                            <p className="text-[8px] font-black text-slate-500 uppercase mb-1">Já Ganhei</p>
+                            <p className="text-sm font-bold text-white">{formatMT(memberUser.lucro_acumulado || 0)}</p>
+                         </div>
+                         <div>
+                            <p className="text-[8px] font-black text-slate-500 uppercase mb-1">A Receber</p>
+                            <p className="text-sm font-bold text-blue-400">{formatMT(memberDetails.totalJuroEsperado)}</p>
+                         </div>
+                      </div>
                    </div>
-                   <div className="bg-slate-800/40 rounded-3xl p-5 border border-white/5 flex flex-col justify-center relative overflow-hidden group">
-                     <div className="flex justify-between items-start mb-1">
-                        <span className="text-xs font-medium text-slate-400 flex items-center gap-1.5"><Activity className="w-3.5 h-3.5 text-blue-400"/> A Render</span>
-                        <div className="text-[8px] font-black bg-blue-500/10 text-blue-400 px-1.5 py-0.5 rounded-full uppercase tracking-tighter">+{formatMT(memberDetails.totalJuroEsperado)}</div>
-                     </div>
-                     <span className="font-display text-xl font-semibold text-white">{formatMT(memberDetails.totalEmCirculacao)}</span>
-                     <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500/0 group-hover:bg-blue-500/20 transition-all" />
+
+                   <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-slate-900/40 rounded-3xl p-5 border border-white/5">
+                         <p className="text-[8px] font-black text-slate-500 uppercase mb-2">Dinheiro na Mão</p>
+                         <p className="text-xl font-black text-white">{formatMT(memberDetails.emCaixa)}</p>
+                      </div>
+                      <div className="bg-slate-900/40 rounded-3xl p-5 border border-white/5">
+                         <p className="text-[8px] font-black text-slate-500 uppercase mb-2">Dinheiro na Rua</p>
+                         <p className="text-xl font-black text-blue-500">{formatMT(memberDetails.totalEmCirculacao)}</p>
+                      </div>
                    </div>
                 </div>
 
-                {/* Ecossistema Global (Minimalista) */}
-                <div className="space-y-4 mt-8">
-                   <div className="flex items-center justify-between px-1">
-                      <h3 className="text-sm font-semibold text-white">Resumo Global do Fundo</h3>
-                      <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-emerald-500"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"/> Ao vivo</div>
+                {/* ── ECOSSISTEMA GLOBAL DO FUNDO (TRANSPARÊNCIA) ── */}
+                <div className="space-y-4">
+                   <div className="flex items-center justify-between px-2">
+                      <h3 className="text-[10px] font-black text-white uppercase tracking-[0.3em] italic">Ecossistema Global</h3>
+                      <div className="text-[8px] font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full animate-pulse">SISTEMA ONLINE</div>
                    </div>
-                    <div className="bg-slate-800/20 rounded-3xl p-5 border border-white/5 space-y-4">
-                      <div className="flex justify-between items-center pb-4 border-b border-white/5">
-                         <span className="text-sm text-slate-400 font-medium">Custódia Total</span>
-                         <span className="font-semibold text-white">{formatMT(globalStats?.caixa || 0)}</span>
+                   <div className="bg-blue-600/5 rounded-3xl p-6 border border-blue-500/10 relative overflow-hidden group">
+                      <div className="absolute right-0 top-0 p-6 opacity-[0.03]"><Database className="w-20 h-20 text-white"/></div>
+                      <div className="space-y-5">
+                         <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-3">
+                               <div className="w-10 h-10 rounded-2xl bg-blue-500/10 flex items-center justify-center"><Building2 className="w-5 h-5 text-blue-500"/></div>
+                               <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Caixa Global (Total)</span>
+                            </div>
+                            <span className="text-lg font-black text-white">{formatMT(globalStats?.caixa || 0)}</span>
+                         </div>
+                         <div className="flex justify-between items-center pt-5 border-t border-white/5">
+                            <div className="flex items-center gap-3">
+                               <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center"><Activity className="w-5 h-5 text-emerald-500"/></div>
+                               <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Lucro Total Gerado</span>
+                            </div>
+                            <span className="text-lg font-black text-emerald-400">{formatMT(globalStats?.lucros || 0)}</span>
+                         </div>
                       </div>
-                      <div className="flex justify-between items-center">
-                         <span className="text-sm text-slate-400 font-medium">Cap. Gerido</span>
-                         <span className="font-semibold text-white">{formatMT(globalStats?.total || 0)}</span>
-                      </div>
-                    </div>
+                   </div>
+                   <p className="text-[8px] text-center text-slate-600 font-bold uppercase tracking-widest italic">Estes valores reflectem a força de todos os membros somada.</p>
                 </div>
               </motion.div>
             )}
@@ -281,8 +314,8 @@ export default function MemberDashboard() {
               <motion.div key="assets" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-6">
                 <div className="flex justify-between items-end px-2">
                    <div>
-                      <p className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em] mb-1">Estatísticas Operacionais</p>
-                      <h2 className="text-2xl font-display font-semibold text-white">Sua Carteira</h2>
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Central de Gestão do Cofre</span>
+                    <h1 className="text-2xl font-black text-white italic tracking-tighter uppercase leading-none">Meus Ganhos</h1>
                    </div>
                    <div className="text-right">
                       <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Lucro Realizado</p>
@@ -315,10 +348,10 @@ export default function MemberDashboard() {
                   {/* Lucros Estimados (80/20 Aplicado) */}
                   <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 rounded-[2rem] p-6 border border-emerald-500/20 relative overflow-hidden group">
                      <div className="absolute right-0 bottom-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity"><ShieldCheck className="w-20 h-20 text-emerald-500" /></div>
-                     <div className="flex justify-between items-start mb-2">
-                        <p className="text-sm font-semibold text-emerald-400">Projeção de Lucros</p>
-                        <div className="bg-emerald-500/20 text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter">80% Membro</div>
-                     </div>
+                     <div className="flex items-center justify-between mb-2">
+                   <h3 className="text-[8px] font-black text-white/40 uppercase tracking-[0.3em]">Resumo do Dinheiro</h3>
+                   <div className="text-[8px] font-black bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full uppercase">Sua Parte (80%)</div>
+                </div>
                      <div className="text-4xl font-display font-medium text-white">+{formatMT(memberDetails.totalJuroEsperado)}</div>
                      <p className="text-xs text-slate-400 mt-2">Ganhos líquidos estimados ao fim dos ciclos vigentes.</p>
                   </div>
@@ -326,10 +359,10 @@ export default function MemberDashboard() {
 
                 {/* Ativos em Operação (Lista Detalhada) */}
                 <div className="mt-8 space-y-4">
-                   <div className="flex items-center justify-between px-2">
-                      <h3 className="text-sm font-semibold text-white">Ativos em Operação</h3>
-                      <button className="text-[10px] font-bold text-blue-400 uppercase tracking-widest hover:text-blue-300 transition-colors">Ver Todos</button>
-                   </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-[10px] font-black text-white uppercase tracking-widest italic">Dinheiro que está Render</h3>
+                    <button className="text-[8px] font-black text-emerald-400 uppercase tracking-widest hover:underline">Ver Todos</button>
+                  </div>
                    
                    <div className="space-y-3">
                       {(memberDetails.emCirculacao || []).filter((c: any) => c.status !== "Liquidado").map((item: any, idx: number) => (
@@ -373,7 +406,10 @@ export default function MemberDashboard() {
                                <Shield className="w-6 h-6 text-slate-600" />
                             </div>
                             <p className="text-sm font-medium text-slate-400">Nenhum capital alocado no momento</p>
-                            <p className="text-[10px] text-slate-600 uppercase mt-1">O seu capital será alocado quando houver pedidos de crédito</p>
+                            <p className="text-[10px] text-white/40 font-bold leading-relaxed uppercase">
+                          O seu dinheiro vai render quando houver pedidos de crédito. 
+                          <br/>O Patrão do cofre avisa você.
+                        </p>
                          </div>
                       )}
                    </div>
