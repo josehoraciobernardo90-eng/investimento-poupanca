@@ -15,8 +15,9 @@
 export interface LoanStatus {
   fase: 1 | 2 | 3 | "VENCIDO";
   taxaAtual: 10 | 20 | 50;
-  juro: number;        // em centavos
-  totalDevido: number;  // base + juro em centavos
+  juro: number;        // juros fixos da fase
+  multaAtraso: number; // multas acumuladas por dia (1% ao dia após 3 meses)
+  totalDevido: number;  // base + juro + multa
   diasRestantes: number;
   proximaData: Date;
   dataLimite: Date;     // data final do 3º mês
@@ -59,6 +60,7 @@ export function calcularStatusEmprestimo(
       fase: 1,
       taxaAtual: 10,
       juro,
+      multaAtraso: 0,
       totalDevido: valorBase + juro,
       diasRestantes,
       proximaData: data1,
@@ -74,6 +76,7 @@ export function calcularStatusEmprestimo(
       fase: 2,
       taxaAtual: 20,
       juro,
+      multaAtraso: 0,
       totalDevido: valorBase + juro,
       diasRestantes,
       proximaData: data2,
@@ -89,6 +92,7 @@ export function calcularStatusEmprestimo(
       fase: 3,
       taxaAtual: 50,
       juro,
+      multaAtraso: 0,
       totalDevido: valorBase + juro,
       diasRestantes,
       proximaData: data3,
@@ -97,18 +101,22 @@ export function calcularStatusEmprestimo(
       label: `Mês 3 — Juro 50% ⚠️ | Limite ${formatarData(dataLimite)} (${diasRestantes} dias)`,
     };
   } else {
-    // Passou a data limite do 3º mês → VENCIDO, BLOQUEAR!
+    // Passou a data limite do 3º mês → VENCIDO, APLICAR MULTA DIÁRIA 1%
     const juro = Math.round(valorBase * 0.50);
+    const diasEmAtraso = Math.floor((agora.getTime() - dataLimite.getTime()) / (1000 * 60 * 60 * 24));
+    const multaAtraso = Math.max(0, Math.round(valorBase * 0.01 * diasEmAtraso)); // 1% ao dia
+
     return {
       fase: "VENCIDO",
       taxaAtual: 50,
       juro,
-      totalDevido: valorBase + juro,
+      multaAtraso,
+      totalDevido: valorBase + juro + multaAtraso,
       diasRestantes: 0,
       proximaData: data3,
       dataLimite,
       deveBloqueiar: true,
-      label: `VENCIDO — Conta deve ser bloqueada automaticamente`,
+      label: `VENCIDO — Multa acumulada: ${multaAtraso} (1% dia)`,
     };
   }
 }

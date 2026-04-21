@@ -1,6 +1,6 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, Users, Coins, ArrowLeftRight, History, Vault, Lock, LogOut, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Users, Coins, ArrowLeftRight, History, Vault, Lock, LogOut, ShieldCheck, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAdmin } from "@/hooks/use-admin";
@@ -166,6 +166,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            <button 
+              onClick={() => {
+                const isStealth = document.body.getAttribute('data-stealth') === 'true';
+                document.body.setAttribute('data-stealth', isStealth ? 'false' : 'true');
+              }}
+              className="p-2 rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white transition-all shadow-inner"
+            >
+              <ShieldAlert className="w-4 h-4" />
+            </button>
             <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#00ff8c', boxShadow: '0 0 5px #00ff8c' }} />
             <button
               onClick={() => isAdmin ? logout() : setShowAuth(true)}

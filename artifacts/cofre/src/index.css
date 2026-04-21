@@ -269,4 +269,21 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.25);
   }
+
+  /* ── STEALTH MODE (PRIVACY) ── */
+  [data-stealth='true'] .font-mono,
+  [data-stealth='true'] .font-display.text-5xl,
+  [data-stealth='true'] .font-display.text-6xl,
+  [data-stealth='true'] .font-display.text-4xl,
+  [data-stealth='true'] .font-display.text-3xl {
+    filter: blur(8px);
+    pointer-events: none;
+    user-select: none;
+    transition: filter 0.3s ease;
+  }
+
+  [data-stealth='true'] .font-mono:hover,
+  [data-stealth='true'] .font-display:hover {
+    filter: blur(0px);
+  }
 }

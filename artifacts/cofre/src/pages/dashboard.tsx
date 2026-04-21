@@ -15,6 +15,9 @@ import { useRequests, useAdminComissao } from "@/hooks/use-requests";
 import { Loader2, Wallet, Zap, TrendingUp, AlertCircle, ShieldAlert, Activity, Database, History, Coins, Clock, Settings, BarChart3, Building2, CheckCircle2, X } from "lucide-react";
 import React, { useState, ReactNode } from "react";
 import { dbStore } from "@/data/firebase-data";
+import { InnovationHub } from "@/components/dashboard/InnovationHub";
+import { CommunityPerformance } from "@/components/dashboard/CommunityPerformance";
+import { GeralIntelligence } from "@/components/dashboard/GeralIntelligence";
 
 function CorporatePanel({ children, className }: { children: ReactNode; className?: string }) {
   return (
@@ -119,6 +122,9 @@ export default function DashboardPage() {
         </div>
       </header>
 
+      {/* ── INOVAÇÃO & SIMULAÇÃO (TECNOLOGIA DE ÚLTIMA GERAÇÃO) ── */}
+      <InnovationHub memberScore={92} />
+
       {/* ── PAINEL DE CONTROLO DE SEDE GLOBAL ── */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-8 rounded-[2rem] glass-card-elite border-t border-b border-t-blue-500/30 border-b-blue-500/10 shadow-[0_0_80px_rgba(59,130,246,0.15)] relative overflow-hidden mb-6">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5" />
@@ -169,6 +175,9 @@ export default function DashboardPage() {
            </div>
         </div>
       </motion.div>
+
+      {/* ── INTELIGÊNCIA COLETIVA & SONHOS (DREAMS & FEED) ── */}
+      <GeralIntelligence memberBalance={globalCaixa / (membrosCount || 1)} />
 
       {/* ── PANELS DE OPERAÇÃO ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -295,6 +304,9 @@ export default function DashboardPage() {
 
       {/* ── SLIDESHOW INSTITUCIONAL ── */}
       <TechSlideshow />
+
+      {/* ── TRANSPARÊNCIA E IMPACTO COMUNITÁRIO ── */}
+      <CommunityPerformance />
 
       {/* ── GRÁFICOS E SISTEMA ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

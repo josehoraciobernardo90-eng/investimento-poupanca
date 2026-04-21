@@ -5,7 +5,7 @@ import { formatMT, formatDateTime, parseInputMoney, cn } from "@/lib/utils";
 import { Link } from "wouter";
 import { PageLoader } from "@/components/ui/page-loader";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Check, X, ArrowDownToLine, ArrowUpFromLine, AlertTriangle, Loader2, Trash2, ShieldCheck, User } from "lucide-react";
+import { Check, X, ArrowDownToLine, ArrowUpFromLine, AlertTriangle, Loader2, Trash2, ShieldCheck, User, Receipt } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertDialog,
@@ -479,6 +479,32 @@ export default function RequestsPage() {
           <form onSubmit={handleCreate} className="space-y-6">
             <div><label className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-2 block px-1">Membro Titular</label><select required value={userId} onChange={e => setUserId(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary transition-all appearance-none"><option value="" className="bg-black">Seleccionar Membro...</option>{users?.filter(u => u.status === 'Ativo').map(u => (<option key={u.id} value={u.id} className="bg-black">{u.nome}</option>))}</select></div>
             <div><label className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-2 block px-1">Valor Unitário (MT)</label><input required value={valor} onChange={e => setValor(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-2xl font-black text-white focus:outline-none focus:border-primary text-center italic tracking-tighter" placeholder="0.00" /></div>
+            
+            <div className="p-4 rounded-3xl bg-white/5 border border-dashed border-white/10 relative group transition-all hover:bg-white/10">
+              <input 
+                type="file" 
+                accept="image/*" 
+                className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => setMotivo(reader.result as string); // Usando motivo temporariamente para guardar a base64 do comprovante
+                    reader.readAsDataURL(file);
+                  }
+                }}
+              />
+              <div className="flex flex-col items-center justify-center gap-2 py-4">
+                {motivo && motivo.startsWith('data:image') ? (
+                  <img src={motivo} className="w-32 h-32 object-cover rounded-xl shadow-2xl border-2 border-white/20" />
+                ) : (
+                  <>
+                    <Receipt className="w-8 h-8 text-white/20 group-hover:text-primary transition-colors" />
+                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Anexar Comprovante (Opcional)</span>
+                  </>
+                )}
+              </div>
+            </div>
             {createType === "loan" && (
               <>
                 <div>
