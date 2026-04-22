@@ -33,16 +33,13 @@ export function useDashboard() {
     
   return {
     data: {
+      ...dbStore.dashboard,
       caixa: globalCaixa,
       lucros: globalLucro,
       naRua: globalNaRua,
       total: patrimonyGlobal,
       membros_ativos: (dbStore.users || []).filter(u => u.status === "Ativo").length,
       emprestimos_ativos: activeContracts,
-      ...dbStore.dashboard,
-      // Garantir que os calculados têm precedência absoluta
-      caixa: globalCaixa,
-      lucros: globalLucro,
       contasNoVermelho: globalNaRua,
       contagemContratos: activeContracts,
       patrimonyGlobal,
