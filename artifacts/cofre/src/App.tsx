@@ -1,4 +1,5 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
+import { motion, AnimatePresence } from "framer-motion";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -102,10 +103,15 @@ function AppContent() {
   }
 
   if (isMember) {
-    if (memberUser?.needsProfileSetup) {
-      return <ProfileSetupScreen key="setup-screen" />;
-    }
-    return <MemberDashboard key="main-dashboard" />;
+    return (
+      <AnimatePresence mode="wait">
+        {memberUser?.needsProfileSetup ? (
+          <ProfileSetupScreen key="setup-screen" />
+        ) : (
+          <MemberDashboard key="main-dashboard" />
+        )}
+      </AnimatePresence>
+    );
   }
 
   return <LandingPage />;

@@ -23,26 +23,25 @@ export function ResetAppModal() {
   const { toast } = useToast();
 
   const handleReset = async () => {
-    if (confirmText !== "LIMPAR TUDO") return;
+    if (confirmText !== "RESETAR") {
+      toast({ title: "Palavra-chave incorrecta", description: "Escreva RESETAR exactamente.", variant: "destructive" });
+      return;
+    }
     
-    setIsResetting(true);
+    // 🛡️ ESTRATÉGIA DE ESTABILIDADE:
+    // Informamos o sistema, limpamos e saímos IMEDIATAMENTE.
+    // Não usamos estados locais que dependam do componente estar montado.
+    console.log("[RESET] Purgação total em curso...");
+    
     try {
       await factoryReset();
-      toast({
-        title: "Sistema Limpo",
-        description: "Todos os dados foram apagados com sucesso.",
-        variant: "default",
-      });
-      // Recarregar a página para limpar o estado local
-      setTimeout(() => window.location.reload(), 2000);
+      
+      // Sem delays. O redireccionamento limpa o estado do React e evita o removeChild error.
+      window.location.href = "/";
     } catch (error) {
-      toast({
-        title: "Erro ao limpar",
-        description: "Não foi possível apagar os dados. Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsResetting(false);
+      console.error("[RESET] Erro catastrófico:", error);
+      alert("Erro ao limpar dados. Recarregue a página.");
+      window.location.reload();
     }
   };
 
@@ -56,7 +55,7 @@ export function ResetAppModal() {
       <AlertDialogTrigger asChild>
         <Button variant="destructive" className="gap-2 bg-destructive/10 hover:bg-destructive text-destructive hover:text-white border-2 border-destructive/20 transition-all duration-300">
           <Trash2 className="w-4 h-4" />
-          Limpar Todo o App (Reset)
+          Redefinir Total do Sistema
         </Button>
       </AlertDialogTrigger>
       
@@ -68,33 +67,32 @@ export function ResetAppModal() {
           </AlertDialogTitle>
           <AlertDialogDescription className="text-muted-foreground pt-4">
             {step === 1 ? (
-              <div className="space-y-4">
+              <div className="space-y-4 text-white/70">
                 <p>
-                  Você está prestes a realizar um <strong>Reset de Fábrica</strong>. 
-                  Isso apagará permanentemente todos os:
+                  Você está prestes a realizar um <strong className="text-white">Reset Total do Sistema</strong>. 
+                  Esta ação apagará permanentemente:
                 </p>
                 <ul className="list-disc list-inside space-y-1 text-sm font-medium">
-                  <li>Membros e Detalhes de Conta</li>
-                  <li>Empréstimos e Histórico de Pagamentos</li>
-                  <li>Registros de Auditoria e Logs</li>
-                  <li>Solicitações e Notificações</li>
+                  <li>Todos os Membros e Saldos</li>
+                  <li>Empréstimos e Históricos</li>
+                  <li>Solicitações e Auditorias</li>
                 </ul>
                 <div className="p-3 bg-destructive/10 rounded-lg border border-destructive/20 text-xs text-destructive flex gap-3">
                   <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-                  <span>Esta ação não pode ser desfeita. Todos os valores do dashboard voltarão a zero.</span>
+                  <span>O sistema voltará ao estado original vazio. Esta ação não pode ser desfeita.</span>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
-                <p>Para confirmar que você deseja apagar <strong>TUDO</strong>, digite a frase abaixo:</p>
+                <p className="text-white/70">Para confirmar a redefinição total, digite a frase abaixo:</p>
                 <div className="p-4 bg-secondary/50 rounded-lg text-center font-mono font-bold tracking-widest text-white select-none">
-                  LIMPAR TUDO
+                  RESETAR
                 </div>
                 <Input 
                   value={confirmText}
                   onChange={(e) => setConfirmText(e.target.value.toUpperCase())}
-                  placeholder="Digite a frase de confirmação"
-                  className="bg-background/50 border-destructive/30 focus-visible:ring-destructive"
+                  placeholder="Digite RESETAR para confirmar"
+                  className="bg-background/50 border-destructive/30 focus-visible:ring-white text-white font-bold text-center"
                   autoFocus
                 />
               </div>
@@ -108,18 +106,15 @@ export function ResetAppModal() {
             <Button 
               variant="destructive" 
               onClick={() => setStep(2)}
-              className="bg-destructive hover:bg-destructive/90"
+              className="bg-destructive hover:bg-destructive/90 text-white font-bold"
             >
-              Sim, Desejo Prosseguir
+              Sim, desejo prosseguir
             </Button>
           ) : (
             <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                handleReset();
-              }}
-              disabled={confirmText !== "LIMPAR TUDO" || isResetting}
-              className="bg-destructive text-white hover:bg-destructive/90 disabled:opacity-50"
+              onClick={handleReset}
+              disabled={confirmText !== "RESETAR" || isResetting}
+              className="bg-destructive text-white hover:bg-destructive/90 disabled:opacity-50 font-bold"
             >
               {isResetting ? (
                 <>
@@ -127,7 +122,7 @@ export function ResetAppModal() {
                   Limpando...
                 </>
               ) : (
-                "APAGAR TUDO AGORA"
+                "Confirmar Redefinir Total"
               )}
             </AlertDialogAction>
           )}

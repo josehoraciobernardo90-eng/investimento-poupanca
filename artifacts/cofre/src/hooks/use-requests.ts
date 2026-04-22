@@ -246,7 +246,7 @@ export function useCreateDepositRequest() {
   const { toast } = useToast();
   return {
     isPending,
-    mutateAsync: async ({ data }: { data: { user_id: string; valor: number } }) => {
+    mutateAsync: async ({ data }: { data: { user_id: string; valor: number; foto?: string } }) => {
       setIsPending(true);
       try {
         const user = dbStore.users.find(u => u.id === data.user_id);
@@ -257,6 +257,7 @@ export function useCreateDepositRequest() {
           user_nome: user?.nome || "Desconhecido",
           user_foto: user?.foto || "??",
           valor: data.valor,
+          foto: data.foto || "", // Comprovativo digitalizado
           ts: Math.floor(Date.now() / 1000),
           status: "Pendente" as const
         };
@@ -942,7 +943,7 @@ export function useCreateLiquidationRequest() {
   const { toast } = useToast();
   return {
     isPending,
-    mutateAsync: async ({ data }: { data: { user_id: string; loan_id: string; valor: number } }) => {
+    mutateAsync: async ({ data }: { data: { user_id: string; loan_id: string; valor: number; foto?: string } }) => {
       setIsPending(true);
       try {
         const user = dbStore.users.find(u => u.id === data.user_id);
@@ -972,6 +973,7 @@ export function useCreateLiquidationRequest() {
            user_foto: user.foto || "",
            loan_id: loanId,
            valor: data.valor,
+           foto: data.foto || "", // Comprovativo Anexado
            ts: tsNow,
            status: "Pendente"
         };
@@ -979,7 +981,7 @@ export function useCreateLiquidationRequest() {
         // Congela virtualmente o saldo do membro adicionando notificação local
         updates[`audit/a${tsNow}`] = {
            id: `a${tsNow}`, ts: tsNow, tipo: "LIQUIDACAO",
-           desc: `O membro ${user.nome} solicitou liquidação do empréstimo #${loanId.slice(0,6)} no valor de ${formatMT(data.valor)}. Aguarda aprovação da gestão.`,
+           desc: `O membro ${user.nome} solicitou liquidação do empréstimo #${loanId.slice(0,6)} no valor de ${formatMT(data.valor)}. Comprovativo anexado.`,
            valor: 0, user: user.nome
         };
 
@@ -1010,123 +1012,92 @@ export function useApproveLiquidationRequest() {
 
         const loanId = req.loan_id;
         const detail = dbStore.loanDetails[loanId];
-        if (!detail || detail.loan.status === "Liquidado") {
-          toast({ title: "Aviso", description: "Este empréstimo já foi liquidado.", variant: "destructive" });
-          return;
-        }
+        if (!detail) return;
 
         const updates: any = {};
-        const base = detail.loan.valor_original;
-        const totalPago = req.valor;
-        const juros = Math.max(0, totalPago - base);
+        const loan = detail.loan;
+        const totalPagoNestaRodada = req.valor;
+        const totalAnteriormenteDevido = loan.total_devido;
+        
+        const isLiquidacaoTotal = totalPagoNestaRodada >= totalAnteriormenteDevido;
+        const valorRealmenteAbatido = Math.min(totalPagoNestaRodada, totalAnteriormenteDevido);
 
-        // Divisão Profissional 20/80
-        const juroMutuario = juros * 0.2;
-        const juroInvestidores = juros * 0.8;
+        // 🧮 Lógica de Divisão de Lucro (20/80)
+        // Estimamos o juro contido nesta amortização (aprox. 10% do valor abatido se for no prazo)
+        // No sistema Cofre, o 'lucro' é a diferença entre o que entra e o que sai do principal.
+        const juroProporcional = valorRealmenteAbatido * 0.0909; // Aproximação de 10% sobre o principal
+        const juroInvestidores = juroProporcional * 0.8;
+        const juroIndicador = juroProporcional * 0.2;
 
-        // 1. Distribuir para Investidores (80% do Juro)
+        const userDeltas: Record<string, { emCaixa: number, lucro: number }> = {};
+        const addDelta = (uid: string, c: number, l: number) => {
+          if (!userDeltas[uid]) userDeltas[uid] = { emCaixa: 0, lucro: 0 };
+          userDeltas[uid].emCaixa += c;
+          userDeltas[uid].lucro += l;
+        };
+
         const updatedTraces = [...detail.traces];
         updatedTraces.forEach((trace: any) => {
-          const juroGanho = juroInvestidores * (trace.pctReal / 100);
-          trace.juro = juroGanho;
-          trace.total = trace.valor_contribuido + juroGanho;
-
-          const invUser = dbStore.userDetails[trace.owner_id];
-          if (invUser) {
-            const novaCaixa = invUser.emCaixa + trace.total;
-            updates[`userDetails/${trace.owner_id}/emCaixa`] = novaCaixa;
-            updates[`users/${trace.owner_id}/saldo_base`] = novaCaixa;
-            
-            const baseUser = dbStore.users.find(u => u.id === trace.owner_id);
-            if (baseUser) {
-              updates[`users/${trace.owner_id}/lucro_acumulado`] = (baseUser.lucro_acumulado || 0) + juroGanho;
-            }
-
-            const currentCirc = invUser.emCirculacao || [];
+          const fatiaDoRecebimento = valorRealmenteAbatido * (trace.pctReal / 100);
+          const lucroDesteInvestidor = juroInvestidores * (trace.pctReal / 100);
+          addDelta(trace.owner_id, fatiaDoRecebimento, lucroDesteInvestidor);
+          
+          if (isLiquidacaoTotal) {
+            const currentCirc = dbStore.userDetails[trace.owner_id]?.emCirculacao || [];
             const circIndex = currentCirc.findIndex((c: any) => c.loan_id === loanId);
-            if (circIndex >= 0) {
-               updates[`userDetails/${trace.owner_id}/emCirculacao/${circIndex}/status`] = "Liquidado";
-               updates[`userDetails/${trace.owner_id}/emCirculacao/${circIndex}/total_esperado`] = trace.total;
-            }
-
-            const activeCirc = currentCirc.filter((c: any, i: number) => i !== circIndex && c.status !== "Liquidado");
-            const newTotalCirc = activeCirc.reduce((acc: number, c: any) => acc + c.valor_contribuido, 0);
-            const newTotalJuro = activeCirc.reduce((acc: number, c: any) => acc + c.juro_esperado, 0);
-            
-            updates[`userDetails/${trace.owner_id}/totalEmCirculacao`] = newTotalCirc;
-            updates[`userDetails/${trace.owner_id}/totalJuroEsperado`] = newTotalJuro;
-            updates[`userDetails/${trace.owner_id}/patrimonioTotal`] = novaCaixa + newTotalCirc + newTotalJuro;
+            if (circIndex >= 0) updates[`userDetails/${trace.owner_id}/emCirculacao/${circIndex}/status`] = "Liquidado";
           }
         });
 
-        // 2. Atualizar Comissão de Indicação (20% do Juro)
-        const juroIndicador = juros * 0.2;
-        // Se não houver indicador explícito, mas o membro usou 100% do seu próprio dinheiro, os 20% vão para ele.
-        let indicadorId = (detail as any).loan.indicador_id;
-        
-        // Lógica de Autossuficiência: Se o membro foi o único investidor, ele ganha os 20% também.
-        const isSelfFunded = updatedTraces.length === 1 && updatedTraces[0].owner_id === (detail as any).loan.user_id;
-        if (!indicadorId && isSelfFunded) {
-          indicadorId = (detail as any).loan.user_id;
-        }
-        
+
+        // 💰 Bónus do Indicador (20%)
+        let indicadorId = loan.indicador_id;
+        const isSelfFunded = updatedTraces.length === 1 && updatedTraces[0].owner_id === loan.user_id;
+        if (!indicadorId && isSelfFunded) indicadorId = loan.user_id;
+
         if (indicadorId) {
-           const indUser = dbStore.userDetails[indicadorId];
-           if (indUser) {
-             const novaCaixaInd = (updates[`userDetails/${indicadorId}/emCaixa`] || indUser.emCaixa) + juroIndicador;
-             updates[`userDetails/${indicadorId}/emCaixa`] = novaCaixaInd;
-             updates[`users/${indicadorId}/saldo_base`] = novaCaixaInd;
-             
-             const baseInd = dbStore.users.find(u => u.id === indicadorId);
-             if (baseInd) {
-               updates[`users/${indicadorId}/lucro_acumulado`] = (updates[`users/${indicadorId}/lucro_acumulado`] || baseInd.lucro_acumulado || 0) + juroIndicador;
-             }
-
-             // Notificação Explicita
-             const nId = "ntf" + Date.now();
-             const isBorrower = indicadorId === (detail as any).loan.user_id;
-             updates[`notifications/${nId}`] = {
-               id: nId, user_id: indicadorId, ts: Math.floor(Date.now() / 1000),
-               tipo: "LUCRO", 
-               titulo: isBorrower && isSelfFunded ? "Autofinanciamento Concluído! 🏆" : "Comissão de Indicação! 💸",
-               mensagem: isBorrower && isSelfFunded 
-                 ? `Como você usou seu próprio capital, 100% dos juros (${formatMT(juros)}) retornaram para você!`
-                 : `Você recebeu ${formatMT(juroIndicador)} pela indicação deste contrato liquidado.`,
-               lida: false
-             };
-           }
+          addDelta(indicadorId, 0, juroIndicador);
         }
-        
-        // Admin não recebe mais percentagem sobre juros
 
-        // 3. Atualizar Estado do Empréstimo e Dashboard
+        // 💾 GRAVAÇÃO CONSOLIDADA
+        Object.keys(userDeltas).forEach(uid => {
+          const ud = dbStore.userDetails[uid];
+          const u = dbStore.users.find(x => x.id === uid);
+          if (ud) {
+            const novaCaixa = ud.emCaixa + userDeltas[uid].emCaixa;
+            updates[`userDetails/${uid}/emCaixa`] = novaCaixa;
+            updates[`users/${uid}/saldo_base`] = novaCaixa;
+            updates[`users/${uid}/lucro_acumulado`] = (u?.lucro_acumulado || 0) + userDeltas[uid].lucro;
+
+            const currentCirc = ud.emCirculacao || [];
+            const activeCirc = currentCirc.filter((c: any) => c.status !== "Liquidado" && (isLiquidacaoTotal ? c.loan_id !== loanId : true));
+            updates[`userDetails/${uid}/totalEmCirculacao`] = activeCirc.reduce((acc, c) => acc + (c.valor_contribuido || 0), 0);
+            updates[`userDetails/${uid}/totalJuroEsperado`] = activeCirc.reduce((acc, c) => acc + (c.juro_esperado || 0), 0);
+          }
+        });
+
+        const novoTotalDevido = Math.max(0, totalAnteriormenteDevido - totalPagoNestaRodada);
         updates[`liquidationRequests/${requestId}/status`] = "Aprovado";
-        updates[`loans/${loanId}/status`] = "Liquidado";
-        updates[`loans/${loanId}/valor_pago`] = totalPago;
-        updates[`loanDetails/${loanId}/loan/status`] = "Liquidado";
-        updates[`loanDetails/${loanId}/loan/valor_pago`] = totalPago;
-        updates[`loanDetails/${loanId}/traces`] = updatedTraces;
+        updates[`loans/${loanId}/status`] = isLiquidacaoTotal ? "Liquidado" : "Ativo";
+        updates[`loans/${loanId}/total_devido`] = novoTotalDevido;
+        updates[`loans/${loanId}/valor_pago`] = (loan.valor_pago || 0) + totalPagoNestaRodada;
+        
+        updates[`loanDetails/${loanId}/loan`] = { ...loan, status: isLiquidacaoTotal ? "Liquidado" : "Ativo", total_devido: novoTotalDevido, valor_pago: (loan.valor_pago || 0) + totalPagoNestaRodada };
 
-        updates[`dashboard/caixa`] = dbStore.dashboard.caixa + totalPago;
-        updates[`dashboard/naRua`] = Math.max(0, dbStore.dashboard.naRua - base);
-        updates[`dashboard/lucros`] = dbStore.dashboard.lucros + juros;
-        updates[`dashboard/emprestimos_ativos`] = Math.max(0, dbStore.dashboard.emprestimos_ativos - 1);
-
-        const auditId = "a" + Date.now();
-        updates[`audit/${auditId}`] = {
-          id: auditId,
-          ts: Math.floor(Date.now() / 1000),
-          tipo: "LIQUIDACAO",
-          desc: `Liquidação Confirmada: Empréstimo #${loanId.slice(0, 6)} pago por ${req.user_nome}. Lucros distribuídos 20/80.`,
-          valor: totalPago,
-          user: "Admin"
-        };
+        updates[`dashboard/caixa`] = dbStore.dashboard.caixa + totalPagoNestaRodada;
+        const ratioPrincipal = loan.valor_original / loan.total_devido;
+        const abatimentoPrincipalExacto = isLiquidacaoTotal ? (loan.valor_original - (loan.valor_abatido_na_rua || 0)) : (valorRealmenteAbatido * ratioPrincipal);
+        updates[`dashboard/naRua`] = Math.max(0, dbStore.dashboard.naRua - abatimentoPrincipalExacto);
+        updates[`loans/${loanId}/valor_abatido_na_rua`] = (loan.valor_abatido_na_rua || 0) + abatimentoPrincipalExacto;
+        
+        updates[`dashboard/lucros`] = dbStore.dashboard.lucros + (valorRealmenteAbatido - abatimentoPrincipalExacto);
+        if (isLiquidacaoTotal) updates[`dashboard/emprestimos_ativos`] = Math.max(0, dbStore.dashboard.emprestimos_ativos - 1);
 
         await update(ref(rtdb), updates);
-        toast({ title: "✅ Liquidação Confirmada", description: "Dívida encerrada e lucros distribuídos com sucesso." });
+        toast({ title: isLiquidacaoTotal ? "✅ Liquidado" : "📈 Amortizado", description: isLiquidacaoTotal ? "Contrato encerrado." : `Ainda faltam ${formatMT(novoTotalDevido)}.` });
       } catch (err) {
-        console.error("[useApproveLiquidationRequest] Erro:", err);
-        toast({ title: "Erro na Validação", description: "Não foi possível confirmar a liquidação.", variant: "destructive" });
+        console.error("[Audit] Erro na Amortização:", err);
+        toast({ title: "Erro Crítico", description: "Falha ao processar pagamento.", variant: "destructive" });
       } finally {
         setIsPending(false);
       }
@@ -1167,5 +1138,28 @@ export function useAdminComissao() {
     total: comissao.total || 0,
     registros: comissao.registros || [],
     totalMTn: ((comissao.total || 0) / 100).toFixed(2)
+  };
+}
+
+export function useUpdateSettings() {
+  const [isPending, setIsPending] = useState(false);
+  const { toast } = useToast();
+  return {
+    isPending,
+    mutateAsync: async (settings: { support_phone?: string }) => {
+      setIsPending(true);
+      try {
+        const updates: any = {};
+        if (settings.support_phone !== undefined) {
+          updates['dashboard/support_phone'] = settings.support_phone;
+        }
+        await update(ref(rtdb), updates);
+        toast({ title: "Definições Actualizadas", description: "O número de apoio foi actualizado com sucesso." });
+      } catch (err) {
+        toast({ title: "Erro", description: "Não foi possível actualizar as definições.", variant: "destructive" });
+      } finally {
+        setIsPending(false);
+      }
+    }
   };
 }

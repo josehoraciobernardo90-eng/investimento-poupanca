@@ -43,7 +43,7 @@ type AnyRequest = {
 export default function RequestsPage() {
   const { loans, deposits, liquidations, memberships, profileEdits, isLoading } = useRequests();
   const { data: users } = useUsers();
-  const [tab, setTab] = useState<"memberships" | "loans" | "deposits" | "profileEdits" | "liquidations">("memberships");
+  const [tab, setTab] = useState<"memberships" | "loans" | "deposits" | "profileEdits" | "liquidations" | "vault">("memberships");
 
   const approveLoanMut = useApproveLoanRequest();
   const rejectLoanMut = useRejectLoanRequest();
@@ -97,23 +97,6 @@ export default function RequestsPage() {
   const pendingLiqs = (liquidations || []).filter((r: any) => r.status === "Pendente");
   const historyLiqs = (liquidations || []).filter((r: any) => r.status !== "Pendente");
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const val = parseInputMoney(valor);
-    if (!userId || val <= 0) return;
-    try {
-      if (createType === "loan") {
-        await createLoanMut.mutateAsync({ data: { user_id: userId, valor: val, motivo, indicador_id: indicadorId } });
-      } else {
-        await createDepMut.mutateAsync({ data: { user_id: userId, valor: val } });
-      }
-      setTimeout(() => {
-        setCreateType(null);
-        setUserId(""); setValor(""); setMotivo(""); setIndicadorId("");
-      }, 100);
-    } catch {}
-  };
-
   const handleConfirmApprove = async () => {
     if (!confirmApprove) return;
     try {
@@ -124,7 +107,6 @@ export default function RequestsPage() {
       else if (type === "profileEdit") await approveProfileMut.mutateAsync({ requestId: req.id });
       else if (type === "liquidation") await approveLiqMut.mutateAsync({ requestId: req.id });
       
-      // Delay tático para evitar removeChild error
       setTimeout(() => setConfirmApprove(null), 100);
     } catch {}
   };
@@ -162,47 +144,38 @@ export default function RequestsPage() {
 
   return (
     <div className="space-y-6 pb-16">
-      {/* ── Cabeçalho ── */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 pb-4 border-b border-white/[0.04]">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <ShieldCheck className="w-3.5 h-3.5" style={{ color: 'hsl(160 84% 44%)' }} />
-            <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(16,185,129,0.6)' }}>Gestão das Contas · Chimoio</span>
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500/60" />
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-emerald-500/60">Gestão das Contas · Auditoria Fiscal</span>
           </div>
-          <h1 className="font-display text-3xl font-bold text-white">Pedidos dos Membros</h1>
-          <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Pedidos pendentes de aprovação e histórico de movimentações.</p>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => setCreateType("deposit")} className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-all" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.5)' }}>
-            <ArrowDownToLine className="w-3.5 h-3.5" /> Novo Aporte
-          </button>
-          <button onClick={() => setCreateType("loan")} className="btn-primary">
-            <ArrowUpFromLine className="w-3.5 h-3.5" /> Novo Empréstimo
-          </button>
+          <h1 className="font-display text-3xl font-bold text-white">Administração do Cofre</h1>
+          <p className="text-sm mt-1 text-white/30">Validação de movimentações e arquivo de provas documentais.</p>
         </div>
       </div>
 
-      {/* ── Tabs ── */}
-      <div className="flex gap-1 p-1 rounded-lg w-fit" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+      <div className="flex gap-1 p-1 rounded-xl w-fit bg-white/5 border border-white/5 overflow-x-auto max-w-full no-scrollbar">
         {[
           { id: "memberships", label: "Cadastros", count: pendingMems.length },
           { id: "loans", label: "Empréstimos", count: pendingLoans.length },
           { id: "deposits", label: "Aportes", count: pendingDeps.length },
           { id: "liquidations", label: "Liquidações", count: pendingLiqs.length },
           { id: "profileEdits", label: "Alterações", count: pendingProfileEdits.length },
+          { id: "vault", label: "Cofre de Recibos", count: [...deposits, ...liquidations].filter(d => (d as any).foto).length },
         ].map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id as any)}
-            className="px-4 py-2 rounded-md transition-all text-xs font-medium"
+            className="px-4 py-2 rounded-lg transition-all text-xs font-bold whitespace-nowrap"
             style={tab === t.id
               ? { background: 'rgba(255,255,255,0.08)', color: 'white' }
               : { color: 'rgba(255,255,255,0.35)' }
             }
           >
             {t.label}
-            {t.count > 0 && (
-              <span className="ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold" style={{ background: 'rgba(16,185,129,0.12)', color: 'hsl(160 84% 44%)' }}>
+            {t.count > 0 && t.id !== "vault" && (
+              <span className="ml-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400">
                 {t.count}
               </span>
             )}
@@ -210,324 +183,164 @@ export default function RequestsPage() {
         ))}
       </div>
 
-      {/* ── Pedidos Pendentes ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <AnimatePresence mode="popLayout">
-          {(tab === "memberships" ? pendingMems : tab === "loans" ? pendingLoans : tab === "profileEdits" ? pendingProfileEdits : tab === "liquidations" ? pendingLiqs : pendingDeps).map((req) => (
+          {tab === "vault" ? (
+             <div className="col-span-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {[...deposits, ...liquidations].filter(d => (d as any).foto).sort((a,b) => b.ts - a.ts).map((item) => (
+                   <motion.div
+                    key={`vault-${item.id}`}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="group relative aspect-square rounded-2xl overflow-hidden bg-[#0A0F1C] border border-white/5 cursor-zoom-in"
+                    onClick={() => setPhotoPreview({ url: (item as any).foto, name: `Recibo: ${item.user_nome} - ${formatMT(item.valor)}` })}
+                   >
+                      <img src={(item as any).foto} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 opacity-60 group-hover:opacity-100" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent p-4 flex flex-col justify-end">
+                         <p className="text-[10px] font-black text-white uppercase tracking-tighter leading-none mb-1">{item.user_nome}</p>
+                         <p className="text-[10px] text-emerald-400 font-bold">{formatMT(item.valor)}</p>
+                         <p className="text-[8px] text-white/20 mt-1 uppercase font-black">{formatDateTime(item.ts)}</p>
+                      </div>
+                   </motion.div>
+                ))}
+                {[...deposits, ...liquidations].filter(d => (d as any).foto).length === 0 && (
+                   <div className="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-[3rem]">
+                      <Receipt className="w-12 h-12 mx-auto mb-4 opacity-10" />
+                      <p className="text-xs text-white/20 uppercase tracking-[0.3em] font-black">Cofre de Provas Vazio</p>
+                   </div>
+                )}
+             </div>
+          ) : (tab === "memberships" ? pendingMems : tab === "loans" ? pendingLoans : tab === "profileEdits" ? pendingProfileEdits : tab === "liquidations" ? pendingLiqs : pendingDeps).map((req) => (
             <motion.div
               key={`${tab}-${req.id}`}
               layout
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15 } }}
-              className="rounded-xl p-5"
-              style={{ background: 'hsl(222 35% 7%)', border: '1px solid rgba(255,255,255,0.05)', borderLeft: '2px solid rgba(251,191,36,0.3)' }}
+              className="rounded-[2rem] p-6 bg-[#0A1121] border border-white/5 relative overflow-hidden group"
             >
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-3">
+              <div className="flex justify-between items-start mb-6">
+                <div className="flex items-center gap-4">
                   <div 
                     onClick={() => {
                         let photoUrl = req.user_foto;
-                        if (tab === "profileEdits" && (req as any).foto) photoUrl = (req as any).foto;
+                        if ((tab === "profileEdits" || tab === "deposits") && (req as any).foto) photoUrl = (req as any).foto;
                         if (photoUrl?.startsWith('data:image') || photoUrl?.startsWith('http')) {
                           setPhotoPreview({ url: photoUrl, name: req.user_nome });
                         }
                     }}
-                    className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold font-mono overflow-hidden cursor-zoom-in group-hover:scale-110 transition-transform" style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.15)', color: 'rgba(165,180,252,0.8)' }}
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-bold font-mono overflow-hidden cursor-zoom-in relative bg-white/5 border border-white/5"
                   >
                     {req.user_foto?.startsWith('data:image') || req.user_foto?.startsWith('http') ? (
-                      <img src={req.user_foto} className="w-full h-full object-cover" alt={req.user_nome} />
-                    ) : tab === "profileEdits" && (req as any).foto ? (
+                      <img src={req.user_foto} className="w-full h-full object-cover" />
+                    ) : (tab === "profileEdits" || tab === "deposits" || tab === "liquidations") && (req as any).foto ? (
                       <img src={(req as any).foto} className="w-full h-full object-cover" />
                     ) : (
                       req.user_foto
                     )}
+                    {(req as any).foto && (tab === "deposits" || tab === "liquidations") && <Receipt className="absolute w-4 h-4 text-blue-400 bottom-1 right-1" />}
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-white">{req.user_nome}</h4>
-                    <p className="text-[9px] font-mono" style={{ color: 'rgba(255,255,255,0.25)' }}>{formatDateTime(req.ts)}</p>
+                    <h4 className="text-sm font-black text-white uppercase italic">{req.user_nome}</h4>
+                    <p className="text-[10px] font-mono text-white/20">{formatDateTime(req.ts)}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  {tab !== "profileEdits" ? (
-                    <span className="text-lg font-bold font-mono" style={{ color: tab === "liquidations" ? 'hsl(160 84% 44%)' : 'white' }}>{formatMT(req.valor)}</span>
-                  ) : (
-                    <span className="text-[9px] font-semibold uppercase px-2 py-0.5 rounded" style={{ background: 'rgba(16,185,129,0.07)', color: 'rgba(16,185,129,0.7)', border: '1px solid rgba(16,185,129,0.12)' }}>Alteração</span>
-                  )}
+                  <span className="text-xl font-black font-mono text-white italic">{formatMT(req.valor)}</span>
                 </div>
               </div>
 
-              {tab === "loans" && (req as any).motivo && (
-                <div className="mb-4 p-3 rounded-lg text-xs leading-relaxed" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)' }}>
-                  <span style={{ color: 'rgba(251,191,36,0.7)' }} className="font-semibold">Motivo: </span>{(req as any).motivo}
-                </div>
-              )}
-
-              {tab === "liquidations" && (
-                <div className="mb-4 p-3 rounded-lg text-xs leading-relaxed" style={{ background: 'rgba(16,185,129,0.04)', border: '1px solid rgba(16,185,129,0.1)', color: 'rgba(255,255,255,0.45)' }}>
-                  <span style={{ color: 'rgba(16,185,129,0.7)' }} className="font-semibold">Confirmação de Pagamento: </span>O membro afirma ter entregue o valor acumulado. Verifique o caixa antes de aprovar.
-                </div>
-              )}
-
-              <div className="flex gap-2 pt-4 border-t border-white/[0.04]">
+              <div className="flex gap-2">
                 <button
                   onClick={() => setConfirmApprove({ req: req as AnyRequest, type: tab === "memberships" ? "membership" : tab === "loans" ? "loan" : tab === "profileEdits" ? "profileEdit" : tab === "liquidations" ? "liquidation" : "deposit" })}
-                  disabled={isApproving}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold transition-all"
-                  style={{ background: 'rgba(16,185,129,0.08)', color: 'rgba(16,185,129,0.8)', border: '1px solid rgba(16,185,129,0.15)' }}
+                  className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 active:scale-95 transition-all"
                 >
-                  <Check className="w-3.5 h-3.5" /> Aceitar
+                  Confirmar
                 </button>
                 <button
                   onClick={() => setConfirmReject({ req: req as AnyRequest, type: tab === "memberships" ? "membership" : tab === "loans" ? "loan" : tab === "profileEdits" ? "profileEdit" : tab === "liquidations" ? "liquidation" : "deposit" })}
-                  disabled={isApproving}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold transition-all"
-                  style={{ background: 'rgba(239,68,68,0.06)', color: 'rgba(239,68,68,0.7)', border: '1px solid rgba(239,68,68,0.12)' }}
+                  className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest bg-rose-500/10 text-rose-400 border border-rose-500/20 active:scale-95 transition-all"
                 >
-                  <X className="w-3.5 h-3.5" /> Recusar
+                  Recusar
                 </button>
               </div>
             </motion.div>
           ))}
         </AnimatePresence>
-        {(tab === "memberships" ? pendingMems : tab === "loans" ? pendingLoans : tab === "profileEdits" ? pendingProfileEdits : tab === "liquidations" ? pendingLiqs : pendingDeps).length === 0 && (
-          <div className="col-span-full py-16 text-center rounded-xl" style={{ border: '1px dashed rgba(255,255,255,0.06)' }}>
-            <ShieldCheck className="w-6 h-6 mx-auto mb-3" style={{ color: 'rgba(255,255,255,0.1)' }} />
-            <p className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.2)' }}>Nenhum pedido pendente nesta categoria</p>
-          </div>
-        )}
       </div>
 
-      {/* ── Histórico ── */}
-      {(tab === "memberships" ? historyMems : tab === "loans" ? historyLoans : historyDeps).length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>Histórico</h2>
-            <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.05)' }} />
-          </div>
-          <div className="rounded-xl overflow-hidden" style={{ background: 'hsl(222 35% 7%)', border: '1px solid rgba(255,255,255,0.05)' }}>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <th className="px-5 py-3 text-[9px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.25)' }}>Membro</th>
-                    {tab !== "profileEdits" && <th className="px-5 py-3 text-[9px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.25)' }}>Capital</th>}
-                    <th className="px-5 py-3 text-[9px] font-semibold uppercase tracking-widest text-center" style={{ color: 'rgba(255,255,255,0.25)' }}>Estado</th>
-                    <th className="px-5 py-3 text-[9px] font-semibold uppercase tracking-widest text-right" style={{ color: 'rgba(255,255,255,0.25)' }}>Acção</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(tab === "memberships" ? historyMems : tab === "loans" ? historyLoans : tab === "profileEdits" ? historyProfileEdits : historyDeps).map((req) => (
-                    <tr key={`history-${req.id}`} className="group transition-colors" style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}
-                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.02)'}
-                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = ''}>
-                      <td className="px-5 py-3">
-                        <div className="flex items-center gap-3">
-                          <div 
-                            onClick={() => {
-                                let photoUrl = req.user_foto;
-                                if (tab === "profileEdits" && (req as any).foto) photoUrl = (req as any).foto;
-                                if (photoUrl?.startsWith('data:image') || photoUrl?.startsWith('http')) {
-                                  setPhotoPreview({ url: photoUrl, name: req.user_nome });
-                                }
-                            }}
-                            className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold font-mono overflow-hidden cursor-zoom-in" style={{ background: 'rgba(99,102,241,0.08)', color: 'rgba(165,180,252,0.7)' }}
-                          >
-                            {req.user_foto?.startsWith('data:image') || req.user_foto?.startsWith('http') ? (
-                              <img src={req.user_foto} className="w-full h-full object-cover" alt={req.user_nome} />
-                            ) : tab === "profileEdits" && (req as any).foto ? (
-                              <img src={(req as any).foto} className="w-full h-full object-cover" />
-                            ) : (
-                              req.user_foto
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-white">{req.user_nome}</p>
-                            <p className="text-[9px] font-mono" style={{ color: 'rgba(255,255,255,0.2)' }}>{formatDateTime(req.ts)}</p>
-                          </div>
-                        </div>
-                      </td>
-                      {tab !== "profileEdits" && <td className="px-5 py-3 text-sm font-semibold font-mono text-white">{formatMT(req.valor)}</td>}
-                      <td className="px-5 py-3 text-center"><StatusBadge status={req.status} /></td>
-                      <td className="px-5 py-3 text-right">
-                        <button
-                          onClick={() => setConfirmDelete({ req: req as AnyRequest, type: tab === "memberships" ? "membership" : tab === "loans" ? "loan" : "deposit" })}
-                          className="p-1.5 rounded-md transition-all opacity-0 group-hover:opacity-100"
-                          style={{ background: 'rgba(239,68,68,0.06)', color: 'rgba(239,68,68,0.5)' }}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Modais de Confirmação ── */}
       <AlertDialog open={!!confirmApprove} onOpenChange={(open) => !open && setConfirmApprove(null)}>
-        <AlertDialogContent className="max-w-sm rounded-xl p-0 overflow-hidden border-0" style={{ background: 'hsl(222 35% 7%)', border: '1px solid rgba(16,185,129,0.15)' }}>
-          <div className="p-6">
-            <AlertDialogHeader>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.15)' }}>
-                  <Check className="w-4 h-4" style={{ color: 'hsl(160 84% 44%)' }} />
+        <AlertDialogContent className="max-w-md rounded-[2.5rem] bg-[#0A0F1C] border border-white/5 p-8 shadow-[0_0_100px_rgba(16,185,129,0.1)]">
+            <AlertDialogHeader className="space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                    <Check className="w-6 h-6 text-emerald-500" strokeWidth={3} />
+                  </div>
+                  <div>
+                    <AlertDialogTitle className="text-xl font-black text-white italic uppercase tracking-tighter leading-none">Validar Acção</AlertDialogTitle>
+                    <p className="text-[10px] font-black text-emerald-500/40 uppercase tracking-widest mt-1">Acção Fiscal Validada</p>
+                  </div>
                 </div>
-                <div>
-                  <AlertDialogTitle className="text-base font-bold text-white">Confirmar Aprovação</AlertDialogTitle>
-                  <p className="text-[9px] uppercase tracking-widest" style={{ color: 'rgba(16,185,129,0.6)' }}>Acção Fiscal Validada</p>
-                </div>
-              </div>
-              <AlertDialogDescription className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                Este pedido será validado no sistema. A operação gera efeito imediato nos saldos.
-              </AlertDialogDescription>
+                
+                <AlertDialogDescription className="text-xs text-white/40 leading-relaxed uppercase font-medium">
+                  Este pedido será consolidado no sistema com efeito imediato nos saldos.
+                </AlertDialogDescription>
+
+                {/* RECIBO EM DESTAQUE */}
+                {(displayApprove.current?.type === "deposit" || displayApprove.current?.type === "liquidation") && (displayApprove.current?.req as any)?.foto && (
+                   <div className="space-y-3">
+                      <div className="flex items-center justify-between px-2">
+                         <span className="text-[9px] font-black text-blue-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                           <Receipt className="w-3 h-3" /> Foto do Recibo
+                         </span>
+                         <button onClick={() => setPhotoPreview({ url: (displayApprove.current?.req as any).foto, name: "Comprovativo" })} className="text-[9px] font-bold text-white/20 uppercase">Ampliar</button>
+                      </div>
+                      <div 
+                        onClick={() => setPhotoPreview({ url: (displayApprove.current?.req as any).foto, name: "Comprovativo" })}
+                        className="aspect-video w-full rounded-2xl overflow-hidden border border-white/10 group cursor-zoom-in"
+                      >
+                         <img src={(displayApprove.current?.req as any).foto} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                      </div>
+                   </div>
+                )}
             </AlertDialogHeader>
-            <div className="flex items-center justify-between p-3 rounded-lg my-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div className="flex items-center gap-2">
-                <div 
-                  onClick={() => {
-                        let photoUrl = displayApprove.current?.req?.user_foto;
-                        if (displayApprove.current?.type === "profileEdit" && (displayApprove.current?.req as any)?.foto) photoUrl = (displayApprove.current?.req as any).foto;
-                        if (photoUrl?.startsWith('data:image') || photoUrl?.startsWith('http')) {
-                          setPhotoPreview({ url: photoUrl, name: displayApprove.current?.req?.user_nome || "Membro" });
-                        }
-                  }}
-                  className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold font-mono overflow-hidden cursor-zoom-in" style={{ background: 'rgba(99,102,241,0.1)', color: 'rgba(165,180,252,0.7)' }}
-                >
-                   {displayApprove.current?.req?.user_foto?.startsWith('data:image') || displayApprove.current?.req?.user_foto?.startsWith('http') ? (
-                      <img src={displayApprove.current.req.user_foto} className="w-full h-full object-cover" />
-                   ) : displayApprove.current?.type === "profileEdit" && (displayApprove.current?.req as any)?.foto ? (
-                      <img src={(displayApprove.current?.req as any).foto} className="w-full h-full object-cover" />
-                   ) : (
-                      displayApprove.current?.req?.user_foto
-                   )}
+
+            <div className="my-8 flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-xl bg-white/5 overflow-hidden">
+                      {displayApprove.current?.req?.user_foto && <img src={displayApprove.current.req.user_foto} className="w-full h-full object-cover" />}
+                   </div>
+                   <p className="text-sm font-black text-white italic">{displayApprove.current?.req?.user_nome}</p>
                 </div>
-                <p className="text-sm font-semibold text-white">{displayApprove.current?.req?.user_nome}</p>
-              </div>
-              <div className="text-right">
-                 {displayApprove.current?.type === "profileEdit" ? (
-                   <span className="text-xs font-bold font-mono" style={{ color: 'hsl(160 84% 44%)' }}>Actualização de Perfil</span>
-                 ) : (
-                   <p className="text-sm font-bold font-mono" style={{ color: 'hsl(160 84% 44%)' }}>{formatMT(displayApprove.current?.req?.valor || 0)}</p>
-                 )}
-              </div>
+                <p className="text-lg font-black text-emerald-500 font-mono italic">{formatMT(displayApprove.current?.req?.valor || 0)}</p>
             </div>
-            <AlertDialogFooter className="gap-2">
-              <AlertDialogCancel className="rounded-lg h-10 text-xs font-medium px-4" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.07)' }}>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={(e) => { e.preventDefault(); handleConfirmApprove(); }} className="flex-1 rounded-lg h-10 text-xs font-semibold" style={{ background: 'hsl(160 84% 39%)', color: 'hsl(222 40% 5%)' }}>Confirmar Aprovação</AlertDialogAction>
+
+            <AlertDialogFooter className="flex-col sm:flex-row gap-3">
+              <AlertDialogCancel className="h-14 rounded-2xl font-black text-[10px] uppercase tracking-widest bg-white/5 border-white/5 text-white/40 hover:bg-white/10">Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={(e) => { e.preventDefault(); handleConfirmApprove(); }} className="h-14 rounded-2xl bg-emerald-500 text-[#050810] font-black text-[10px] uppercase tracking-[0.2em] hover:bg-emerald-400 transition-all flex-1">Confirmar A</AlertDialogAction>
             </AlertDialogFooter>
-          </div>
         </AlertDialogContent>
       </AlertDialog>
 
       <AlertDialog open={!!confirmReject} onOpenChange={(open) => !open && setConfirmReject(null)}>
-        <AlertDialogContent className="max-w-sm rounded-xl p-0 overflow-hidden border-0" style={{ background: 'hsl(222 35% 7%)', border: '1px solid rgba(239,68,68,0.15)' }}>
-          <div className="p-6">
-            <AlertDialogHeader>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}>
-                  <X className="w-4 h-4" style={{ color: 'rgba(239,68,68,0.8)' }} />
+        <AlertDialogContent className="max-w-md rounded-[2.5rem] bg-[#0A0F1C] border border-rose-500/20 p-8 shadow-[0_0_100px_rgba(244,63,94,0.1)]">
+            <AlertDialogHeader className="space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+                    <X className="w-6 h-6 text-rose-500" strokeWidth={3} />
+                  </div>
+                  <div>
+                    <AlertDialogTitle className="text-xl font-black text-white italic uppercase tracking-tighter leading-none">Rejeitar Pedido</AlertDialogTitle>
+                    <p className="text-[10px] font-black text-rose-500/40 uppercase tracking-widest mt-1">Cancelamento Automático</p>
+                  </div>
                 </div>
-                <div>
-                  <AlertDialogTitle className="text-base font-bold text-white">Rejeitar Pedido</AlertDialogTitle>
-                  <p className="text-[9px] uppercase tracking-widest" style={{ color: 'rgba(239,68,68,0.6)' }}>Cancelamento Automático</p>
-                </div>
-              </div>
-              <AlertDialogDescription className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                Ao rejeitar, o pedido é movido para o histórico e o membro não receberá os fundos.
-              </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter className="gap-2 mt-4">
-              <AlertDialogCancel className="rounded-lg h-10 text-xs font-medium px-4" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.07)' }}>Manter Pedido</AlertDialogCancel>
-              <AlertDialogAction onClick={(e) => { e.preventDefault(); handleConfirmReject(); }} className="flex-1 rounded-lg h-10 text-xs font-semibold" style={{ background: 'hsl(0 72% 51%)', color: 'white' }}>Confirmar Rejeição</AlertDialogAction>
+            <AlertDialogFooter className="mt-8 flex-col sm:flex-row gap-3">
+              <AlertDialogCancel className="h-14 rounded-2xl font-black text-[10px] uppercase tracking-widest bg-white/5 border-white/5 text-white/40">Manter Pendente</AlertDialogCancel>
+              <AlertDialogAction onClick={(e) => { e.preventDefault(); handleConfirmReject(); }} className="h-14 rounded-2xl bg-rose-500 text-white font-black text-[10px] uppercase tracking-[0.2em] flex-1">Confirmar Rejeição</AlertDialogAction>
             </AlertDialogFooter>
-          </div>
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!confirmDelete} onOpenChange={(open) => !open && setConfirmDelete(null)}>
-        <AlertDialogContent className="max-w-sm rounded-xl p-0 overflow-hidden border-0" style={{ background: 'hsl(222 35% 7%)', border: '1px solid rgba(239,68,68,0.15)' }}>
-          <div className="p-6">
-            <AlertDialogHeader>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}>
-                  <Trash2 className="w-4 h-4" style={{ color: 'rgba(239,68,68,0.8)' }} />
-                </div>
-                <div>
-                  <AlertDialogTitle className="text-base font-bold text-white">Eliminar Histórico</AlertDialogTitle>
-                  <p className="text-[9px] uppercase tracking-widest" style={{ color: 'rgba(239,68,68,0.6)' }}>Auditoria de Sistema</p>
-                </div>
-              </div>
-              <AlertDialogDescription className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                Uma solicitação formal de exclusão será enviada. O histórico só será permanentemente apagado após a aprovação no cofre.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="gap-2 mt-4">
-              <AlertDialogCancel className="rounded-lg h-10 text-xs font-medium px-4" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.07)' }}>Manter Histórico</AlertDialogCancel>
-              <AlertDialogAction onClick={(e) => { e.preventDefault(); handleConfirmDelete(); }} className="flex-1 rounded-lg h-10 text-xs font-semibold" style={{ background: 'hsl(0 72% 51%)', color: 'white' }}>Solicitar Exclusão</AlertDialogAction>
-            </AlertDialogFooter>
-          </div>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <Dialog open={!!createType} onOpenChange={(open) => !open && setCreateType(null)}>
-        <DialogContent className="glass-panel border-white/20 rounded-[3rem] max-w-md p-10 shadow-2xl overflow-hidden">
-          <DialogHeader><DialogTitle className="text-2xl font-black text-white italic uppercase tracking-tighter mb-8">Novo Registo Fiscal</DialogTitle></DialogHeader>
-          <form onSubmit={handleCreate} className="space-y-6">
-            <div><label className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-2 block px-1">Membro Titular</label><select required value={userId} onChange={e => setUserId(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary transition-all appearance-none"><option value="" className="bg-black">Seleccionar Membro...</option>{users?.filter(u => u.status === 'Ativo').map(u => (<option key={u.id} value={u.id} className="bg-black">{u.nome}</option>))}</select></div>
-            <div><label className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-2 block px-1">Valor Unitário (MT)</label><input required value={valor} onChange={e => setValor(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-2xl font-black text-white focus:outline-none focus:border-primary text-center italic tracking-tighter" placeholder="0.00" /></div>
-            
-            <div className="p-4 rounded-3xl bg-white/5 border border-dashed border-white/10 relative group transition-all hover:bg-white/10">
-              <input 
-                type="file" 
-                accept="image/*" 
-                className="absolute inset-0 opacity-0 cursor-pointer z-10" 
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onloadend = () => setMotivo(reader.result as string); // Usando motivo temporariamente para guardar a base64 do comprovante
-                    reader.readAsDataURL(file);
-                  }
-                }}
-              />
-              <div className="flex flex-col items-center justify-center gap-2 py-4">
-                {motivo && motivo.startsWith('data:image') ? (
-                  <img src={motivo} className="w-32 h-32 object-cover rounded-xl shadow-2xl border-2 border-white/20" />
-                ) : (
-                  <>
-                    <Receipt className="w-8 h-8 text-white/20 group-hover:text-primary transition-colors" />
-                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Anexar Comprovante (Opcional)</span>
-                  </>
-                )}
-              </div>
-            </div>
-            {createType === "loan" && (
-              <>
-                <div>
-                  <label className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-2 block px-1">Membro Indicador (Ganha 20%)</label>
-                  <select value={indicadorId} onChange={e => setIndicadorId(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary transition-all appearance-none">
-                    <option value="" className="bg-black text-white/40 italic text-[10px]">Sem indicador (Opcional)</option>
-                    {users?.filter(u => u.status === 'Ativo').map(u => (
-                      <option key={`ind-${u.id}`} value={u.id} className="bg-black">{u.nome}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[8px] font-black text-white/40 uppercase tracking-widest mb-2 block px-1">Justificativa de Crédito</label>
-                  <textarea value={motivo} onChange={e => setMotivo(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-xs font-bold text-white focus:outline-none focus:border-primary min-h-[100px] resize-none" placeholder="Ex: Investimento em gado" />
-                </div>
-              </>
-            )}
-            <button disabled={createLoanMut.isPending || createDepMut.isPending} className="w-full bg-white text-black py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3">{(createLoanMut.isPending || createDepMut.isPending) ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Check className="w-5 h-5" /> Confirmar Lançamento</>}</button>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal de Previsualização de Foto */}
       <AnimatePresence>
         {photoPreview && (
           <motion.div 
@@ -535,30 +348,15 @@ export default function RequestsPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setPhotoPreview(null)}
-            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 cursor-zoom-out"
+            className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center p-4 cursor-zoom-out backdrop-blur-2xl"
           >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="relative max-w-2xl w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="absolute -top-12 left-0 right-0 flex justify-between items-center text-white">
-                <span className="font-medium">{photoPreview.name}</span>
-                <button 
-                  onClick={() => setPhotoPreview(null)}
-                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              <img 
+             <motion.img 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
                 src={photoPreview.url} 
-                className="w-full h-auto rounded-3xl shadow-2xl border-2 border-white/10" 
-                alt={photoPreview.name} 
-              />
-            </motion.div>
+                className="max-w-full max-h-[80vh] rounded-3xl shadow-2xl border border-white/10"
+                onClick={e => e.stopPropagation()}
+             />
           </motion.div>
         )}
       </AnimatePresence>

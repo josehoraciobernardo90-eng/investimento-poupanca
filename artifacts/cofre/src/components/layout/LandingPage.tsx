@@ -41,6 +41,7 @@ export function LandingPage() {
   const [memberPin, setMemberPin] = useState("");
   const [showMemberPin, setShowMemberPin] = useState(false);
   const [error, setError] = useState(false);
+  const [logoClicks, setLogoClicks] = useState(0);
 
   const handleAdminSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +70,16 @@ export function LandingPage() {
           {view === "landing" && (
             <div className="w-full max-w-5xl mx-auto space-y-8 md:space-y-16">
               <div className="text-center space-y-4 md:space-y-8">
-                <div className="mx-auto w-24 h-24 sm:w-40 sm:h-40 relative drop-shadow-[0_0_40px_rgba(37,99,235,0.4)]">
+                <div 
+                  onClick={() => {
+                    setLogoClicks(prev => prev + 1);
+                    if (logoClicks >= 2) { // 3 cliques para revelar
+                      setView("admin-login");
+                      setLogoClicks(0);
+                    }
+                  }}
+                  className="mx-auto w-24 h-24 sm:w-40 sm:h-40 relative drop-shadow-[0_0_40px_rgba(37,99,235,0.4)] cursor-default select-none active:scale-95 transition-transform"
+                >
                   <svg viewBox="0 0 100 100" className="w-full h-full" fill="none">
                     <defs>
                       <linearGradient id="landing-gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -93,33 +103,18 @@ export function LandingPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+              <div className="flex justify-center max-w-sm mx-auto w-full">
                 <button
                   onClick={() => setView("member-login")}
-                  className="group relative overflow-hidden glass-panel border-white/5 hover:border-blue-500/30 p-6 md:p-8 rounded-[2rem] transition-all text-left"
+                  className="w-full group relative overflow-hidden glass-panel border-white/5 hover:border-blue-500/30 p-8 rounded-[2.5rem] transition-all text-center shadow-2xl"
                 >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20">
-                        <Wallet className="w-6 h-6" />
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-16 h-16 rounded-[1.5rem] bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20 group-hover:scale-110 transition-transform">
+                        <Wallet className="w-8 h-8" />
                       </div>
-                      <div>
-                        <div className="text-xs font-black uppercase tracking-widest opacity-40">Área do Investidor</div>
-                        <div className="text-xl font-bold text-white">Entrar no Cofre</div>
-                      </div>
-                    </div>
-                </button>
-
-                <button
-                  onClick={() => setView("admin-login")}
-                  className="group relative overflow-hidden glass-panel border-white/5 hover:border-indigo-500/30 p-6 md:p-8 rounded-[2rem] transition-all text-left bg-indigo-500/5"
-                >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 border border-indigo-500/20">
-                        <Lock className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-black uppercase tracking-widest opacity-40">Gestão Superior</div>
-                        <div className="text-xl font-bold text-white">Painel Gestor</div>
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Área do Investidor</div>
+                        <div className="text-2xl font-black text-white italic tracking-tighter uppercase">Entrar no Cofre</div>
                       </div>
                     </div>
                 </button>

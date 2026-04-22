@@ -96,7 +96,10 @@ export default function LoanDetailPage() {
         <StatCard title="Total a Devolver" value={formatMT(s.totalDevido)} icon={<AlertTriangle className="text-warning" />} className="md:col-span-2 bg-warning/5 border-warning/20" />
         <StatCard title="Taxa Actual" value={`${s.taxaAtual}%`} icon={<Percent />} />
         <StatCard title="Dias Corridos" value={data.loan.dias.toString()} icon={<Clock />} />
-        <StatCard title="Juro Total" value={formatMT(s.juro)} className="md:col-span-2" />
+        <StatCard title="Juro Base" value={formatMT(s.juro)} className="md:col-span-1" />
+        {s.multaAtraso > 0 && (
+          <StatCard title="Multa de Mora" value={formatMT(s.multaAtraso)} icon={<AlertTriangle className="text-rose-500" />} className="md:col-span-1 bg-rose-500/5 border-rose-500/20 text-rose-500" />
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">

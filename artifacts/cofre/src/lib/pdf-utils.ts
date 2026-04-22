@@ -1,4 +1,5 @@
 import { formatMT, formatDateTime } from "@/lib/utils";
+import { dbStore } from "@/data/firebase-data";
 
 export async function generateMemberReport(memberUser: any, memberDetails: any) {
   // Load jsPDF from CDN
@@ -90,14 +91,33 @@ export async function generateMemberReport(memberUser: any, memberDetails: any) 
   doc.text(`Investimentos em Circulação:`, 25, 158);
   doc.text(`${formatMT(memberDetails.totalEmCirculacao)}`, 190, 158, { align: "right" });
 
-  // PERFORMANCE TAG
-  doc.setFillColor(...blue);
-  doc.rect(15, 180, 180, 25, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(11);
-  doc.text("ESTIMATIVA DE RENDIMENTO MENSAL PRÓXIMO CICLO:", 25, 195);
-  doc.setFontSize(14);
-  doc.text(`+ ${formatMT(memberDetails.totalJuroEsperado)}`, 190, 195, { align: "right" });
+  doc.setFont("helvetica", "bold");
+  doc.text(`LUCRO TOTAL JÁ REALIZADO:`, 25, 166);
+  doc.text(`${formatMT(memberUser.lucro_acumulado || 0)}`, 190, 166, { align: "right" });
+
+  // SECTION 4: Créditos Ativos
+  const activeLoans = (dbStore.loans || []).filter(l => l.user_id === memberUser.id && l.status !== "Liquidado");
+  
+  if (activeLoans.length > 0) {
+    doc.setTextColor(...crimson);
+    doc.setFontSize(12);
+    doc.text("EXTRATO DE PASSIVOS (DÍVIDA ACTIVA)", 15, 185);
+    doc.line(15, 188, 80, 188);
+
+    doc.setTextColor(50, 50, 50);
+    doc.setFontSize(9);
+    let y = 198;
+    activeLoans.forEach((loan: any) => {
+      doc.text(`Empréstimo #${loan.id.slice(0, 8)}:`, 15, y);
+      doc.setFont("helvetica", "bold");
+      doc.text(`${formatMT(loan.total_devido)}`, 190, y, { align: "right" });
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(150, 150, 150);
+      doc.text(`Data: ${formatDateTime(loan.data_inicio)} | Taxa: ${loan.taxa_atual}%`, 15, y + 5);
+      doc.setTextColor(50, 50, 50);
+      y += 15;
+    });
+  }
 
   // Footer Cyber
   doc.setFontSize(7);

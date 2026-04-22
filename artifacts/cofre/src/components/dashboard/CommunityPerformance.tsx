@@ -3,7 +3,12 @@ import { motion } from "framer-motion";
 import { TrendingUp, Users, PieChart, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { formatMT } from "@/lib/utils";
 
-export function CommunityPerformance() {
+interface CommunityProps {
+  totalDistributed?: number;
+  activeRate?: number;
+}
+
+export function CommunityPerformance({ totalDistributed = 125430.00, activeRate = 94 }: CommunityProps) {
   return (
     <section className="mt-12">
       <div className="flex items-center gap-3 mb-6">
@@ -46,11 +51,16 @@ export function CommunityPerformance() {
             <span className="text-[10px] font-bold text-slate-500 uppercase">Rede Ativa</span>
           </div>
           <div>
-             <div className="text-3xl font-display font-bold text-white mb-1">94%</div>
-             <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mb-2">
-                <div className="h-full bg-blue-500 w-[94%]" />
+             <div className="text-3xl font-display font-bold text-white mb-1">{activeRate}%</div>
+             <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mb-2 shadow-inner">
+                <motion.div 
+                   initial={{ width: 0 }}
+                   animate={{ width: `${activeRate}%` }}
+                   transition={{ duration: 1.5 }}
+                   className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" 
+                />
              </div>
-             <p className="text-[10px] text-slate-400 leading-relaxed uppercase font-semibold">Membros com aportes regulares este mês.</p>
+             <p className="text-[10px] text-slate-400 leading-relaxed uppercase font-semibold">Membros com movimentação regular este mês.</p>
           </div>
         </div>
 

@@ -1,7 +1,8 @@
 import { useMember } from "@/hooks/use-member";
 import { dbStore, storeEmitter } from "@/data/firebase-data";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { formatDateTime } from "@/lib/utils";
+import { eliteNotify } from "@/lib/push-engine";
 
 export interface Notification {
   id: string;
@@ -17,6 +18,7 @@ export interface Notification {
 export function useNotifications() {
   const { memberUser } = useMember();
   const [version, setVersion] = useState(0);
+  const processedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const handler = () => setVersion(v => v + 1);
@@ -104,6 +106,24 @@ export function useNotifications() {
 
     return list.sort((a, b) => b.ts - a.ts).slice(0, 30); // Last 30
   }, [memberUser, version]);
+
+  // ANUNCIAR NOVAS NOTIFICAÇÕES (SOM + VIBRAÇÃO)
+  useEffect(() => {
+    if (notifications.length > 0) {
+      const firstRun = processedRef.current.size === 0;
+      
+      notifications.forEach(n => {
+        if (!processedRef.current.has(n.id)) {
+          processedRef.current.add(n.id);
+          
+          // Apenas dispara som se não for o carregamento inicial da página
+          if (!firstRun && !n.read) {
+             eliteNotify.send(n.title, n.message);
+          }
+        }
+      });
+    }
+  }, [notifications]);
 
   return { notifications };
 }

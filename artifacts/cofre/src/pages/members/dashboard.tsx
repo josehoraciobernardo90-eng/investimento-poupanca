@@ -19,10 +19,18 @@ import {
   History,
   Home,
   UserCircle,
-  Camera
+  Camera,
+  Scan,
+  Trophy,
+  Calculator,
+  Zap,
+  Star,
+  ShieldAlert,
+  Receipt,
+  Sparkles
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, ReactNode, useRef } from "react";
+import { useState, ReactNode, useRef, useEffect, useMemo } from "react";
 import { useNotifications } from "@/hooks/use-notifications";
 import { generateMemberReport } from "@/lib/pdf-utils";
 import { useCreateLoanRequest, useCreateDepositRequest, useRequests, useCreateProfileEditRequest, useCreateLiquidationRequest, useApproveDeletionRequest, useRejectDeletionRequest } from "@/hooks/use-requests";
@@ -30,6 +38,12 @@ import { useDashboard } from "@/hooks/use-dashboard";
 import { MemberTechSlides } from "@/components/dashboard/MemberTechSlides";
 import { dbStore } from "@/data/firebase-data";
 import { HudBell } from "@/components/ui/HudBell";
+import { InnovationHub } from "@/components/dashboard/InnovationHub";
+import { GeralIntelligence } from "@/components/dashboard/GeralIntelligence";
+import { NotificationHub } from "@/components/dashboard/NotificationHub";
+import { calcularStatusEmprestimo } from "@/lib/auto-freeze";
+import { ReceiptScanner } from "@/components/dashboard/ReceiptScanner";
+import { SlideToConfirm } from "@/components/ui/SlideToConfirm";
 
 function NavButton({ 
   id, label, icon: Icon, active, set 
@@ -53,15 +67,23 @@ function NavButton({
   );
 }
 
+const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+  <div className="flex items-center gap-2 mb-1">
+    <div className="w-1 h-3 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+    <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">{children}</span>
+  </div>
+);
+
 export default function MemberDashboard() {
   const { logout, memberUser, memberDetails } = useMember();
   const { notifications } = useNotifications();
   const { data: globalStats } = useDashboard();
   
-  const [activeTab, setActiveTab] = useState<"summary" | "assets" | "loans" | "profile">("summary");
+  const [activeTab, setActiveTab] = useState<"summary" | "assets" | "loans" | "profile" | "rank" | "simulator">("summary");
 
   const [isLoanOpen, setIsLoanOpen] = useState(false);
   const [isDepositOpen, setIsDepositOpen] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<any>(null);
@@ -69,6 +91,12 @@ export default function MemberDashboard() {
   const [loanAmount, setLoanAmount] = useState("");
   const [loanReason, setLoanReason] = useState("");
   const [depositAmount, setDepositAmount] = useState("");
+  const [depositPhoto, setDepositPhoto] = useState<string | null>(null);
+  const [liquidationAmount, setLiquidationAmount] = useState("");
+  const [liquidationPhoto, setLiquidationPhoto] = useState<string | null>(null);
+  const [isLiqScannerOpen, setIsLiqScannerOpen] = useState(false);
+  const [simAmount, setSimAmount] = useState(10000);
+  const [isProfitModalOpen, setIsProfitModalOpen] = useState(false);
 
   const createLoanMut = useCreateLoanRequest();
   const createDepositMut = useCreateDepositRequest();
@@ -137,20 +165,37 @@ export default function MemberDashboard() {
     const val = parseFloat(depositAmount.replace(/[^\d.]/g, '')) * 100;
     if (isNaN(val) || val <= 0) return;
     try {
-      await createDepositMut.mutateAsync({ data: { user_id: memberUser.id, valor: val } });
+      await createDepositMut.mutateAsync({ 
+        data: { 
+          user_id: memberUser.id, 
+          valor: val,
+          foto: depositPhoto || ""
+        } 
+      });
       setDepositAmount("");
+      setDepositPhoto(null);
       setTimeout(() => setIsDepositOpen(false), 100);
     } catch {}
   };
 
-  const handleLiquidationRequest = async (loanId: string, amount: number) => {
-    if (!confirm(`Confirma liquidação total de ${formatMT(amount)}?`)) return;
+  const handleLiquidationRequest = async (loanId: string, valor: number) => {
+    if (!liquidationPhoto) {
+      alert("Por favor, anexe a foto do comprovativo para liquidar.");
+      return;
+    }
     try {
-      const operacaoBancariaBemSucedida = await createLiqMet.mutateAsync({
-        data: { user_id: memberUser.id, loan_id: loanId, valor: amount }
+      const success = await createLiqMet.mutateAsync({ 
+        data: { 
+          user_id: memberUser.id, 
+          loan_id: loanId, 
+          valor, 
+          foto: liquidationPhoto 
+        } 
       });
-      if (operacaoBancariaBemSucedida === true) {
+      if (success) {
         setSelectedLoan(null);
+        setLiquidationAmount("");
+        setLiquidationPhoto(null);
       }
     } catch {}
   };
@@ -158,7 +203,18 @@ export default function MemberDashboard() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isCapturingProfile, setIsCapturingProfile] = useState(false);
   const [cameraStatus, setCameraStatus] = useState<"idle" | "requesting" | "active" | "error">("idle");
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const toggleCamera = () => {
+    setFacingMode(prev => prev === "user" ? "environment" : "user");
+  };
+
+  useEffect(() => {
+    if (isCapturingProfile) {
+      startCamera();
+    }
+  }, [facingMode]);
 
   const startCamera = async () => {
     setCameraStatus("requesting");
@@ -169,7 +225,7 @@ export default function MemberDashboard() {
     try {
       setIsCapturingProfile(true);
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 640 } } 
+        video: { facingMode: facingMode, width: { ideal: 640 }, height: { ideal: 640 } } 
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -339,67 +395,174 @@ export default function MemberDashboard() {
                    </div>
                 </div>
 
-                {/* ── MÉTRICAS INDIVIDUAIS (TECNOLOGIA DE PONTA) ── */}
-                <div className="grid grid-cols-1 gap-4">
-                   <div className="bg-slate-900/40 rounded-3xl p-6 border border-white/5 relative overflow-hidden group">
-                      <div className="flex justify-between items-start mb-6">
-                         <div>
-                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Meus Juros Totais</h3>
-                            <p className="text-2xl font-black text-emerald-400 italic">+{formatMT((memberUser.lucro_acumulado || 0) + memberDetails.totalJuroEsperado)}</p>
-                         </div>
-                         <div className="bg-emerald-500/10 p-3 rounded-2xl"><TrendingUp className="w-6 h-6 text-emerald-400"/></div>
-                      </div>
-                      <div className="flex gap-6 border-t border-white/5 pt-4">
-                         <div>
-                            <p className="text-[8px] font-black text-slate-500 uppercase mb-1">Já Ganhei</p>
-                            <p className="text-sm font-bold text-white">{formatMT(memberUser.lucro_acumulado || 0)}</p>
-                         </div>
-                         <div>
-                            <p className="text-[8px] font-black text-slate-500 uppercase mb-1">A Receber</p>
-                            <p className="text-sm font-bold text-blue-400">{formatMT(memberDetails.totalJuroEsperado)}</p>
-                         </div>
-                      </div>
-                   </div>
+                 {/* ── INOVAÇÃO & SIMULAÇÃO (TECNOLOGIA DE ÚLTIMA GERAÇÃO) ── */}
+                 <div className="space-y-6">
+                    <InnovationHub loans={myActiveLoans} isAdmin={false} />
+                    
+                    <GeralIntelligence 
+                      memberBalance={memberDetails.emCaixa}
+                      recentRequests={[
+                        ...dbStore.membershipRequests,
+                        ...dbStore.loanRequests,
+                        ...dbStore.depositRequests
+                      ].sort((a, b) => b.ts - a.ts)}
+                      isAdmin={false}
+                    />
+                  </div>
 
-                   <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-slate-900/40 rounded-3xl p-5 border border-white/5">
-                         <p className="text-[8px] font-black text-slate-500 uppercase mb-2">Dinheiro na Mão</p>
-                         <p className="text-xl font-black text-white">{formatMT(memberDetails.emCaixa)}</p>
-                      </div>
-                      <div className="bg-slate-900/40 rounded-3xl p-5 border border-white/5">
-                         <p className="text-[8px] font-black text-slate-500 uppercase mb-2">Dinheiro na Rua</p>
-                         <p className="text-xl font-black text-blue-500">{formatMT(memberDetails.totalEmCirculacao)}</p>
-                      </div>
-                   </div>
-                </div>
+                  {/* ── MÉTRICAS INDIVIDUAIS (PRESSURIZADO) ── */}
+                  {(() => {
+                     const lucroRealizado = memberUser.lucro_acumulado || 0;
+                     const lucroProjetado = myActiveLoans.reduce((acc, l) => acc + l.statusCalc.juroReal, 0);
+                     const lucroTotal = lucroRealizado + lucroProjetado;
+
+                     return (
+                        <div className="grid grid-cols-1 gap-4">
+                           <button 
+                             onClick={() => setIsProfitModalOpen(true)}
+                             className="bg-gradient-to-br from-emerald-500/20 via-slate-900/40 to-slate-900/40 rounded-[2rem] p-7 border border-emerald-500/20 relative overflow-hidden group shadow-2xl text-left active:scale-[0.98] transition-all"
+                           >
+                              <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity"><TrendingUp className="w-24 h-24 text-emerald-400" /></div>
+                              <div className="flex justify-between items-start">
+                                 <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                      <h3 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Lucro Total Gerado</h3>
+                                    </div>
+                                    <p className="text-4xl font-black text-white italic tracking-tighter">
+                                      +{formatMT(lucroTotal)}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-2">
+                                       <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-none">Calculado via Algoritmo Gogoma</span>
+                                       <div className="w-1 h-1 rounded-full bg-slate-700" />
+                                       <span className="text-[9px] text-emerald-500 font-black uppercase tracking-widest flex items-center gap-1">Ver Flash <ChevronRight className="w-3 h-3"/></span>
+                                    </div>
+                                 </div>
+                                 <div className="bg-emerald-500/10 p-3 rounded-2xl border border-emerald-500/20"><Zap className="w-6 h-6 text-emerald-400 animate-pulse"/></div>
+                              </div>
+                           </button>
+
+                           <div className="grid grid-cols-2 gap-4">
+                              <div className="bg-slate-900/40 rounded-3xl p-5 border border-white/5">
+                                 <p className="text-[8px] font-black text-slate-500 uppercase mb-2">Dinheiro na Mão</p>
+                                 <p className="text-xl font-black text-white">{formatMT(memberDetails.emCaixa)}</p>
+                              </div>
+                              <div className="bg-slate-900/40 rounded-3xl p-5 border border-white/5">
+                                 <p className="text-[8px] font-black text-slate-500 uppercase mb-2">Dinheiro na Rua</p>
+                                 <p className="text-xl font-black text-blue-500">{formatMT(memberDetails.totalEmCirculacao)}</p>
+                              </div>
+                           </div>
+
+                           {/* APOIO AO CLIENTE (SUPORTE TÉCNICO) */}
+                           {dbStore.dashboard.support_phone && (
+                              <a 
+                               href={`https://wa.me/${dbStore.dashboard.support_phone.replace(/\D/g, "")}`} 
+                               target="_blank"
+                               className="block bg-indigo-500/5 rounded-3xl p-6 border border-indigo-500/10 hover:bg-indigo-500/10 transition-all group overflow-hidden relative"
+                              >
+                                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                    <Phone className="w-16 h-16 text-indigo-400" />
+                                 </div>
+                                 <div className="flex items-center gap-4 relative z-10">
+                                    <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center border border-indigo-400/30">
+                                       <Phone className="w-5 h-5 text-indigo-400" />
+                                    </div>
+                                    <div>
+                                       <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest leading-none mb-1">Apoio ao Cliente</p>
+                                       <h4 className="text-sm font-bold text-white italic">{dbStore.dashboard.support_phone}</h4>
+                                       <p className="text-[8px] text-slate-500 uppercase font-bold tracking-tighter mt-1 italic">Clique para falar com a Administração Agora</p>
+                                    </div>
+                                 </div>
+                              </a>
+                           )}
+                        </div>
+                     );
+                  })()}
 
                 {/* ── ECOSSISTEMA GLOBAL DO FUNDO (TRANSPARÊNCIA) ── */}
-                <div className="space-y-4">
-                   <div className="flex items-center justify-between px-2">
-                      <h3 className="text-[10px] font-black text-white uppercase tracking-[0.3em] italic">Ecossistema Global</h3>
-                      <div className="text-[8px] font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full animate-pulse">SISTEMA ONLINE</div>
-                   </div>
-                   <div className="bg-blue-600/5 rounded-3xl p-6 border border-blue-500/10 relative overflow-hidden group">
-                      <div className="absolute right-0 top-0 p-6 opacity-[0.03]"><Database className="w-20 h-20 text-white"/></div>
-                      <div className="space-y-5">
-                         <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-3">
-                               <div className="w-10 h-10 rounded-2xl bg-blue-500/10 flex items-center justify-center"><Building2 className="w-5 h-5 text-blue-500"/></div>
-                               <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Caixa Global (Total)</span>
-                            </div>
-                            <span className="text-lg font-black text-white">{formatMT(globalStats?.caixa || 0)}</span>
-                         </div>
-                         <div className="flex justify-between items-center pt-5 border-t border-white/5">
-                            <div className="flex items-center gap-3">
-                               <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 flex items-center justify-center"><Activity className="w-5 h-5 text-emerald-500"/></div>
-                               <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Lucro Total Gerado</span>
-                            </div>
-                            <span className="text-lg font-black text-emerald-400">{formatMT(globalStats?.lucros || 0)}</span>
-                         </div>
-                      </div>
-                   </div>
-                   <p className="text-[8px] text-center text-slate-600 font-bold uppercase tracking-widest italic">Estes valores reflectem a força de todos os membros somada.</p>
-                </div>
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between px-2">
+                       <div className="flex flex-col">
+                          <h3 className="text-[10px] font-black text-white uppercase tracking-[0.3em] italic">Sede do Capital Geral</h3>
+                          <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">Controlo Master do Ecossistema</p>
+                       </div>
+                       <div className="text-[8px] font-black text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full animate-pulse border border-emerald-500/20">SIS MASTER ONLINE</div>
+                    </div>
+
+                    {/* PATRIMÓNIO GLOBAL (MAIN) */}
+                    <div className="bg-gradient-to-br from-blue-600/20 via-slate-900 to-slate-900 rounded-[2.5rem] p-8 border border-white/5 relative overflow-hidden group shadow-2xl">
+                       <div className="absolute right-0 top-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity"><Building2 className="w-32 h-32 text-white"/></div>
+                       <div className="relative z-10">
+                          <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-2 block">Património Global do Fundo</span>
+                          <div className="text-4xl font-black text-white tracking-tighter italic mb-4">
+                            {formatMT(globalStats?.patrimonyGlobal || 0)}
+                          </div>
+                          <div className="flex items-center gap-2 py-2 px-4 rounded-xl bg-blue-500/10 border border-blue-500/20 w-fit">
+                             <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                             <span className="text-[9px] font-black text-blue-300 uppercase tracking-widest">Sistema Master Operacional ({globalStats?.membros_ativos || 0} Cofres)</span>
+                          </div>
+                       </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                       {/* DINHEIRO EM CAIXA */}
+                       <div className="bg-slate-900/40 rounded-3xl p-6 border border-white/5 relative overflow-hidden group">
+                          <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20"><Wallet className="w-6 h-6 text-emerald-400" /></div>
+                                <div>
+                                   <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Dinheiro em Caixa</p>
+                                   <p className="text-xl font-black text-white">{formatMT(globalStats?.caixa || 0)}</p>
+                                   <p className="text-[8px] text-emerald-500/60 font-bold uppercase tracking-widest">Reserva Imediata</p>
+                                </div>
+                             </div>
+                             <div className="text-right">
+                                <p className="text-[8px] text-slate-600 font-black uppercase mb-1">Status</p>
+                                <div className="bg-emerald-500/20 text-emerald-400 text-[8px] font-black px-2 py-0.5 rounded uppercase">Alta Liquidez</div>
+                             </div>
+                          </div>
+                       </div>
+
+                       {/* CAPITAL NA ESTRADA */}
+                       <div className="bg-slate-900/40 rounded-3xl p-6 border border-white/5 relative overflow-hidden group">
+                          <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20"><TrendingUp className="w-6 h-6 text-blue-400" /></div>
+                                <div>
+                                   <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Capital na Estrada</p>
+                                   <p className="text-xl font-black text-white">{formatMT(globalStats?.naRua || 0)}</p>
+                                   <p className="text-[8px] text-blue-500/60 font-bold uppercase tracking-widest">
+                                      {globalStats?.contagemContratos || 0} Contratos (Em Operação)
+                                   </p>
+                                </div>
+                             </div>
+                             <div className="text-right">
+                                <p className="text-[8px] text-slate-600 font-black uppercase mb-1">Carga</p>
+                                <div className="bg-blue-500/20 text-blue-400 text-[8px] font-black px-2 py-0.5 rounded uppercase">Em Renda</div>
+                             </div>
+                          </div>
+                       </div>
+
+                       {/* LUCRO GLOBAL */}
+                       <div className="bg-slate-900/40 rounded-3xl p-6 border border-white/5 relative overflow-hidden group">
+                          <div className="flex justify-between items-center">
+                             <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20"><Star className="w-6 h-6 text-amber-400" /></div>
+                                <div>
+                                   <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Lucro Global (Fundos)</p>
+                                   <p className="text-xl font-black text-amber-400">{formatMT(globalStats?.lucros || 0)}</p>
+                                   <p className="text-[8px] text-amber-500/60 font-bold uppercase tracking-widest">+ Taxas Consolidadas</p>
+                                </div>
+                             </div>
+                             <div className="text-right">
+                                <p className="text-[8px] text-slate-600 font-black uppercase mb-1">Fundo</p>
+                                <div className="bg-amber-500/20 text-amber-400 text-[8px] font-black px-2 py-0.5 rounded uppercase">Histórico</div>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                    <p className="text-[8px] text-center text-slate-600 font-black uppercase tracking-[0.3em] italic py-4">Actualizado em Tempo Real via Algoritmo Gogoma</p>
+                 </div>
               </motion.div>
             )}
 
@@ -668,6 +831,180 @@ export default function MemberDashboard() {
                        <ChevronRight className="w-5 h-5 text-slate-500" />
                     </button>
                  </div>
+
+                 <div className="mt-8 border-t border-white/5 pt-8">
+                    <NotificationHub />
+                 </div>
+               </motion.div>
+            )}
+
+            {activeTab === "rank" && (
+              <motion.div
+                key="rank"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="pb-24 pt-4"
+              >
+                <div className="mb-6 flex justify-between items-end">
+                   <div>
+                      <SectionLabel>Comunidade Elite</SectionLabel>
+                      <h2 className="text-2xl font-black text-white italic tracking-tighter">Ranking de Confiança</h2>
+                   </div>
+                   <Trophy className="w-8 h-8 text-amber-500 opacity-20" />
+                </div>
+
+                <div className="space-y-4">
+                   {/* Pódio Dinâmico (Top 3) */}
+                   <div className="grid grid-cols-3 gap-2 items-end mb-8 pt-4">
+                      {(() => {
+                        const top3 = Object.values(dbStore.userDetails || {})
+                          .map((ud: any) => {
+                            const dLoans = (dbStore.loans || []).filter(l => l.user_id === ud.user.id && l.status !== "Liquidado" && (calcularStatusEmprestimo(l.valor_original, l.data_inicio).fase !== 1));
+                            const pLoans = (dbStore.loans || []).filter(l => l.user_id === ud.user.id && l.status === "Liquidado").length;
+                            let s = 800;
+                            s -= dLoans.length * 150;
+                            s += pLoans * 20;
+                            s += Math.min(100, (ud.emCaixa / 10000) * 10);
+                            return { ...ud, score: s };
+                          })
+                          .sort((a, b) => b.score - a.score)
+                          .slice(0, 3);
+
+                        return [
+                          { pos: 2, user: top3[1], color: "bg-slate-400", label: "Prata" },
+                          { pos: 1, user: top3[0], color: "bg-amber-500", label: "Ouro" },
+                          { pos: 3, user: top3[2], color: "bg-amber-700", label: "Bronze" }
+                        ].map((p, idx) => (
+                          <div key={idx} className={cn("flex flex-col items-center", p.pos === 1 ? "order-2" : p.pos === 2 ? "order-1" : "order-3")}>
+                             <div className="mb-2 relative">
+                                <div className={cn("w-14 h-14 rounded-full border-2 p-1 overflow-hidden", p.pos === 1 ? "border-amber-500" : p.pos === 2 ? "border-slate-400" : "border-amber-700")}>
+                                   {p.user?.user.foto ? (
+                                     <img src={p.user.user.foto} className="w-full h-full object-cover rounded-full" alt="Avatar" />
+                                   ) : (
+                                     <div className="w-full h-full bg-slate-800 rounded-full flex items-center justify-center text-[10px] text-slate-500">?</div>
+                                   )}
+                                </div>
+                                <div className={cn("absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center text-[8px] font-black text-white border-2 border-[#090D14]", p.color)}>
+                                   {p.pos}º
+                                </div>
+                             </div>
+                             <div className="text-center px-1">
+                                <p className="text-[10px] font-black text-white uppercase tracking-tight truncate w-20 leading-none mb-1">{p.user?.user.nome.split(' ')[0] || "Vago"}</p>
+                                <p className={cn("text-[9px] font-mono font-bold", p.pos === 1 ? "text-amber-500" : "text-slate-400")}>{p.user ? `${p.user.score.toFixed(0)} pts` : "---"}</p>
+                             </div>
+                             <div className={cn("w-full mt-3 rounded-t-xl opacity-20", p.pos === 1 ? "h-16 bg-amber-500" : p.pos === 2 ? "h-10 bg-slate-400" : "h-6 bg-amber-700")} />
+                          </div>
+                        ));
+                      })()}
+                   </div>
+
+                   {/* Lista Completa (Membro Actual em Destaque) */}
+                   <div className="bg-slate-800/20 rounded-3xl border border-white/5 overflow-hidden">
+                      {Object.values(dbStore.userDetails || {})
+                        .map((ud: any) => {
+                          const delayedLoans = (dbStore.loans || []).filter(l => l.user_id === ud.user.id && l.status !== "Liquidado" && (calcularStatusEmprestimo(l.valor_original, l.data_inicio).fase !== 1));
+                          const paidLoans = (dbStore.loans || []).filter(l => l.user_id === ud.user.id && l.status === "Liquidado").length;
+                          let score = 800;
+                          score -= delayedLoans.length * 150;
+                          score += paidLoans * 20;
+                          score += Math.min(100, (ud.emCaixa / 10000) * 10);
+                          return { ...ud, score };
+                        })
+                        .sort((a, b) => b.score - a.score)
+                        .map((user, i) => (
+                          <div key={user.user.id} className={cn("flex items-center justify-between p-4 border-b border-white/5 last:border-0 transition-colors", user.user.id === memberUser.id ? "bg-blue-500/10" : "hover:bg-white/[0.02]")}>
+                             <div className="flex items-center gap-3">
+                                <span className={cn("text-xs font-black w-5", i === 0 ? "text-amber-500" : i === 1 ? "text-slate-400" : i === 2 ? "text-amber-700" : "text-slate-600")}>{i + 1}º</span>
+                                <div className="text-sm font-bold text-slate-200">
+                                  {user.user.nome} {user.user.id === memberUser.id && <span className="text-[8px] bg-blue-500 text-white px-1.5 py-0.5 rounded-full ml-2 uppercase">Tu</span>}
+                                </div>
+                             </div>
+                             <div className="flex flex-col items-end">
+                                <span className="text-xs font-mono font-bold text-blue-400">{user.score.toFixed(0)} pts</span>
+                                <div className="h-1 w-12 bg-slate-800 rounded-full mt-1 overflow-hidden drop-shadow-[0_0_5px_rgba(59,130,246,0.3)]">
+                                   <div className="h-full bg-blue-500" style={{ width: `${(user.score / 1000) * 100}%` }} />
+                                </div>
+                             </div>
+                          </div>
+                        ))}
+                   </div>
+                   <p className="text-center text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-6 bg-white/5 py-2 rounded-full">Actualizado em Tempo Real via Algoritmo Gogoma</p>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === "simulator" && (
+              <motion.div
+                key="simulator"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="pb-24 pt-4"
+              >
+                <div className="mb-8">
+                   <SectionLabel>Simulador de Micro-Crédito</SectionLabel>
+                   <h2 className="text-2xl font-black text-white italic tracking-tighter">Planeie o seu Futuro</h2>
+                </div>
+
+                <div className="bg-slate-800/30 rounded-[2.5rem] border border-white/5 p-8 relative overflow-hidden backdrop-blur-xl">
+                   <div className="absolute top-0 right-0 -mr-12 -mt-12 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl" />
+                   
+                   <div className="space-y-8 relative z-10">
+                      <div>
+                         <div className="flex justify-between items-center mb-4">
+                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Valor do Empréstimo</label>
+                            <span className="text-xl font-display font-medium text-white">{formatMT(simAmount)}</span>
+                         </div>
+                         <input 
+                            type="range" 
+                            min="1000" 
+                            max="50000" 
+                            step="1000"
+                            value={simAmount}
+                            onChange={(e) => setSimAmount(parseInt(e.target.value))}
+                            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                         />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3">
+                         {[
+                           { label: "1 Mês", juro: 0.10, d: "10%" },
+                           { label: "2 Meses", juro: 0.20, d: "20%" },
+                           { label: "3 Meses", juro: 0.50, d: "50%" }
+                         ].map((opt, i) => (
+                           <div key={i} className="bg-slate-900/50 p-4 rounded-3xl border border-white/5 flex flex-col items-center">
+                              <span className="text-[10px] font-bold text-slate-500 mb-1">{opt.label}</span>
+                              <span className="text-lg font-black text-white">{opt.d}</span>
+                              <span className="text-[9px] text-blue-400 font-bold mt-2">+{formatMT(simAmount * opt.juro)}</span>
+                           </div>
+                         ))}
+                      </div>
+
+                      <div className="pt-8 border-t border-white/5">
+                         <div className="flex justify-between items-end mb-1">
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Retorno Estimado (3 Meses)</span>
+                            <span className="text-3xl font-display font-medium text-emerald-400">{formatMT(simAmount * 1.5)}</span>
+                         </div>
+                         <p className="text-[9px] text-slate-600 font-medium">Cálculo baseado na taxa progressiva de 10%, 20% e 50% conforme o Cofre Capital.</p>
+                      </div>
+
+                      <button 
+                        onClick={() => { setLoanAmount((simAmount/100).toString()); setIsLoanOpen(true); }}
+                        className="w-full bg-white text-black py-5 rounded-[1.5rem] font-black text-sm uppercase tracking-[0.2em] hover:bg-blue-400 hover:text-white transition-all shadow-xl"
+                      >
+                         Solicitar Este Valor
+                      </button>
+                   </div>
+                </div>
+
+                <div className="mt-8 p-6 bg-amber-500/5 border border-amber-500/10 rounded-3xl">
+                   <div className="flex items-center gap-3 mb-3">
+                      <ShieldAlert className="w-5 h-5 text-amber-500" />
+                      <span className="text-xs font-black text-amber-500 uppercase tracking-widest leading-none">Aviso de Responsabilidade</span>
+                   </div>
+                   <p className="text-[10px] text-slate-500 leading-relaxed font-medium">Os valores apresentados são simulações. A aprovação final depende do seu Ranking de Confiança e da liquidez disponível no ecossistema.</p>
+                </div>
               </motion.div>
             )}
 
@@ -679,7 +1016,9 @@ export default function MemberDashboard() {
             <div className="max-w-md mx-auto flex justify-between items-center px-4">
                <NavButton id="summary" label="Início" icon={Home} active={activeTab} set={setActiveTab} />
                <NavButton id="assets" label="Carteira" icon={Wallet} active={activeTab} set={setActiveTab} />
+               <NavButton id="rank" label="Rank" icon={Trophy} active={activeTab} set={setActiveTab} />
                <NavButton id="loans" label="Crédito" icon={CreditCard} active={activeTab} set={setActiveTab} />
+               <NavButton id="simulator" label="Simular" icon={Calculator} active={activeTab} set={setActiveTab} />
                <NavButton id="profile" label="Perfil" icon={UserCircle} active={activeTab} set={setActiveTab} />
             </div>
         </nav>
@@ -725,14 +1064,67 @@ export default function MemberDashboard() {
                   <h3 className="text-xl font-semibold text-white">Aportar Capital</h3>
                   <button onClick={() => setIsDepositOpen(false)} className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white transition-colors"><X className="w-5 h-5"/></button>
                 </div>
-                <form onSubmit={handleDepositSubmit} className="space-y-5">
+                <div className="mb-6 space-y-4">
+                  {depositPhoto ? (
+                    <div className="relative group">
+                      <div className="w-full h-40 rounded-2xl overflow-hidden border-2 border-emerald-500/30 shadow-lg">
+                        <img src={depositPhoto} className="w-full h-full object-cover" alt="Comprovativo" />
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={() => setDepositPhoto(null)}
+                        className="absolute top-2 right-2 p-2 bg-black/60 rounded-full text-white hover:bg-rose-500 transition-colors backdrop-blur-md"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
+                        <span className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Comprovativo Digitalizado
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <button 
+                      type="button"
+                      onClick={() => setIsScannerOpen(true)}
+                      className="w-full bg-white/5 border border-white/10 p-5 rounded-2xl flex items-center justify-between group active:bg-white/10 transition-all shadow-inner"
+                    >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 group-hover:scale-110 transition-transform">
+                              <Scan className="w-5 h-5 text-blue-400" />
+                          </div>
+                          <div className="text-left">
+                              <p className="text-sm font-bold text-white leading-none mb-1">Digitalizar Comprovante</p>
+                              <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.2em] leading-none">Auto-preencher via IA</p>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-slate-600" />
+                    </button>
+                  )}
+                </div>
+
+                <form onSubmit={handleDepositSubmit} className="space-y-6">
                    <div>
-                       <label className="text-sm font-medium text-slate-300 block mb-2">Valor a Investir (MZN)</label>
-                       <input required value={depositAmount} onChange={e => setDepositAmount(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-4 text-white text-2xl text-center focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all font-display" placeholder="0.00" type="number" step="0.01" />
+                       <label className="text-xs font-black text-slate-500 uppercase tracking-widest block mb-3 pl-1">Valor a Investir (MZN)</label>
+                       <input 
+                         required 
+                         value={depositAmount} 
+                         onChange={e => setDepositAmount(e.target.value)} 
+                         className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-5 text-white text-3xl text-center focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all font-display font-bold shadow-inner" 
+                         placeholder="0.00" 
+                         type="number" 
+                         step="0.01" 
+                       />
                    </div>
-                   <p className="text-xs text-slate-500 text-center">Taxa fixa de 30 MZN aplicável.</p>
-                   <button disabled={createDepositMut.isPending} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-4 rounded-xl transition-all flex justify-center items-center mt-2">
-                      {createDepositMut.isPending ? "Processando..." : "Confirmar Depósito"}
+                   <div className="flex items-center gap-2 justify-center py-2 px-4 rounded-xl bg-white/[0.03] border border-white/5">
+                      <Receipt className="w-3.5 h-3.5 text-slate-500" />
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Taxa fixa de 30 MZN aplicável.</p>
+                   </div>
+                   <button 
+                     disabled={createDepositMut.isPending} 
+                     className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-5 rounded-[1.5rem] transition-all shadow-xl shadow-emerald-900/20 flex justify-center items-center gap-3 active:scale-[0.98] uppercase tracking-widest text-sm"
+                   >
+                      {createDepositMut.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirmar Depósito"}
                    </button>
                 </form>
               </motion.div>
@@ -781,13 +1173,60 @@ export default function MemberDashboard() {
                    </div>
                 </div>
 
-                <button 
-                  onClick={() => handleLiquidationRequest(selectedLoan.id, selectedLoan.statusCalc.totalADevolver)}
-                  className="w-full bg-white text-black font-semibold py-4 rounded-xl transition-all flex justify-center items-center gap-2"
-                  disabled={createLiqMet.isPending}
-                >
-                  {createLiqMet.isPending ? <Loader2 className="w-5 h-5 animate-spin"/> : "Pagar Agora"}
-                </button>
+                 <div className="space-y-4 pt-4">
+                    <div className="bg-slate-900 border border-slate-700 rounded-2xl p-4">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Quanto deseja pagar? (MTn)</label>
+                      <div className="relative flex items-center">
+                        <input 
+                          type="number"
+                          value={liquidationAmount}
+                          onChange={(e) => setLiquidationAmount(e.target.value)}
+                          placeholder={(selectedLoan.statusCalc.totalADevolver / 100).toString()}
+                          className="w-full bg-transparent text-2xl font-bold text-white outline-none"
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => setLiquidationAmount((selectedLoan.statusCalc.totalADevolver / 100).toString())}
+                          className="text-[10px] font-bold text-blue-400 uppercase tracking-widest bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20 whitespace-nowrap"
+                        >
+                          Total
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Comprovativo de Pagamento</label>
+                      {liquidationPhoto ? (
+                        <div className="relative group">
+                          <div className="w-full h-32 rounded-2xl overflow-hidden border-2 border-blue-500/30">
+                            <img src={liquidationPhoto} className="w-full h-full object-cover" alt="Recibo" />
+                          </div>
+                          <button 
+                            onClick={() => setLiquidationPhoto(null)}
+                            className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-full text-white hover:bg-rose-500 transition-colors backdrop-blur-md"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => setIsLiqScannerOpen(true)}
+                          className="w-full py-6 bg-blue-500/5 border-2 border-dashed border-blue-500/20 rounded-2xl flex flex-col items-center justify-center gap-2 group active:scale-[0.98] transition-all"
+                        >
+                           <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                              <Camera className="w-5 h-5 text-blue-400" />
+                           </div>
+                           <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">Capturar Recibo</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <SlideToConfirm 
+                      label="Deslize para Confirmar"
+                      successLabel="Pagamento Enviado!"
+                      onConfirm={() => handleLiquidationRequest(selectedLoan.id, liquidationAmount ? parseFloat(liquidationAmount) * 100 : selectedLoan.statusCalc.totalADevolver)}
+                    />
+                 </div>
               </motion.div>
             </div>
           )}
@@ -847,6 +1286,9 @@ export default function MemberDashboard() {
                        </button>
                        <button type="button" onClick={takePhoto} className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl">
                          <Camera className="w-5 h-5" />
+                       </button>
+                       <button type="button" onClick={toggleCamera} className="w-10 h-10 rounded-full bg-slate-800/80 text-white flex items-center justify-center hover:bg-blue-500 transition-colors backdrop-blur-md">
+                         <Sparkles className={cn("w-5 h-5 transition-transform duration-500", facingMode === "user" ? "rotate-180" : "rotate-0")} />
                        </button>
                      </div>
                    </div>
@@ -978,6 +1420,105 @@ export default function MemberDashboard() {
           )}
         </AnimatePresence>
 
+        {/* ── SCANNER DE ÚLTIMA GERAÇÃO ── */}
+        <AnimatePresence>
+          {isScannerOpen && (
+            <ReceiptScanner 
+              onClose={() => setIsScannerOpen(false)}
+              onScanResult={(data) => {
+                setDepositAmount(data.valor.toString());
+                if (data.foto) setDepositPhoto(data.foto);
+                setIsScannerOpen(false);
+              }}
+            />
+          )}
+          {isLiqScannerOpen && (
+            <ReceiptScanner 
+              onClose={() => setIsLiqScannerOpen(false)}
+              onScanResult={(data) => {
+                if (data.foto) setLiquidationPhoto(data.foto);
+                setIsLiqScannerOpen(false);
+              }}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* ── MODAL DE LUCRO DETALHADO (ELITE FLASH) ── */}
+        <AnimatePresence>
+          {isProfitModalOpen && (
+            <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsProfitModalOpen(false)} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+              <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }} className="relative w-full max-w-lg bg-[#090D14] border-t sm:border border-white/10 rounded-t-[2.5rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+                <div className="p-1.5 flex justify-center"><div className="w-12 h-1 bg-white/10 rounded-full" /></div>
+                <div className="p-8 space-y-8 overflow-y-auto">
+                   <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <h2 className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] italic">Relatório de Performance</h2>
+                        <p className="text-2xl font-black text-white italic tracking-tighter uppercase">Lucro Total Gerado</p>
+                      </div>
+                      <button onClick={() => setIsProfitModalOpen(false)} className="p-2 rounded-full bg-white/5 text-slate-400 hover:text-white transition-colors"><X className="w-5 h-5"/></button>
+                   </div>
+
+                   {(() => {
+                      const lucroRealizado = memberUser.lucro_acumulado || 0;
+                      const lucroProjetado = myActiveLoans.reduce((acc, l) => acc + l.statusCalc.juroReal, 0);
+                      const lucroTotal = lucroRealizado + lucroProjetado;
+
+                      return (
+                        <div className="space-y-6">
+                           {/* BIG TOTAL */}
+                           <div className="bg-gradient-to-br from-emerald-500/10 via-slate-900 to-slate-900 rounded-[2rem] p-8 border border-emerald-500/20 relative overflow-hidden group">
+                              <div className="absolute -right-8 -top-8 p-8 opacity-5"><TrendingUp className="w-32 h-32 text-emerald-400" /></div>
+                              <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-2 block">Saldo Acumulado de Ganhos</span>
+                              <div className="text-5xl font-black text-white tracking-tighter italic mb-4">
+                                +{formatMT(lucroTotal)}
+                              </div>
+                              <div className="flex items-center gap-2 py-2 px-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 w-fit">
+                                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                 <span className="text-[9px] font-black text-emerald-300 uppercase tracking-widest">Cálculo em Tempo Real (Algoritmo Gogoma)</span>
+                              </div>
+                           </div>
+
+                           <div className="grid grid-cols-1 gap-4">
+                              {/* REALIZADO */}
+                              <div className="bg-slate-900/60 rounded-3xl p-6 border border-white/5">
+                                 <div className="flex justify-between items-center mb-1">
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Lucro Realizado</p>
+                                    <div className="bg-emerald-500/20 text-emerald-400 text-[8px] font-black px-2 py-0.5 rounded uppercase">Consolidado</div>
+                                 </div>
+                                 <p className="text-2xl font-black text-white">{formatMT(lucroRealizado)}</p>
+                                 <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1 italic leading-none">Já no seu bolso (Auditado via Blockchain Local)</p>
+                              </div>
+
+                              {/* PROJEÇÃO */}
+                              <div className="bg-slate-900/60 rounded-3xl p-6 border border-white/5 relative overflow-hidden">
+                                 <div className="absolute right-0 top-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16" />
+                                 <div className="flex justify-between items-center mb-1">
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Lucro em Projeção</p>
+                                    <div className="bg-blue-500/20 text-blue-400 text-[8px] font-black px-2 py-0.5 rounded uppercase">Em Renda</div>
+                                 </div>
+                                 <p className="text-2xl font-black text-blue-400">{formatMT(lucroProjetado)}</p>
+                                 <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1 italic leading-none">Vínculo em contratos ativos ({myActiveLoans.length} operando)</p>
+                              </div>
+                           </div>
+
+                           {/* INFORMATIONAL FLASH */}
+                           <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl p-4 flex gap-3">
+                              <Sparkles className="w-5 h-5 text-emerald-500 shrink-0"/>
+                              <p className="text-[10px] text-emerald-200/60 font-medium leading-relaxed">
+                                Este relatório reflecte o desempenho bruto dos seus activos. O lucro realizado já pode ser levantado ou reinvestido, enquanto a projecção amadurece conforme o calendário dos contratos.
+                              </p>
+                           </div>
+                        </div>
+                      );
+                   })()}
+
+                   <button onClick={() => setIsProfitModalOpen(false)} className="w-full py-5 rounded-2xl bg-white text-black font-black text-xs uppercase tracking-[0.2em] shadow-xl active:scale-[0.98] transition-all">Fechar Relatório</button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

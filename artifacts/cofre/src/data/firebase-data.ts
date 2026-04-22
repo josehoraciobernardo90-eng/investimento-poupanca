@@ -44,7 +44,8 @@ export interface UserDetails {
 export const dbStore = {
   users: [] as any[],
   dashboard: {
-    caixa: 0, lucros: 0, naRua: 0, total: 0, membros_ativos: 0, emprestimos_ativos: 0, solicitacoes_pendentes: 0
+    caixa: 0, lucros: 0, naRua: 0, total: 0, membros_ativos: 0, emprestimos_ativos: 0, solicitacoes_pendentes: 0,
+    support_phone: ""
   } as any,
   loans: [] as any[],
   loanDetails: {} as Record<string, any>,
@@ -148,43 +149,44 @@ export function initFirebaseSync() {
 }
 
 /**
- * Factory Reset: Clears all operational data from the database.
- * This is a critical action and should only be called after double confirmation.
+ * Factory Reset: Genuinely clears the ENTIRE database.
+ * Replaces everything with the initial empty state.
  */
 export async function factoryReset() {
-  const resetDashboard = {
-    caixa: 0,
-    lucros: 0,
-    naRua: 0,
-    total: 0,
-    membros_ativos: 0,
-    emprestimos_ativos: 0,
-    solicitacoes_pendentes: 0
+  const initialState = {
+    dashboard: {
+      caixa: 0,
+      lucros: 0,
+      naRua: 0,
+      total: 0,
+      membros_ativos: 0,
+      emprestimos_ativos: 0,
+      solicitacoes_pendentes: 0
+    },
+    users: null,
+    userDetails: null,
+    loans: null,
+    loanDetails: null,
+    loanRequests: null,
+    depositRequests: null,
+    membershipRequests: null,
+    deletionRequests: null,
+    profileEditRequests: null,
+    liquidationRequests: null,
+    audit: null,
+    notifications: null,
+    adminComissao: { total: 0, registros: [] }
   };
 
   try {
-    const updates: any = {};
-    updates['users'] = null;
-    updates['userDetails'] = null;
-    updates['loans'] = null;
-    updates['loanDetails'] = null;
-    updates['loanRequests'] = null;
-    updates['depositRequests'] = null;
-    updates['membershipRequests'] = null;
-    updates['deletionRequests'] = null;
-    updates['profileEditRequests'] = null;
-    updates['liquidationRequests'] = null;
-    updates['audit'] = null;
-    updates['notifications'] = null;
-    updates['adminComissao'] = null;
-    updates['dashboard'] = resetDashboard;
-
-    await update(ref(rtdb), updates);
+    // Usamos set(ref(rtdb), ...) para garantir que NADA escape. 
+    // É uma limpeza total ao nível da raiz.
+    await set(ref(rtdb), initialState);
     
-    console.log("[FACTORY RESET] Application data has been cleared successfully.");
+    console.log("[FACTORY RESET] Limpeza total executada com sucesso.");
     return true;
   } catch (error) {
-    console.error("[FACTORY RESET] Error clearing data:", error);
+    console.error("[FACTORY RESET] Falha catastrófica ao limpar dados:", error);
     throw error;
   }
 }

@@ -11,13 +11,14 @@ import { calcularStatusEmprestimo } from "@/lib/auto-freeze";
 import { TechSlideshow } from "@/components/dashboard/TechSlideshow";
 import { BankingCharts } from "@/components/dashboard/BankingCharts";
 import { useSystemAudit } from "@/hooks/use-audit";
-import { useRequests, useAdminComissao } from "@/hooks/use-requests";
-import { Loader2, Wallet, Zap, TrendingUp, AlertCircle, ShieldAlert, Activity, Database, History, Coins, Clock, Settings, BarChart3, Building2, CheckCircle2, X } from "lucide-react";
+import { useRequests, useAdminComissao, useUpdateSettings } from "@/hooks/use-requests";
+import { Loader2, Wallet, Zap, TrendingUp, AlertCircle, ShieldAlert, Activity, Database, History, Coins, Clock, Settings, BarChart3, Building2, CheckCircle2, X, Star, Phone } from "lucide-react";
 import React, { useState, ReactNode } from "react";
 import { dbStore } from "@/data/firebase-data";
 import { InnovationHub } from "@/components/dashboard/InnovationHub";
 import { CommunityPerformance } from "@/components/dashboard/CommunityPerformance";
 import { GeralIntelligence } from "@/components/dashboard/GeralIntelligence";
+import { NotificationHub } from "@/components/dashboard/NotificationHub";
 
 function CorporatePanel({ children, className }: { children: ReactNode; className?: string }) {
   return (
@@ -41,6 +42,7 @@ export default function DashboardPage() {
   const { isAdmin } = useAdmin();
   const { runAudit, isAuditing } = useSystemAudit();
   const comissao = useAdminComissao();
+  const updateSettings = useUpdateSettings();
   const [photoPreview, setPhotoPreview] = useState<{ url: string, name: string } | null>(null);
 
   if (isLoading) return <PageLoader />;
@@ -57,28 +59,29 @@ export default function DashboardPage() {
     .filter(l => l.status !== "Liquidado")
     .map(l => ({ ...l, autoFreezeStatus: calcularStatusEmprestimo(l.valor_original, l.data_inicio) }));
 
-  // --- CÁLCULO ABSOLUTO DO CAPITAL GERAL ---
+  // --- CÁLCULO PROFISSIONAL DO PATRIMÓNIO GLOBAL (VALOR DE MERCADO) ---
   let globalCaixa = 0;
   Object.values(dbStore.userDetails || {}).forEach((ud: any) => {
     globalCaixa += ud.emCaixa || 0;
   });
 
-  let globalLucro = comissao?.total || 0;
-  Object.values(dbStore.users || {}).forEach((u: any) => {
-    globalLucro += u.lucro_acumulado || 0;
-  });
-
   let globalNaRua = 0;
+  let jurosProjectados = 0;
   let activeContracts = 0;
-  Object.values(dbStore.loans || {}).forEach((l: any) => {
+  (dbStore.loans || []).forEach((l: any) => {
     if (l.status === "Aprovado" || l.status === "Ativo" || l.status === "Atrasado" || l.status === "Auditoria" || l.status === "Em Processo") {
       globalNaRua += l.valor_original || 0;
+      const status = calcularStatusEmprestimo(l.valor_original, l.data_inicio);
+      jurosProjectados += status.juro;
       activeContracts++;
     }
   });
 
-  const patrimonyGlobal = globalCaixa + globalNaRua;
-  const membrosCount = Object.keys(dbStore.userDetails || {}).length;
+  // O Lucro Global (Realizado) já está no globalCaixa dos membros.
+  // O Património Total do Fundo é: Líquido em Caixa + Contratos a Decorrer (Principal + Juro Vital)
+  const globalLucro = (dbStore.dashboard?.lucros || 0) + jurosProjectados;
+  const patrimonyGlobal = globalCaixa + globalNaRua + jurosProjectados;
+  const membrosCount = (dbStore.users || []).length;
   // -----------------------------------------
 
   return (
@@ -95,7 +98,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <h1 className="font-display text-3xl sm:text-4xl font-semibold text-white tracking-tight">
-              Visão Geral do <span className="text-blue-500">Capital</span>
+              Visão Geral do <span className="text-blue-500">Capital</span> <span className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-1 rounded ml-2">SISTEMA ACTUALIZADO</span>
             </h1>
             <p className="mt-2 text-slate-400 font-light text-sm">
               Análise e monitorização em tempo real do património gerido.
@@ -123,7 +126,7 @@ export default function DashboardPage() {
       </header>
 
       {/* ── INOVAÇÃO & SIMULAÇÃO (TECNOLOGIA DE ÚLTIMA GERAÇÃO) ── */}
-      <InnovationHub memberScore={92} />
+      <InnovationHub loans={loans} isAdmin={isAdmin} />
 
       {/* ── PAINEL DE CONTROLO DE SEDE GLOBAL ── */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-8 rounded-[2rem] glass-card-elite border-t border-b border-t-blue-500/30 border-b-blue-500/10 shadow-[0_0_80px_rgba(59,130,246,0.15)] relative overflow-hidden mb-6">
@@ -177,136 +180,193 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* ── INTELIGÊNCIA COLETIVA & SONHOS (DREAMS & FEED) ── */}
-      <GeralIntelligence memberBalance={globalCaixa / (membrosCount || 1)} />
+      <GeralIntelligence 
+        memberBalance={globalCaixa / (membrosCount || 1)} 
+        recentRequests={[
+          ...dbStore.membershipRequests,
+          ...dbStore.loanRequests,
+          ...dbStore.depositRequests
+        ].sort((a, b) => b.ts - a.ts)}
+        isAdmin={isAdmin}
+      />
 
-      {/* ── PANELS DE OPERAÇÃO ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* ── RANKING DE CONFIANÇA INDIVIDUAL (PROFISSIONAL) ── */}
+       <div className="grid grid-cols-1 gap-6">
+          <CorporatePanel className="relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-5"><ShieldAlert className="w-16 h-16"/></div>
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <SectionLabel>Classificação de Confiança Global</SectionLabel>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Ordenado por Reputação Financeira (Algoritmo Gogoma)</p>
+              </div>
+              <div className="flex gap-2">
+                 <div className="flex items-center gap-1.5 text-[10px] font-black text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
+                    <Star className="w-3 h-3 fill-blue-500" /> ELITE
+                 </div>
+              </div>
+            </div>
 
-        {/* Distribuição de Liquidez */}
-        <CorporatePanel>
-          <div className="flex justify-between items-center mb-6">
-            <SectionLabel>Distribuição de Liquidez</SectionLabel>
-            <Database className="w-4 h-4 text-blue-400" />
-          </div>
-          <div className="space-y-3 max-h-[220px] overflow-y-auto custom-scrollbar pr-2">
-            {Object.values(dbStore.userDetails || {}).sort((a: any, b: any) => b.emCaixa - a.emCaixa).slice(0, 6).map((u: any, i) => (
-              <div key={u.user.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-800/50 border border-white/5 hover:border-white/10 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-xs font-medium text-blue-400">
-                    {i + 1}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-white/5 pb-4">
+                    <th className="pb-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Membro</th>
+                    <th className="pb-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Pontuação</th>
+                    <th className="pb-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Status de Confiança</th>
+                    <th className="pb-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Património</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {Object.values(dbStore.userDetails || {})
+                    .map((ud: any) => {
+                      // Algoritmo de Reputação Gogoma
+                      const delayedLoans = (dbStore.loans || []).filter(l => l.user_id === ud.user.id && l.status !== "Liquidado" && (calcularStatusEmprestimo(l.valor_original, l.data_inicio).fase !== 1));
+                      const paidLoans = (dbStore.loans || []).filter(l => l.user_id === ud.user.id && l.status === "Liquidado").length;
+                      
+                      let score = 800; // Base Neutra
+                      score -= delayedLoans.length * 150; // Penalização pesada por atraso
+                      score += paidLoans * 20; // Recompensa por fidelidade paga
+                      score += Math.min(100, (ud.emCaixa / 10000) * 10); // Bónus por liquidez
+                      
+                      const reputation = score >= 850 ? "ELITE" : score >= 600 ? "BOA" : "RISCO";
+                      const color = reputation === "ELITE" ? "text-blue-400 bg-blue-500/10 border-blue-500/20" : reputation === "BOA" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" : "text-rose-400 bg-rose-500/10 border-rose-500/20";
+                      
+                      return { ...ud, score, reputation, color };
+                    })
+                    .sort((a, b) => b.score - a.score)
+                    .map((m) => (
+                      <tr key={m.user.id} className="group hover:bg-white/[0.02] transition-colors">
+                        <td className="py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full border border-white/10 p-0.5 overflow-hidden">
+                              {m.user.foto ? <img src={m.user.foto} className="w-full h-full object-cover rounded-full" /> : <div className="w-full h-full bg-slate-800 rounded-full flex items-center justify-center text-xs text-slate-500">?</div>}
+                            </div>
+                            <div>
+                               <div className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors uppercase tracking-tight">{m.user.nome}</div>
+                               <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{m.user.telefone}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 text-center">
+                          <div className="inline-flex flex-col items-center">
+                             <span className="text-sm font-black text-white font-mono">{m.score.toFixed(0)}</span>
+                             <div className="w-16 h-1 bg-slate-800 rounded-full mt-1 overflow-hidden">
+                                <motion.div initial={{ width: 0 }} animate={{ width: `${(m.score / 1000) * 100}%` }} className={cn("h-full", m.score >= 600 ? "bg-blue-500" : "bg-rose-500")} />
+                             </div>
+                          </div>
+                        </td>
+                        <td className="py-4 text-center">
+                           <span className={cn("text-[9px] font-black px-2.5 py-1 rounded border shadow-sm uppercase tracking-widest", m.color)}>
+                              {m.reputation}
+                           </span>
+                        </td>
+                        <td className="py-4 text-right">
+                           <span className="text-sm font-bold text-slate-200">{formatMT(m.patrimonioTotal)}</span>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </CorporatePanel>
+       </div>
+
+       {/* ── CENTRAL DE OPERAÇÕES E LIQUIDEZ ── */}
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+           <CorporatePanel>
+            <div className="flex justify-between items-center mb-6">
+              <SectionLabel>Central de Pedidos</SectionLabel>
+              <Link href="/solicitacoes">
+                <span className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 cursor-pointer transition-colors px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20">Gerir Fluxo</span>
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: "Adesão", count: dbStore.membershipRequests.filter(r => r.status === "Pendente").length, color: "text-blue-500", bg: "bg-blue-500" },
+                { label: "Empréstimos", count: dbStore.loanRequests.filter(r => r.status === "Pendente").length, color: "text-amber-500", bg: "bg-amber-500" },
+                { label: "Aportes", count: dbStore.depositRequests.filter(r => r.status === "Pendente").length, color: "text-emerald-500", bg: "bg-emerald-500" },
+                { label: "Liquidação", count: (dbStore as any).liquidationRequests?.filter((r: any) => r.status === "Pendente").length || 0, color: "text-rose-500", bg: "bg-rose-500" }
+              ].map((item, i) => (
+                <div key={i} className="p-4 rounded-xl border border-white/5 bg-slate-800/30 flex flex-col items-center justify-center gap-2 hover:bg-slate-800/80 transition-all group">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-400">{item.label}</span>
+                  <div className="flex items-center gap-2">
+                    <span className={cn("text-3xl font-display font-bold", item.count > 0 ? "text-white" : "text-slate-700")}>
+                      {item.count.toString().padStart(2, '0')}
+                    </span>
+                    {item.count > 0 && <span className={cn("w-2 h-2 rounded-full animate-pulse", item.bg)} />}
                   </div>
-                  <span className="text-sm font-medium text-slate-200">{u.user.nome}</span>
                 </div>
-                <span className="text-sm font-semibold text-blue-400">{formatMT(u.emCaixa)}</span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-5 pt-4 border-t border-white/5 flex justify-between items-center">
-            <span className="text-sm font-medium text-slate-400">Total em Custódia</span>
-            <span className="text-base font-bold text-white">{formatMT(globalCaixa)}</span>
-          </div>
-        </CorporatePanel>
+              ))}
+            </div>
+          </CorporatePanel>
 
-        {/* Central de Pedidos */}
-        <CorporatePanel>
-          <div className="flex justify-between items-center mb-6">
-            <SectionLabel>Central de Pedidos</SectionLabel>
-            <Link href="/solicitacoes">
-              <span className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 cursor-pointer transition-colors px-3 py-1 rounded-full bg-indigo-500/10">Ver Todos os Pedidos</span>
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              { label: "Adesão", count: dbStore.membershipRequests.filter(r => r.status === "Pendente").length, color: "text-blue-500", bg: "bg-blue-500" },
-              { label: "Empréstimos", count: dbStore.loanRequests.filter(r => r.status === "Pendente").length, color: "text-amber-500", bg: "bg-amber-500" },
-              { label: "Aportes", count: dbStore.depositRequests.filter(r => r.status === "Pendente").length, color: "text-emerald-500", bg: "bg-emerald-500" },
-              { label: "Liquidação", count: (dbStore as any).liquidationRequests?.filter((r: any) => r.status === "Pendente").length || 0, color: "text-rose-500", bg: "bg-rose-500" }
-            ].map((item, i) => (
-              <div key={i} className="p-4 rounded-xl border border-white/5 bg-slate-800/50 flex flex-col items-center justify-center gap-2 hover:bg-slate-800/80 transition-colors">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{item.label}</span>
-                <div className="flex items-center gap-2">
-                  <span className={cn("text-3xl font-display font-bold", item.count > 0 ? "text-white" : "text-slate-600")}>
-                    {item.count.toString().padStart(2, '0')}
-                  </span>
-                  {item.count > 0 && <span className={cn("w-2 h-2 rounded-full animate-pulse", item.bg)} />}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CorporatePanel>
-
-        {/* Exposição de Risco */}
-        <CorporatePanel>
-          <div className="flex justify-between items-center mb-6">
-            <SectionLabel>Exposição de Carteira</SectionLabel>
-            <span className="text-xs font-medium text-slate-400 bg-slate-800 px-2 py-1 rounded">Total Exposto: {formatMT(globalNaRua)}</span>
-          </div>
-          <div className="space-y-5 max-h-[220px] overflow-y-auto custom-scrollbar pr-2">
-            {emprestimosStatus.slice(0, 3).map((emp: any) => {
-              const pct = (emp.valor_original / (globalNaRua || 1)) * 100;
-              return (
-                <div key={emp.id}>
-                  <div className="flex justify-between text-xs mb-2 font-medium">
-                    <span className="text-slate-300">{emp.tomador_nome}</span>
-                    <span className="text-blue-400">{pct.toFixed(1)}% do Capital</span>
+          <CorporatePanel>
+            <div className="flex justify-between items-center mb-6">
+              <SectionLabel>Distribuição de Liquidez</SectionLabel>
+              <Database className="w-4 h-4 text-blue-400" />
+            </div>
+            <div className="space-y-3 max-h-[190px] overflow-y-auto custom-scrollbar pr-2">
+              {Object.values(dbStore.userDetails || {}).sort((a: any, b: any) => b.emCaixa - a.emCaixa).map((u: any, i) => (
+                <div key={u.user.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-800/20 border border-white/5 hover:border-blue-500/20 transition-colors group">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-black text-slate-600 group-hover:text-blue-500">{i + 1}</span>
+                    <span className="text-sm font-medium text-slate-300">{u.user.nome}</span>
                   </div>
-                  <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }} animate={{ width: `${pct}%` }}
-                      className="h-full bg-blue-500"
-                    />
-                  </div>
+                  <span className="text-sm font-black text-white">{formatMT(u.emCaixa)}</span>
                 </div>
-              );
-            })}
-            {emprestimosStatus.length === 0 && (
-              <div className="py-8 text-center text-sm font-light text-slate-500">
-                Nenhuma exposição detectada na carteira actual.
-              </div>
-            )}
-          </div>
-        </CorporatePanel>
+              ))}
+            </div>
+          </CorporatePanel>
 
-        {/* Projeção Financeira */}
-        <CorporatePanel>
-          <div className="flex justify-between items-center mb-6">
-            <SectionLabel>Projeção Financeira</SectionLabel>
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded">
-              <TrendingUp className="w-3.5 h-3.5" /> ROI Est. 14.2%
+          <CorporatePanel>
+            <div className="flex justify-between items-center mb-6">
+              <SectionLabel>Exposição de Carteira</SectionLabel>
+              <ShieldAlert className="w-4 h-4 text-rose-500" />
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-5">
-            <div className="flex flex-col gap-2 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-              <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Lucro Registado</span>
-              <span className="text-2xl font-display font-medium text-white">{formatMT(globalLucro)}</span>
-            </div>
-            <div className="flex flex-col gap-2 p-4 rounded-xl bg-slate-800/50 border border-white/5 opacity-80">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Juros Projetados</span>
-              <span className="text-xl font-display font-medium text-slate-300">{formatMT(globalNaRua * 0.1)}</span>
-            </div>
-          </div>
-          <div className="mt-5 p-4 rounded-xl bg-slate-800/80 border border-white/5 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
-              <Activity className="w-5 h-5 text-blue-400" />
-            </div>
-            <div className="flex-1">
-              <div className="flex justify-between text-xs font-semibold text-slate-300 mb-2">
-                <span>Eficiência de Alocação</span>
-                <span className="text-blue-400">92%</span>
-              </div>
-              <div className="h-1.5 bg-slate-900 rounded-full overflow-hidden">
-                <div className="h-full w-[92%] bg-blue-500" />
+            <div className="space-y-6">
+              <div className="p-4 rounded-xl bg-rose-500/5 border border-rose-500/10">
+                <div className="flex justify-between items-end mb-2">
+                  <span className="text-xs text-slate-400 font-medium">Capital de Risco (Na Estrada)</span>
+                  <span className="text-lg font-bold text-rose-500">{formatMT(globalNaRua)}</span>
+                </div>
+                <div className="h-2 bg-slate-900 rounded-full overflow-hidden">
+                  <div className="h-full bg-rose-500" style={{ width: `${(globalNaRua / (patrimonyGlobal || 1)) * 100}%` }} />
+                </div>
               </div>
             </div>
-          </div>
-        </CorporatePanel>
-      </div>
+          </CorporatePanel>
 
-      {/* ── SLIDESHOW INSTITUCIONAL ── */}
-      <TechSlideshow />
+          <CorporatePanel>
+            <div className="flex justify-between items-center mb-6">
+              <SectionLabel>Projeção Financeira</SectionLabel>
+              <div className="flex items-center gap-2 text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded">
+                <TrendingUp className="w-3.5 h-3.5" /> ROI Est. 14.2%
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-5">
+              <div className="flex flex-col gap-2 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Lucro Registado</span>
+                <span className="text-2xl font-display font-medium text-white">{formatMT(globalLucro)}</span>
+              </div>
+              <div className="flex flex-col gap-2 p-4 rounded-xl bg-slate-800/50 border border-white/5 opacity-80">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Juros Projetados</span>
+                <span className="text-xl font-display font-medium text-slate-300">{formatMT(globalNaRua * 0.1)}</span>
+              </div>
+            </div>
+          </CorporatePanel>
+       </div>
 
-      {/* ── TRANSPARÊNCIA E IMPACTO COMUNITÁRIO ── */}
-      <CommunityPerformance />
+       {/* ── SLIDESHOW INSTITUCIONAL ── */}
+       <TechSlideshow />
+
+       <CommunityPerformance 
+         totalDistributed={globalLucro} 
+         activeRate={membrosCount > 0 ? Math.round((Object.values(dbStore.userDetails || {}).filter((u: any) => u.emCaixa > 0 || u.naRua > 0).length / membrosCount) * 100) : 0} 
+       />
+
+       <div className="mt-8">
+          <NotificationHub />
+       </div>
 
       {/* ── GRÁFICOS E SISTEMA ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -418,6 +478,12 @@ export default function DashboardPage() {
                           <span className="text-slate-400">Juros</span>
                           <span className="text-amber-400 font-medium">{formatMT(s.juro)}</span>
                         </div>
+                        {s.multaAtraso > 0 && (
+                          <div className="flex justify-between text-xs animate-pulse">
+                            <span className="text-rose-400 font-bold uppercase tracking-tighter">Multa de Mora (1%/dia)</span>
+                            <span className="text-rose-400 font-bold">+{formatMT(s.multaAtraso)}</span>
+                          </div>
+                        )}
                         <div className="h-px w-full bg-white/5 my-1" />
                         <div className="flex justify-between items-center">
                           <span className="text-xs font-semibold text-slate-300">Total Previsível</span>
@@ -492,17 +558,78 @@ export default function DashboardPage() {
             </div>
           </CorporatePanel>
 
-          {/* Reset sistema */}
-          <div className="p-6 rounded-2xl bg-slate-800/50 border border-rose-500/20 flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20">
-                <Settings className="w-6 h-6 text-rose-500" />
+          {/* Livro Razão Imutável / Auditoria Fiscal */}
+          <div className="p-8 rounded-[2rem] bg-slate-900 border border-blue-500/10 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden group shadow-2xl">
+            <div className="absolute inset-0 bg-blue-500/[0.02] pointer-events-none" />
+            <div className="absolute -right-10 -bottom-10 opacity-5 group-hover:opacity-10 transition-opacity">
+              <History className="w-40 h-40" />
+            </div>
+            
+            <div className="flex items-center gap-5 relative z-10">
+              <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-lg">
+                <History className="w-7 h-7 text-blue-500" strokeWidth={2.5} />
               </div>
               <div>
-                <h4 className="font-display text-lg font-medium text-white mb-1">Configurações Críticas</h4>
-                <p className="text-sm text-rose-400/80 font-light">
-                  Acesso reservado. Operações de alto risco ao banco de dados.
+                <h4 className="font-display text-xl font-black text-white italic uppercase tracking-tighter leading-none mb-1">Livro Razão Imutável</h4>
+                <p className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em] mb-1">Auditoria Fiscal</p>
+                <p className="text-xs text-slate-400 font-medium">
+                  Registo completo e permanente de todas as movimentações do sistema.
                 </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3 relative z-10 w-full sm:w-auto">
+               <div className="hidden sm:block h-10 w-px bg-white/5 mx-2" />
+               <button 
+                 disabled
+                 className="flex-1 sm:flex-none h-12 px-6 rounded-xl bg-white/5 border border-white/10 text-white/40 text-[10px] font-black uppercase tracking-widest cursor-not-allowed opacity-50"
+               >
+                 Aceder Arquivo
+               </button>
+            </div>
+          </div>
+
+          {/* Suporte ao Cliente */}
+          <div className="p-8 rounded-[2rem] bg-[#0A1121] border border-white/5 mt-6 shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-10 transition-opacity">
+               <Phone className="w-32 h-32" />
+            </div>
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
+              <div className="flex items-center gap-5">
+                <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 shadow-lg">
+                  <Phone className="w-7 h-7 text-indigo-400" />
+                </div>
+                <div>
+                  <h4 className="font-display text-xl font-bold text-white italic uppercase tracking-tighter">Apoio ao Cliente</h4>
+                  <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.2em] mb-1">Linha Telemática Directa</p>
+                  <p className="text-xs text-slate-400 font-medium max-w-md">
+                    Defina o número que os membros visualizarão como suporte oficial do Cofre.
+                  </p>
+                </div>
+              </div>
+
+              <div className="w-full md:w-auto flex items-center gap-2">
+                 <input 
+                   type="text"
+                   defaultValue={dbStore.dashboard.support_phone || ""}
+                   placeholder="+258 84 000 0000"
+                   onBlur={(e) => updateSettings.mutateAsync({ support_phone: e.target.value })}
+                   className="flex-1 md:w-64 h-12 bg-black/40 border border-white/10 rounded-xl px-4 text-sm font-mono text-white placeholder:text-white/10 focus:outline-none focus:border-indigo-500/50 transition-all"
+                 />
+                 {updateSettings.isPending && <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />}
+              </div>
+            </div>
+          </div>
+
+          {/* Reset sistema (Acesso Técnico) */}
+          <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6 mt-4">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5">
+                <Settings className="w-5 h-5 text-slate-500" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-slate-400">Configurações Críticas</h4>
+                <p className="text-[10px] text-slate-600 uppercase font-black">Depuração e Limpeza do Banco de Dados</p>
               </div>
             </div>
             <ResetAppModal />
