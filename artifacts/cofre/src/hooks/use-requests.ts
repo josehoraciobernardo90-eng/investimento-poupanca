@@ -619,7 +619,7 @@ export function useFactoryResetSystem() {
         const pathsToWipe = [
           "users", "userDetails", "loans", "loanDetails", 
           "loanRequests", "depositRequests", "membershipRequests", 
-          "deletionRequests", "audit"
+          "deletionRequests", "audit", "adminComissao"
         ];
         pathsToWipe.forEach(p => { updates[p] = null; });
         

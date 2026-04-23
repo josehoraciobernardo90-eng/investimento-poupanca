@@ -635,9 +635,18 @@ export default function DashboardPage() {
                    </div>
                    <input 
                      type="text"
+                     maxLength={9}
                      defaultValue={dbStore.dashboard.support_phone || ""}
-                     placeholder="+258 84 000 0000"
-                     onBlur={(e) => updateSettings.mutateAsync({ support_phone: e.target.value })}
+                     placeholder="Ex: 840000000"
+                     onBlur={(e) => {
+                       const clean = e.target.value.replace(/\D/g, "").slice(0, 9);
+                       if (clean.length === 9 || clean.length === 0) {
+                         updateSettings.mutateAsync({ support_phone: clean });
+                         e.target.value = clean;
+                       } else {
+                         toast({ title: "Número Inválido", description: "O número de suporte deve ter 9 dígitos.", variant: "destructive" });
+                       }
+                     }}
                      className="w-full md:w-80 h-14 bg-black/40 border border-white/10 group-hover/input:border-indigo-500/30 rounded-2xl pl-12 pr-4 text-sm font-mono text-white placeholder:text-white/10 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-inner"
                    />
                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">

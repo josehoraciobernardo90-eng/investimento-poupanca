@@ -221,15 +221,27 @@ export default function MemberDashboard() {
   }, [facingMode]);
 
   const startCamera = async () => {
+    setIsCapturingProfile(true);
     setCameraStatus("requesting");
+    
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setCameraStatus("error");
+      toast({ 
+        title: "Câmara Inacessível", 
+        description: "O seu navegador ou conexão (HTTP) não permite acesso à câmara. Use a galeria.",
+        variant: "destructive"
+      });
+      setIsCapturingProfile(false);
       return;
     }
+
     try {
-      setIsCapturingProfile(true);
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: facingMode, width: { ideal: 640 }, height: { ideal: 640 } } 
+        video: { 
+          facingMode: facingMode, 
+          width: { ideal: 640 }, 
+          height: { ideal: 640 } 
+        } 
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -238,9 +250,15 @@ export default function MemberDashboard() {
           setCameraStatus("active");
         };
       }
-    } catch {
+    } catch (err: any) {
+      console.error("Camera Error:", err);
       setCameraStatus("error");
       setIsCapturingProfile(false);
+      toast({ 
+        title: "Erro de Permissão", 
+        description: "Não foi possível aceder à câmara. Por favor, verifique as permissões do navegador.",
+        variant: "destructive" 
+      });
     }
   };
 
@@ -1252,12 +1270,12 @@ export default function MemberDashboard() {
                    <h4 className="text-sm font-medium text-slate-300 mb-3 px-1">Distribuição de Lucro:</h4>
                    <div className="grid grid-cols-2 gap-3 text-sm">
                       <div className="bg-slate-800/50 p-3 rounded-xl border-l-2 border-blue-500">
-                         <span className="text-[10px] text-slate-400 block mb-1">Membros (80%)</span>
-                         <span className="font-medium text-blue-400">{formatMT(selectedLoan.statusCalc.juroReal * 0.8)}</span>
+                         <span className="text-[10px] text-slate-400 block mb-1">Investidores (80%)</span>
+                         <span className="font-medium text-blue-400 font-display">{formatMT(selectedLoan.statusCalc.juroReal * 0.8)}</span>
                       </div>
-                      <div className="bg-slate-800/50 p-3 rounded-xl border-l-2 border-amber-500">
-                         <span className="text-[10px] text-slate-400 block mb-1">Sistema (20%)</span>
-                         <span className="font-medium text-amber-500">{formatMT(selectedLoan.statusCalc.juroReal * 0.2)}</span>
+                      <div className="bg-slate-800/50 p-3 rounded-xl border-l-2 border-emerald-500">
+                         <span className="text-[10px] text-slate-400 block mb-1">Cashback Membro (20%)</span>
+                         <span className="font-medium text-emerald-400 font-display">{formatMT(selectedLoan.statusCalc.juroReal * 0.2)}</span>
                       </div>
                    </div>
                 </div>
@@ -1432,7 +1450,13 @@ export default function MemberDashboard() {
                      </div>
                      <div>
                        <label className="text-xs font-semibold text-slate-400 mb-1 block">Telefone</label>
-                       <input value={profileForm.telefone} onChange={e => setProfileForm({...profileForm, telefone: e.target.value.replace(/\D/g, '').slice(0, 9)})} pattern="^$|^[0-9]{9}$" title="Apenas números, com exatamente 9 dígitos" placeholder="Ex: 840000000" className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
+                       <input 
+                          inputMode="numeric"
+                          value={profileForm.telefone} 
+                          onChange={e => setProfileForm({...profileForm, telefone: e.target.value.replace(/\D/g, '').slice(0, 9)})} 
+                          className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm font-mono" 
+                          placeholder="8x 000 0000"
+                        />
                      </div>
                    </div>
                    <div className="grid grid-cols-2 gap-3">
@@ -1442,7 +1466,13 @@ export default function MemberDashboard() {
                      </div>
                      <div>
                        <label className="text-xs font-semibold text-slate-400 mb-1 block">NUIT Fiscal</label>
-                       <input value={profileForm.nuit} onChange={e => setProfileForm({...profileForm, nuit: e.target.value.replace(/\D/g, '').slice(0, 9)})} pattern="^$|^[0-9]{9}$" title="O NUIT deve conter exatamente 9 dígitos numéricos" placeholder="Ex: 123456789" className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
+                       <input 
+                          inputMode="numeric"
+                          value={profileForm.nuit} 
+                          onChange={e => setProfileForm({...profileForm, nuit: e.target.value.replace(/\D/g, '').slice(0, 9)})} 
+                          className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm font-mono" 
+                          placeholder="123 456 789"
+                        />
                      </div>
                    </div>
                    <div className="grid grid-cols-2 gap-3">
@@ -1474,7 +1504,13 @@ export default function MemberDashboard() {
                            </div>
                            <div>
                              <label className="text-[9px] font-semibold text-slate-400 mb-1 block">Telefone</label>
-                             <input value={profileForm.conjuge_numero} onChange={e => setProfileForm({...profileForm, conjuge_numero: e.target.value.replace(/\D/g, '').slice(0, 9)})} className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-white focus:border-blue-500 focus:outline-none text-xs" />
+                             <input 
+                                inputMode="numeric"
+                                value={profileForm.conjuge_numero} 
+                                onChange={e => setProfileForm({...profileForm, conjuge_numero: e.target.value.replace(/\D/g, '').slice(0, 9)})} 
+                                className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-white focus:border-blue-500 focus:outline-none text-xs font-mono" 
+                                placeholder="8x 000 0000"
+                              />
                            </div>
                          </div>
                          
@@ -1487,7 +1523,13 @@ export default function MemberDashboard() {
                            </div>
                            <div>
                              <label className="text-[9px] font-semibold text-slate-400 mb-1 block">Telefone</label>
-                             <input value={profileForm.irmao_numero} onChange={e => setProfileForm({...profileForm, irmao_numero: e.target.value.replace(/\D/g, '').slice(0, 9)})} className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-white focus:border-blue-500 focus:outline-none text-xs" />
+                             <input 
+                                inputMode="numeric"
+                                value={profileForm.irmao_numero} 
+                                onChange={e => setProfileForm({...profileForm, irmao_numero: e.target.value.replace(/\D/g, '').slice(0, 9)})} 
+                                className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-white focus:border-blue-500 focus:outline-none text-xs font-mono" 
+                                placeholder="8x 000 0000"
+                              />
                            </div>
                          </div>
 
@@ -1500,7 +1542,13 @@ export default function MemberDashboard() {
                            </div>
                            <div>
                              <label className="text-[9px] font-semibold text-slate-400 mb-1 block">Telefone</label>
-                             <input value={profileForm.parente_numero} onChange={e => setProfileForm({...profileForm, parente_numero: e.target.value.replace(/\D/g, '').slice(0, 9)})} className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-white focus:border-blue-500 focus:outline-none text-xs" />
+                             <input 
+                                inputMode="numeric"
+                                value={profileForm.parente_numero} 
+                                onChange={e => setProfileForm({...profileForm, parente_numero: e.target.value.replace(/\D/g, '').slice(0, 9)})} 
+                                className="w-full bg-slate-950 border border-white/5 rounded-xl px-3 py-2 text-white focus:border-blue-500 focus:outline-none text-xs font-mono" 
+                                placeholder="8x 000 0000"
+                              />
                            </div>
                          </div>
                        </div>
