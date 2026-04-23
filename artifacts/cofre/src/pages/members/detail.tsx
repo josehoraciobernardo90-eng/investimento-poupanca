@@ -8,6 +8,16 @@ import { StatCard } from "@/components/ui/stat-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ArrowLeft, Wallet, TrendingUp, Briefcase, Lock, Unlock, ShieldCheck } from "lucide-react";
 import { Link } from "wouter";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from "@/components/ui/alert-dialog";
 
 export default function MemberDetailPage() {
   const [, params] = useRoute("/membros/:id");
@@ -194,41 +204,38 @@ export default function MemberDetailPage() {
       </div>
 
       {/* Confirmation Dialog */}
-      {isConfirmOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="glass-panel w-full max-w-sm rounded-[2rem] p-8 border border-white/10 relative overflow-hidden text-center">
+      <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+        <AlertDialogContent className="glass-panel border-white/10 rounded-[2rem] p-8 max-w-sm">
+          <AlertDialogHeader className="text-center">
             <div className="w-16 h-16 rounded-full bg-warning/20 flex items-center justify-center mx-auto mb-4 text-warning">
                <ShieldCheck className="w-8 h-8" />
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">
+            <AlertDialogTitle className="text-2xl font-bold text-white text-center">
               {data.user.status === "Ativo" ? "Congelar Conta?" : "Ativar Conta?"}
-            </h2>
-            <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground text-sm text-center leading-relaxed">
               {data.user.status === "Ativo" 
-                ? "O membro ficará impedido de solicitar novos empréstimos ou realizar aportes até que a conta seja desbloqueada."
+                ? "O membro ficará impedido de solicitar novos empréstimos ou realizar transportes até que a conta seja desbloqueada."
                 : "O membro voltará a ter acesso total a todas as funcionalidades do cofre."}
-            </p>
-            
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={toggleStatus}
-                disabled={updateMutation.isPending}
-                className={`w-full py-3.5 rounded-2xl font-bold transition-all shadow-lg ${
-                  data.user.status === "Ativo" ? "bg-warning text-black" : "bg-success text-white"
-                }`}
-              >
-                {updateMutation.isPending ? "Processando..." : "Confirmar Alteração"}
-              </button>
-              <button
-                onClick={() => setIsConfirmOpen(false)}
-                className="w-full py-3.5 rounded-2xl font-semibold text-muted-foreground hover:text-white bg-white/5 transition-colors"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex flex-col gap-3 mt-8">
+            <AlertDialogAction
+              onClick={toggleStatus}
+              className={`w-full py-6 rounded-2xl font-bold transition-all shadow-lg border-none ${
+                data.user.status === "Ativo" ? "bg-amber-500 text-black hover:bg-amber-400" : "bg-emerald-500 text-white hover:bg-emerald-400"
+              }`}
+            >
+              Confirmar Alteração
+            </AlertDialogAction>
+            <AlertDialogCancel 
+              className="w-full py-6 rounded-2xl font-semibold text-muted-foreground hover:text-white bg-white/5 border-white/5 hover:bg-white/10 transition-colors"
+            >
+              Cancelar
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

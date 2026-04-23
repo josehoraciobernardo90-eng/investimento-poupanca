@@ -435,7 +435,7 @@ export default function MemberDashboard() {
                   {/* ── MÉTRICAS INDIVIDUAIS (PRESSURIZADO) ── */}
                   {(() => {
                      const lucroRealizado = memberUser.lucro_acumulado || 0;
-                     const lucroProjetado = myActiveLoans.reduce((acc, l) => acc + l.statusCalc.juroReal, 0);
+                     const lucroProjetado = myActiveLoans.reduce((acc, l) => acc + (l.statusCalc.juro + (l.statusCalc.multaAtraso || 0)), 0);
                      const lucroTotal = lucroRealizado + lucroProjetado;
 
                      return (
@@ -1251,34 +1251,41 @@ export default function MemberDashboard() {
                    </div>
                 </div>
                 
-                <div className="space-y-4 mb-8">
-                   <div className="flex justify-between items-center p-4 bg-slate-800/50 rounded-2xl">
-                     <span className="text-slate-400">Capital Liberado</span>
-                     <span className="font-medium text-white">{formatMT(selectedLoan.statusCalc.base)}</span>
-                   </div>
-                   <div className="flex justify-between items-center p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
-                     <span className="text-amber-400/80">Juros</span>
-                     <span className="font-medium text-amber-400">+{formatMT(selectedLoan.statusCalc.juroReal)}</span>
-                   </div>
-                   <div className="flex justify-between items-center p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
-                     <span className="text-emerald-400 font-medium">Total para Liquidação</span>
-                     <span className="text-xl font-bold text-emerald-400">{formatMT(selectedLoan.statusCalc.totalDevido)}</span>
-                   </div>
-                </div>
-
-                <div className="mb-8">
-                   <h4 className="text-sm font-medium text-slate-300 mb-3 px-1">Distribuição de Lucro:</h4>
-                   <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div className="bg-slate-800/50 p-3 rounded-xl border-l-2 border-blue-500">
-                         <span className="text-[10px] text-slate-400 block mb-1">Investidores (80%)</span>
-                         <span className="font-medium text-blue-400 font-display">{formatMT(selectedLoan.statusCalc.juroReal * 0.8)}</span>
-                      </div>
-                      <div className="bg-slate-800/50 p-3 rounded-xl border-l-2 border-emerald-500">
-                         <span className="text-[10px] text-slate-400 block mb-1">Cashback Membro (20%)</span>
-                         <span className="font-medium text-emerald-400 font-display">{formatMT(selectedLoan.statusCalc.juroReal * 0.2)}</span>
-                      </div>
-                   </div>
-                </div>
+                 <div className="space-y-4 mb-8">
+                    <div className="flex justify-between items-center p-4 bg-slate-800/50 rounded-2xl">
+                      <span className="text-slate-400">Capital Liberado</span>
+                      <span className="font-medium text-white">{formatMT(selectedLoan.valor_original)}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+                      <span className="text-amber-400/80">Juros Acumulados</span>
+                      <span className="font-medium text-amber-400">+{formatMT(selectedLoan.statusCalc.juro + (selectedLoan.statusCalc.multaAtraso || 0))}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
+                      <span className="text-emerald-400 font-medium">Total para Liquidação</span>
+                      <span className="text-xl font-bold text-emerald-400">{formatMT(selectedLoan.statusCalc.totalDevido)}</span>
+                    </div>
+                 </div>
+ 
+                 <div className="mb-8">
+                    {(() => {
+                       const juroTotal = selectedLoan.statusCalc.juro + (selectedLoan.statusCalc.multaAtraso || 0);
+                       return (
+                         <>
+                           <h4 className="text-sm font-medium text-slate-300 mb-3 px-1">Distribuição de Lucro:</h4>
+                           <div className="grid grid-cols-2 gap-3 text-sm">
+                              <div className="bg-slate-800/50 p-3 rounded-xl border-l-2 border-blue-500">
+                                 <span className="text-[10px] text-slate-400 block mb-1">Investidores (80%)</span>
+                                 <span className="font-medium text-blue-400 font-display">{formatMT(juroTotal * 0.8)}</span>
+                              </div>
+                              <div className="bg-slate-800/50 p-3 rounded-xl border-l-2 border-emerald-500">
+                                 <span className="text-[10px] text-slate-400 block mb-1">Cashback Membro (20%)</span>
+                                 <span className="font-medium text-emerald-400 font-display">{formatMT(juroTotal * 0.2)}</span>
+                              </div>
+                           </div>
+                         </>
+                       );
+                    })()}
+                 </div>
 
                  <div className="space-y-4 pt-4">
                     <div className="bg-slate-900 border border-slate-700 rounded-2xl p-4">
@@ -1632,7 +1639,8 @@ export default function MemberDashboard() {
                            const realLoan = dbStore.loans.find(l => l.id === c.loan_id);
                            if (!realLoan) return acc;
                            const status = calcularStatusEmprestimo(realLoan.valor_original, realLoan.data_inicio, realLoan.valor_pago || 0);
-                           const minhaFatiaJuro = status.juro * (c.pctDoEmprestimo / 100);
+                           const juroEfetivo = status.juro + (status.multaAtraso || 0);
+                           const minhaFatiaJuro = juroEfetivo * (c.pctDoEmprestimo / 100);
                            
                            // Cashback: Se eu sou o tomador, fico com 100% do meu próprio juro. Caso contrário, 80%.
                            return acc + (c.tomador_id === memberUser.id ? minhaFatiaJuro : minhaFatiaJuro * 0.8);
@@ -1643,11 +1651,12 @@ export default function MemberDashboard() {
                          .filter(l => l.user_id === memberUser.id && l.status === "Ativo")
                          .reduce((acc, l) => {
                             const status = calcularStatusEmprestimo(l.valor_original, l.data_inicio, l.valor_pago || 0);
+                            const juroEfetivo = status.juro + (status.multaAtraso || 0);
                             // Se eu contribuir para meu próprio empréstimo, esses 20% do meu capital foram contados acima.
                             // Aqui pegamos 20% do juro total que NÃO veio do meu bolso.
                             const minhaContrib = (memberDetails.emCirculacao || []).find(c => c.loan_id === l.id);
                             const pctTerceiros = 100 - (minhaContrib?.pctDoEmprestimo || 0);
-                            const juroDeTerceiros = status.juro * (pctTerceiros / 100);
+                            const juroDeTerceiros = juroEfetivo * (pctTerceiros / 100);
                             return acc + (juroDeTerceiros * 0.2);
                          }, 0);
 
