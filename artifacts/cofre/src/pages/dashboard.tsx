@@ -10,7 +10,8 @@ import { ResetAppModal } from "@/components/admin/ResetAppModal";
 import { calcularStatusEmprestimo } from "@/lib/auto-freeze";
 import { TechSlideshow } from "@/components/dashboard/TechSlideshow";
 import { BankingCharts } from "@/components/dashboard/BankingCharts";
-import { useSystemAudit } from "@/hooks/use-audit";
+import { useAudit, useSystemAudit } from "@/hooks/use-audit";
+import { generateAuditLedgerReport } from "@/lib/pdf-utils";
 import { useRequests, useAdminComissao, useUpdateSettings } from "@/hooks/use-requests";
 import { Loader2, Wallet, Zap, TrendingUp, AlertCircle, ShieldAlert, Activity, Database, History, Coins, Clock, Settings, BarChart3, Building2, CheckCircle2, X, Star, Phone, CreditCard } from "lucide-react";
 import React, { useState, ReactNode } from "react";
@@ -45,7 +46,9 @@ export default function DashboardPage() {
   const comissao = useAdminComissao();
   const updateSettings = useUpdateSettings();
   const { toast } = useToast();
+  const { data: auditLogs } = useAudit();
   const [photoPreview, setPhotoPreview] = useState<{ url: string, name: string } | null>(null);
+  const [isGeneratingLedger, setIsGeneratingLedger] = useState(false);
 
   if (isLoading) return <PageLoader />;
   if (isError || !data) return (
@@ -568,33 +571,88 @@ export default function DashboardPage() {
             </div>
           </CorporatePanel>
 
-          {/* Livro Razão Imutável / Auditoria Fiscal */}
-          <div className="p-8 rounded-[2rem] bg-slate-900 border border-blue-500/10 flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden group shadow-2xl">
-            <div className="absolute inset-0 bg-blue-500/[0.02] pointer-events-none" />
-            <div className="absolute -right-10 -bottom-10 opacity-5 group-hover:opacity-10 transition-opacity">
-              <History className="w-40 h-40" />
+          {/* Livro Razão Imutável / Auditoria Fiscal — TECHNOLOGY OF LAST GENERATION */}
+          <div className="p-10 rounded-[3rem] bg-gradient-to-br from-[#0c1425] to-[#050811] border border-blue-500/20 flex flex-col lg:flex-row items-center justify-between gap-8 relative overflow-hidden group shadow-[0_30px_100px_rgba(0,0,0,0.5)]">
+            <div className="absolute inset-0 bg-[#3b82f6]/[0.01] pointer-events-none" />
+            
+            {/* Ambient Background Animation */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 blur-[120px] rounded-full -mr-48 -mt-48 group-hover:bg-blue-500/10 transition-colors duration-1000" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/5 blur-[100px] rounded-full -ml-32 -mb-32 group-hover:bg-indigo-500/10 transition-colors duration-1000" />
+
+            <div className="absolute -right-12 -bottom-12 opacity-[0.03] group-hover:opacity-10 transition-all duration-700 group-hover:rotate-12 group-hover:scale-110">
+              <History className="w-56 h-56 text-blue-500" />
             </div>
             
-            <div className="flex items-center gap-5 relative z-10">
-              <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 shadow-lg">
-                <History className="w-7 h-7 text-blue-500" strokeWidth={2.5} />
+            <div className="flex flex-col sm:flex-row items-center gap-8 relative z-10">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-blue-500/10 to-indigo-500/10 flex items-center justify-center border border-white/10 shadow-[inner_0_2px_10px_rgba(255,255,255,0.05)] group-hover:border-blue-500/40 group-hover:scale-105 transition-all duration-500">
+                  <History className="w-10 h-10 text-blue-400 group-hover:text-blue-300 transition-colors" strokeWidth={1.5} />
+                </div>
+                <div className="absolute -top-1 -right-1 flex items-center justify-center">
+                  <span className="relative flex h-5 w-5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 border-2 border-[#0c1425] items-center justify-center">
+                      <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                    </span>
+                  </span>
+                </div>
               </div>
-              <div>
-                <h4 className="font-display text-xl font-black text-white italic uppercase tracking-tighter leading-none mb-1">Livro Razão Imutável</h4>
-                <p className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em] mb-1">Auditoria Fiscal</p>
-                <p className="text-xs text-slate-400 font-medium">
-                  Registo completo e permanente de todas as movimentações do sistema.
+
+              <div className="text-center sm:text-left">
+                <div className="flex flex-col sm:flex-row items-center gap-3 mb-2">
+                  <h4 className="font-display text-2xl font-black text-white italic uppercase tracking-tighter leading-none shadow-blue-500/20 drop-shadow-lg">
+                    Livro Razão <span className="text-blue-500">Imutável</span>
+                  </h4>
+                  <div className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-1.5 backdrop-blur-md">
+                     <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                     Live Ledger Activo
+                  </div>
+                </div>
+                <p className="text-[10px] text-blue-400/60 font-black uppercase tracking-[0.4em] mb-3 drop-shadow-md">Segurança de Auditoria Fiscal 3.0</p>
+                <p className="text-xs text-slate-400 font-medium max-w-sm leading-relaxed">
+                  Base de dados descentralizada de movimentações financeiras. Registo binário permanente de alta fidelidade para transparência absoluta.
                 </p>
               </div>
             </div>
             
-            <div className="flex items-center gap-3 relative z-10 w-full sm:w-auto">
-               <div className="hidden sm:block h-10 w-px bg-white/5 mx-2" />
+            <div className="flex flex-col items-center lg:items-end gap-3 relative z-10 w-full lg:w-auto">
+               <div className="flex items-center gap-8 px-8 py-4 rounded-3xl bg-black/40 border border-white/5 backdrop-blur-xl group-hover:border-blue-500/20 transition-all duration-500">
+                 <div className="text-center border-r border-white/10 pr-8">
+                   <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Registos</div>
+                   <div className="text-lg font-black text-white font-mono group-hover:text-blue-400 transition-colors">{auditLogs?.length || 0}</div>
+                 </div>
+                 <div className="text-center">
+                   <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Vincular</div>
+                   <div className="text-[10px] font-black text-blue-500 uppercase tracking-widest group-hover:animate-pulse">Sincronizado</div>
+                 </div>
+               </div>
+
                <button 
-                 disabled
-                 className="flex-1 sm:flex-none h-12 px-6 rounded-xl bg-white/5 border border-white/10 text-white/40 text-[10px] font-black uppercase tracking-widest cursor-not-allowed opacity-50"
+                 onClick={async () => {
+                   setIsGeneratingLedger(true);
+                   try {
+                     await generateAuditLedgerReport(auditLogs);
+                     toast({ title: "Arquivo Descarregado", description: "O Livro Razão foi gerado com sucesso.", variant: "default" });
+                   } catch (err) {
+                     toast({ title: "Erro no Arquivo", description: "Não foi possível gerar o PDF do Ledger.", variant: "destructive" });
+                   } finally {
+                     setIsGeneratingLedger(false);
+                   }
+                 }}
+                 disabled={isGeneratingLedger}
+                 className="w-full sm:w-auto h-16 px-10 rounded-[1.25rem] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-[0_10px_30px_rgba(37,99,235,0.3)] hover:shadow-[0_15px_40px_rgba(37,99,235,0.4)] hover:-translate-y-1 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-4 overflow-hidden group/btn"
                >
-                 Aceder Arquivo
+                 {isGeneratingLedger ? (
+                   <Loader2 className="w-5 h-5 animate-spin" />
+                 ) : (
+                   <>
+                     <div className="flex flex-col items-start">
+                       <span className="text-[11px] font-black uppercase tracking-widest leading-none mb-1">Aceder Arquivo</span>
+                       <span className="text-[9px] text-blue-200 font-bold uppercase tracking-widest opacity-60">Exportar PDF Corporativo</span>
+                     </div>
+                     <Database className="w-5 h-5 group-hover/btn:rotate-12 transition-transform" />
+                   </>
+                 )}
                </button>
             </div>
           </div>

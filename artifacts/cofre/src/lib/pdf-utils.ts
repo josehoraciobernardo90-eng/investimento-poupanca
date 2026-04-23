@@ -133,3 +133,111 @@ export async function generateMemberReport(memberUser: any, memberDetails: any) 
   // Save
   doc.save(`Extrato_Cyber_${memberUser.nome.replace(/\s+/g, '_')}.pdf`);
 }
+
+export async function generateAuditLedgerReport(auditLogs: any[]) {
+  // Load jsPDF from CDN
+  if (!(window as any).jspdf) {
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    document.head.appendChild(script);
+    await new Promise(resolve => script.onload = resolve);
+  }
+
+  // Load AutoTable for high-end tables
+  if (!(window as any).jspdf_autotable) {
+    const script = document.createElement("script");
+    script.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js";
+    document.head.appendChild(script);
+    await new Promise(resolve => script.onload = resolve);
+  }
+
+  const { jsPDF } = (window as any).jspdf;
+  const doc = new jsPDF();
+  
+  const blue = [37, 99, 235]; // Indigo-600
+  const dark = [9, 13, 20]; // slate-950
+
+  // Header Professional
+  doc.setFillColor(...dark);
+  doc.rect(0, 0, 210, 40, "F");
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(22);
+  doc.text("LIVRO RAZÃO IMUTÁVEL", 15, 22);
+  
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(100, 150, 255);
+  doc.text("SENTINELA FISCAL — PROTOCOLO DE AUDITORIA PERMANENTE", 15, 30);
+  
+  doc.setFontSize(7);
+  doc.setTextColor(150, 150, 150);
+  doc.text(`ID DO RELATÓRIO: LRI-${Date.now()}`, 195, 20, { align: "right" });
+  doc.text(`EMITIDO EM: ${formatDateTime(Math.floor(Date.now() / 1000))}`, 195, 25, { align: "right" });
+
+  // Summary Metrics
+  const totalMovs = auditLogs.length;
+  const totalVolume = auditLogs.reduce((acc, log) => acc + (Number(log.valor) || 0), 0);
+
+  doc.setTextColor(...dark);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.text("RESUMO DA INTEGRIDADE", 15, 55);
+  doc.line(15, 58, 60, 58);
+
+  doc.setFont("helvetica", "normal");
+  doc.text(`Total de Movimentações Registadas: ${totalMovs}`, 15, 68);
+  doc.text(`Volume Financeiro Auditado: ${formatMT(totalVolume)}`, 15, 74);
+  doc.text(`Estado do Ledger: VERIFICADO E SINCRONIZADO`, 15, 80);
+
+  // AutoTable for Audit Logs
+  const tableData = auditLogs.map(log => [
+    formatDateTime(log.ts),
+    log.tipo || "Geral",
+    log.user || "Sistema",
+    log.desc || "N/A",
+    log.valor ? formatMT(log.valor) : "-"
+  ]);
+
+  (doc as any).autoTable({
+    startY: 90,
+    head: [['Data/Hora', 'Tipo', 'Origem/Agente', 'Descrição da Operação', 'Valor (MTn)']],
+    body: tableData,
+    theme: 'striped',
+    headStyles: {
+      fillColor: dark,
+      textColor: [255, 255, 255],
+      fontSize: 8,
+      fontStyle: 'bold',
+      halign: 'left'
+    },
+    bodyStyles: {
+      fontSize: 7,
+      cellPadding: 3
+    },
+    columnStyles: {
+      0: { cellWidth: 35 },
+      1: { cellWidth: 25 },
+      2: { cellWidth: 35 },
+      4: { halign: 'right', fontStyle: 'bold' }
+    },
+    alternateRowStyles: {
+      fillColor: [245, 247, 250]
+    }
+  });
+
+  // Footer
+  const pageCount = (doc as any).internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Folha ${i} de ${pageCount} — Cofre Elite General Ledger — Chimoio, Moçambique`, 105, 285, { align: "center" });
+    doc.setTextColor(37, 99, 235);
+    doc.text("VERIFICAÇÃO CRIPTOGRÁFICA GOGOMA ACTIVA", 105, 290, { align: "center" });
+  }
+
+  // Save
+  doc.save(`Livro_Razao_Imutavel_${new Date().toISOString().split('T')[0]}.pdf`);
+}

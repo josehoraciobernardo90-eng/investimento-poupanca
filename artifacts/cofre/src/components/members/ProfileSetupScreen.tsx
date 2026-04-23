@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, Upload, Check, User, Phone, Lock, Loader2, Sparkles, ShieldCheck } from "lucide-react";
+import { Camera, Upload, Check, User, Phone, Lock, Loader2, Sparkles, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { useMember } from "@/hooks/use-member";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -295,8 +295,30 @@ export function ProfileSetupScreen() {
 
               <form onSubmit={handleSubmit} className="space-y-6 pt-6">
                 <div className="space-y-4">
-                  <input required placeholder="Confirme seu Telefone" value={phoneConfirm} onChange={e => setPhoneConfirm(e.target.value)} className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-xs font-bold text-white focus:outline-none focus:border-blue-500/40" />
-                  <input required type="password" maxLength={6} placeholder="PIN de 6 dígitos" value={pinConfirm} onChange={e => setPinConfirm(e.target.value)} className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-xs font-bold text-white focus:outline-none focus:border-blue-500/40 tracking-[0.3em]" />
+                  <div className="relative">
+                    <input 
+                      required 
+                      placeholder="Confirme seu Telefone" 
+                      value={phoneConfirm} 
+                      maxLength={9}
+                      onChange={e => setPhoneConfirm(e.target.value.replace(/\D/g, "").slice(0, 9))} 
+                      className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-xs font-bold text-white focus:outline-none focus:border-blue-500/40" 
+                    />
+                    {phoneConfirm.length === 9 && (
+                       <div className="absolute right-4 top-1/2 -translate-y-1/2 scale-75">
+                          <CheckCircle2 className={cn("w-6 h-6", phoneConfirm === memberUser.telefone ? "text-emerald-500" : "text-rose-500")} />
+                       </div>
+                    )}
+                  </div>
+                  <input 
+                    required 
+                    type="password" 
+                    maxLength={6} 
+                    placeholder="PIN de 6 dígitos" 
+                    value={pinConfirm} 
+                    onChange={e => setPinConfirm(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-xs font-bold text-white focus:outline-none focus:border-blue-500/40 tracking-[0.3em]" 
+                  />
                 </div>
 
                 <div className="flex flex-col gap-3">

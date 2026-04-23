@@ -1406,28 +1406,31 @@ export default function MemberDashboard() {
                      </div>
                    </div>
 
-                   {!isCapturingProfile && (
-                     <div className="flex items-center gap-4 bg-slate-800/20 p-4 rounded-2xl border border-white/5">
-                        <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-slate-700 bg-slate-900 flex-shrink-0 group">
+                    {!isCapturingProfile && (
+                      <div className="flex items-center gap-6 bg-slate-900/60 p-6 rounded-3xl border border-white/5 shadow-inner mb-6">
+                        <div className="relative w-24 h-24 rounded-[2rem] overflow-hidden border-2 border-slate-700 bg-slate-950 flex-shrink-0 group shadow-2xl">
                            {newPhoto ? (
                              <img src={newPhoto} className="w-full h-full object-cover" alt="Nova Foto" />
                            ) : memberUser.foto?.startsWith('data:image') || memberUser.foto?.startsWith('http') ? (
                              <img src={memberUser.foto} className="w-full h-full object-cover" alt="Foto Atual" />
-                           ) : memberUser.foto ? (
-                             <div className="w-full h-full flex items-center justify-center text-xl font-bold bg-primary/20 text-primary">{memberUser.foto}</div>
                            ) : (
-                             <UserIcon className="w-6 h-6 m-auto text-slate-500 absolute inset-0" />
+                             <div className="w-full h-full flex items-center justify-center text-3xl font-black bg-blue-500/10 text-blue-500">{memberUser.nome[0].toUpperCase()}</div>
                            )}
+                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Camera className="w-6 h-6 text-white" />
+                           </div>
                         </div>
-                        <div className="flex-1">
-                           <p className="text-sm font-semibold text-white mb-1">Foto de Perfil</p>
-                           <p className="text-[10px] text-slate-400 leading-tight mb-3 uppercase tracking-widest">Tire uma foto ou envie ficheiro.</p>
+                        <div className="flex-1 space-y-3">
+                           <div>
+                             <p className="text-sm font-black text-white uppercase italic tracking-tighter leading-none mb-1">Identidade Visual</p>
+                             <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest leading-tight">Escolha entre Captura Biométrica ou Arquivo Digital.</p>
+                           </div>
                            <div className="flex gap-2">
-                             <button type="button" onClick={startCamera} className="flex-1 text-xs font-bold bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-500 transition-colors uppercase tracking-wider flex items-center justify-center gap-2">
+                             <button type="button" onClick={startCamera} className="flex-1 h-10 text-[9px] font-black bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition-all uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg active:scale-95">
                                <Camera className="w-3.5 h-3.5" /> Câmara
                              </button>
                              <div className="relative flex-1">
-                               <button type="button" onClick={() => fileInputRef.current?.click()} className="w-full text-xs font-bold bg-slate-700 text-white py-2 rounded-lg hover:bg-slate-600 transition-colors uppercase tracking-wider text-center">
+                               <button type="button" onClick={() => fileInputRef.current?.click()} className="w-full h-10 text-[9px] font-black bg-slate-800 text-white rounded-xl hover:bg-slate-700 transition-all uppercase tracking-widest text-center shadow-lg active:scale-95">
                                   Galeria
                                </button>
                                <input 
@@ -1440,57 +1443,74 @@ export default function MemberDashboard() {
                              </div>
                            </div>
                         </div>
-                     </div>
-                   )}
+                      </div>
+                    )}
 
-                   <div className="grid grid-cols-2 gap-3">
-                     <div>
-                       <label className="text-xs font-semibold text-slate-400 mb-1 block">Email</label>
-                       <input value={profileForm.email} onChange={e => setProfileForm({...profileForm, email: e.target.value})} type="email" className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
-                     </div>
-                     <div>
-                       <label className="text-xs font-semibold text-slate-400 mb-1 block">Telefone</label>
-                       <input 
-                          inputMode="numeric"
-                          value={profileForm.telefone} 
-                          onChange={e => setProfileForm({...profileForm, telefone: e.target.value.replace(/\D/g, '').slice(0, 9)})} 
-                          className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm font-mono" 
-                          placeholder="8x 000 0000"
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block pl-1">Identificador Fiscal (Email)</label>
+                        <input 
+                          type="email"
+                          value={profileForm.email} 
+                          onChange={e => setProfileForm({...profileForm, email: e.target.value})} 
+                          className="w-full bg-slate-900 border border-white/5 rounded-2xl px-5 py-4 text-white focus:border-blue-500/50 focus:outline-none text-xs transition-all shadow-inner" 
                         />
-                     </div>
-                   </div>
-                   <div className="grid grid-cols-2 gap-3">
-                     <div>
-                       <label className="text-xs font-semibold text-slate-400 mb-1 block">Profissão</label>
-                       <input value={profileForm.profissao} onChange={e => setProfileForm({...profileForm, profissao: e.target.value})} className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
-                     </div>
-                     <div>
-                       <label className="text-xs font-semibold text-slate-400 mb-1 block">NUIT Fiscal</label>
-                       <input 
-                          inputMode="numeric"
-                          value={profileForm.nuit} 
-                          onChange={e => setProfileForm({...profileForm, nuit: e.target.value.replace(/\D/g, '').slice(0, 9)})} 
-                          className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm font-mono" 
-                          placeholder="123 456 789"
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block pl-1">Telefone Principal (9 Dígitos)</label>
+                        <div className="relative">
+                          <input 
+                            inputMode="numeric"
+                            maxLength={9}
+                            value={profileForm.telefone} 
+                            onChange={e => setProfileForm({...profileForm, telefone: e.target.value.replace(/\D/g, '').slice(0, 9)})} 
+                            className="w-full bg-slate-900 border border-white/5 rounded-2xl px-5 py-4 text-white focus:border-blue-500/50 focus:outline-none text-xs font-mono transition-all shadow-inner" 
+                            placeholder="8x 000 0000"
+                          />
+                          {profileForm.telefone.length === 9 && <div className="absolute right-4 top-1/2 -translate-y-1/2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /></div>}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block pl-1">Estrutura Profissional</label>
+                        <input 
+                          value={profileForm.profissao} 
+                          onChange={e => setProfileForm({...profileForm, profissao: e.target.value})} 
+                          className="w-full bg-slate-900 border border-white/5 rounded-2xl px-5 py-4 text-white focus:border-blue-500/50 focus:outline-none text-xs transition-all shadow-inner" 
                         />
-                     </div>
-                   </div>
-                   <div className="grid grid-cols-2 gap-3">
-                     <div>
-                       <label className="text-xs font-semibold text-slate-400 mb-1 block">Nº de B.I.</label>
-                       <input value={profileForm.bi} onChange={e => setProfileForm({...profileForm, bi: e.target.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase().slice(0, 13)})} pattern="^$|^[0-9]{12}[A-Z]$" title="Deve conter 12 números e terminar com 1 letra (Ex: 123456789012A)" placeholder="Ex: 000000000000A" className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
-                     </div>
-                     <div>
-                       <label className="text-xs font-semibold text-slate-400 mb-1 block">Bairro</label>
-                       <input value={profileForm.bairro} onChange={e => setProfileForm({...profileForm, bairro: e.target.value})} className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
-                     </div>
-                   </div>
-                   <div className="grid grid-cols-1 gap-3">
-                     <div>
-                       <label className="text-xs font-semibold text-slate-400 mb-1 block">Zona</label>
-                       <input value={profileForm.zona} onChange={e => setProfileForm({...profileForm, zona: e.target.value})} className="w-full bg-slate-900 border border-white/5 rounded-xl px-4 py-3 text-white focus:border-blue-500 focus:outline-none text-sm" />
-                     </div>
-                   </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block pl-1">NUIT Tax ID (9 Dígitos)</label>
+                        <div className="relative">
+                          <input 
+                            inputMode="numeric"
+                            maxLength={9}
+                            value={profileForm.nuit} 
+                            onChange={e => setProfileForm({...profileForm, nuit: e.target.value.replace(/\D/g, '').slice(0, 9)})} 
+                            className="w-full bg-slate-900 border border-white/5 rounded-2xl px-5 py-4 text-white focus:border-blue-500/50 focus:outline-none text-xs font-mono transition-all shadow-inner" 
+                            placeholder="123 456 789"
+                          />
+                          {profileForm.nuit.length === 9 && <div className="absolute right-4 top-1/2 -translate-y-1/2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /></div>}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block pl-1">Identidade (B.I.)</label>
+                        <input value={profileForm.bi} onChange={e => setProfileForm({...profileForm, bi: e.target.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase().slice(0, 13)})} placeholder="Ex: 000000000000A" className="w-full bg-slate-900 border border-white/5 rounded-2xl px-5 py-4 text-white focus:border-blue-500/50 focus:outline-none text-xs shadow-inner transition-all" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block pl-1">Bairro de Residência</label>
+                        <input value={profileForm.bairro} onChange={e => setProfileForm({...profileForm, bairro: e.target.value})} className="w-full bg-slate-900 border border-white/5 rounded-2xl px-5 py-4 text-white focus:border-blue-500/50 focus:outline-none text-xs shadow-inner transition-all" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block pl-1">Zona / Quarteirão / Detalhes</label>
+                      <input value={profileForm.zona} onChange={e => setProfileForm({...profileForm, zona: e.target.value})} className="w-full bg-slate-900 border border-white/5 rounded-2xl px-5 py-4 text-white focus:border-blue-500/50 focus:outline-none text-xs shadow-inner transition-all" />
+                    </div>
                    
                    <div className="pt-2">
                        <p className="text-xs text-blue-400 font-black uppercase tracking-[0.2em] mb-4">Contactos de Emergência / Parentes</p>
@@ -1602,10 +1622,37 @@ export default function MemberDashboard() {
                       <button onClick={() => setIsProfitModalOpen(false)} className="p-2 rounded-full bg-white/5 text-slate-400 hover:text-white transition-colors"><X className="w-5 h-5"/></button>
                    </div>
 
-                   {(() => {
-                      const lucroRealizado = memberUser.lucro_acumulado || 0;
-                      const lucroProjetado = myActiveLoans.reduce((acc, l) => acc + l.statusCalc.juroReal, 0);
-                      const lucroTotal = lucroRealizado + lucroProjetado;
+                    {(() => {
+                       const lucroRealizado = memberUser.lucro_acumulado || 0;
+
+                       // Projeção como Investidor (80% do juro ou 100% se autofinanciado)
+                       const projInvestidor = (memberDetails.emCirculacao || [])
+                         .filter((c: any) => c.status !== "Liquidado")
+                         .reduce((acc: number, c: any) => {
+                           const realLoan = dbStore.loans.find(l => l.id === c.loan_id);
+                           if (!realLoan) return acc;
+                           const status = calcularStatusEmprestimo(realLoan.valor_original, realLoan.data_inicio, realLoan.valor_pago || 0);
+                           const minhaFatiaJuro = status.juro * (c.pctDoEmprestimo / 100);
+                           
+                           // Cashback: Se eu sou o tomador, fico com 100% do meu próprio juro. Caso contrário, 80%.
+                           return acc + (c.tomador_id === memberUser.id ? minhaFatiaJuro : minhaFatiaJuro * 0.8);
+                         }, 0);
+
+                       // Projeção como Tomador (20% cashback dos empréstimos coletivos)
+                       const projCashback = (dbStore.loans || [])
+                         .filter(l => l.user_id === memberUser.id && l.status === "Ativo")
+                         .reduce((acc, l) => {
+                            const status = calcularStatusEmprestimo(l.valor_original, l.data_inicio, l.valor_pago || 0);
+                            // Se eu contribuir para meu próprio empréstimo, esses 20% do meu capital foram contados acima.
+                            // Aqui pegamos 20% do juro total que NÃO veio do meu bolso.
+                            const minhaContrib = (memberDetails.emCirculacao || []).find(c => c.loan_id === l.id);
+                            const pctTerceiros = 100 - (minhaContrib?.pctDoEmprestimo || 0);
+                            const juroDeTerceiros = status.juro * (pctTerceiros / 100);
+                            return acc + (juroDeTerceiros * 0.2);
+                         }, 0);
+
+                       const lucroProjetado = Math.round(projInvestidor + projCashback);
+                       const lucroTotal = lucroRealizado + lucroProjetado;
 
                       return (
                         <div className="space-y-6">

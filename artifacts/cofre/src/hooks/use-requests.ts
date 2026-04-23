@@ -1053,10 +1053,15 @@ export function useApproveLiquidationRequest() {
           const lucroDesteTrace = lucroBruto * (pct / 100);
           
           if (trace.owner_id === loan.user_id) {
+            // Empréstimo Autofinanciado: 100% do lucro para o investidor/tomador
             addDelta(trace.owner_id, fatiaBruta, lucroDesteTrace);
           } else {
-            addDelta(trace.owner_id, fatiaBruta, lucroDesteTrace * 0.8);
-            addDelta(loan.user_id, 0, lucroDesteTrace * 0.2); // Cashback p/ tomador
+            // Empréstimo Coletivo: 80% Investidor | 20% Cashback para Tomador
+            const cashback = lucroDesteTrace * 0.2;
+            const fatiaInvestidor = fatiaBruta - cashback;
+            
+            addDelta(trace.owner_id, fatiaInvestidor, lucroDesteTrace * 0.8);
+            addDelta(loan.user_id, cashback, cashback); // O cashback entra no saldo real do tomador
           }
 
           if (isLiquidacaoTotal) {
@@ -1067,6 +1072,12 @@ export function useApproveLiquidationRequest() {
         });
 
         // 💾 GRAVAÇÃO CONSOLIDADA
+        const dashboardDelta = {
+          caixa: 0,
+          naRua: 0,
+          lucros: 0
+        };
+
         Object.keys(userDeltas).forEach(uid => {
           const ud = dbStore.userDetails[uid];
           const u = dbStore.users.find(x => x.id === uid);
@@ -1076,12 +1087,25 @@ export function useApproveLiquidationRequest() {
           updates[`userDetails/${uid}/emCaixa`] = currentCaixa + userDeltas[uid].emCaixa;
           updates[`users/${uid}/saldo_base`] = currentCaixa + userDeltas[uid].emCaixa;
           updates[`users/${uid}/lucro_acumulado`] = currentLucro + userDeltas[uid].lucro;
+          
+          dashboardDelta.caixa += userDeltas[uid].emCaixa;
+          dashboardDelta.lucros += userDeltas[uid].lucro;
 
           if (ud) {
              const activeCirc = (ud.emCirculacao || []).filter((c: any) => c.status !== "Liquidado" && (isLiquidacaoTotal ? c.loan_id !== loanId : true));
              updates[`userDetails/${uid}/totalEmCirculacao`] = activeCirc.reduce((acc: number, c: any) => acc + (c.valor_contribuido || 0), 0);
           }
         });
+
+        // O valor base (principal) sai da "rua"
+        const principalAbatido = valorRealmenteAbatido - lucroBruto;
+        
+        updates[`dashboard/caixa`] = (dbStore.dashboard.caixa || 0) + totalPagoNestaRodada;
+        updates[`dashboard/naRua`] = Math.max(0, (dbStore.dashboard.naRua || 0) - principalAbatido);
+        updates[`dashboard/lucros`] = (dbStore.dashboard.lucros || 0) + lucroBruto;
+        if (isLiquidacaoTotal) {
+           updates[`dashboard/emprestimos_ativos`] = Math.max(0, (dbStore.dashboard.emprestimos_ativos || 0) - 1);
+        }
 
         const tsNow = Date.now();
         updates[`liquidationRequests/${requestId}/status`] = "Aprovado";

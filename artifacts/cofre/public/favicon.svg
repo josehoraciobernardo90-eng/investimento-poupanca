@@ -1,5 +1,12 @@
-<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="180" height="180" rx="40" fill="#0A0F1C"/>
-  <circle cx="90" cy="90" r="60" fill="#2563EB"/>
-  <path d="M105 75C100 70 92 68 85 68C72 68 62 78 62 90C62 102 72 112 85 112C92 112 100 110 105 105" stroke="white" stroke-width="8" stroke-linecap="round"/>
+<svg width="512" height="512" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="shield-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF1B8" />
+      <stop offset="50%" stop-color="#EBB320" />
+      <stop offset="100%" stop-color="#9E7606" />
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="48" fill="#0A0F1C" />
+  <path d="M50 15 L85 30 L85 58 C85 85 50 95 50 95 C50 95 15 85 15 58 L15 30 L50 15 Z" fill="url(#shield-gold)" />
+  <path d="M50 20 L78 32 L78 56 C78 75 50 85 50 85 C50 85 22 75 22 56 L22 32 L50 20 Z" fill="#1E3A8A" />
 </svg>
