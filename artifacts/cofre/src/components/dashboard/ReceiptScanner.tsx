@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, X, Check, Loader2, Sparkles, Scan, Smartphone } from "lucide-react";
+import { Camera, X, Check, Loader2, Sparkles, Scan, Smartphone, Zap, ZapOff } from "lucide-react";
 import { cn, formatMT } from "@/lib/utils";
 
 // 📝 REGEX PARA M-PESA / E-MOLA (Adaptado para Moçambique)
@@ -21,6 +21,7 @@ export function ReceiptScanner({ onScanResult, onClose }: ScannerProps) {
   const [status, setStatus] = useState<"starting" | "ready" | "captured">("starting");
   const [photo, setPhoto] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
+  const [isTorchOn, setIsTorchOn] = useState(false);
 
   useEffect(() => {
     startCamera();
@@ -50,7 +51,25 @@ export function ReceiptScanner({ onScanResult, onClose }: ScannerProps) {
   };
 
   const toggleCamera = () => {
+    setIsTorchOn(false);
     setFacingMode(prev => prev === "user" ? "environment" : "user");
+  };
+
+  const toggleTorch = async () => {
+    try {
+      const stream = videoRef.current?.srcObject as MediaStream;
+      const track = stream?.getVideoTracks()[0];
+      if (track) {
+        const nextState = !isTorchOn;
+        await track.applyConstraints({
+          // @ts-ignore - torch is non-standard but supported in Chrome/Android
+          advanced: [{ torch: nextState }]
+        });
+        setIsTorchOn(nextState);
+      }
+    } catch (err) {
+      console.error("Flash não suportado:", err);
+    }
   };
 
   const stopCamera = () => {
@@ -59,6 +78,7 @@ export function ReceiptScanner({ onScanResult, onClose }: ScannerProps) {
       stream.getTracks().forEach(track => track.stop());
       videoRef.current.srcObject = null;
     }
+    setIsTorchOn(false);
   };
 
   const takePhoto = () => {

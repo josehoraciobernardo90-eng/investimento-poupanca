@@ -23,7 +23,7 @@ import {
   Scan,
   Trophy,
   Calculator,
-  Zap,
+  Zap, ZapOff,
   Star,
   ShieldAlert,
   Receipt,
@@ -101,6 +101,8 @@ export default function MemberDashboard() {
   const [isLiqScannerOpen, setIsLiqScannerOpen] = useState(false);
   const [simAmount, setSimAmount] = useState(10000);
   const [isProfitModalOpen, setIsProfitModalOpen] = useState(false);
+  const [profileTorch, setProfileTorch] = useState(false);
+  const [lastBlinkedId, setLastBlinkedId] = useState<string | null>(null);
 
   const createLoanMut = useCreateLoanRequest();
   const createDepositMut = useCreateDepositRequest();
@@ -129,6 +131,51 @@ export default function MemberDashboard() {
   });
 
   const [newPhoto, setNewPhoto] = useState<string | null>(null);
+
+  // ⚡ GOGOMA BLINK ENGINE (Sinal de Aprovação do Patrão)
+  useEffect(() => {
+    const lastNotif = notifications[0];
+    if (lastNotif && !lastNotif.read && lastNotif.title.includes("Aprovado") && lastNotif.id !== lastBlinkedId) {
+      setLastBlinkedId(lastNotif.id);
+      triggerGogomaBlink();
+    }
+  }, [notifications.length, notifications]);
+
+  const triggerGogomaBlink = async () => {
+    // 1. Haptic Feedback
+    if ("vibrate" in navigator) {
+      navigator.vibrate([100, 50, 100, 50, 300]);
+    }
+
+    // 2. Hardware Torch Blink (Com Stream de Fundo Invisível)
+    let tempStream: MediaStream | null = null;
+    try {
+      // Tentar capturar a câmara traseira em background
+      tempStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: "environment" } 
+      });
+      
+      const track = tempStream.getVideoTracks()[0];
+      if (track) {
+        // Sequência de 3 piscadelas stealth
+        for (let i = 0; i < 3; i++) {
+          // @ts-ignore
+          await track.applyConstraints({ advanced: [{ torch: true }] });
+          await new Promise(r => setTimeout(r, 80));
+          // @ts-ignore
+          await track.applyConstraints({ advanced: [{ torch: false }] });
+          await new Promise(r => setTimeout(r, 80));
+        }
+      }
+    } catch (err) {
+      console.warn("Silent Blink: Hardware não permitiu acesso em background.");
+    } finally {
+      // Encerrar o canal imediatamente para poupar bateria e privacidade
+      if (tempStream) {
+        tempStream.getTracks().forEach(t => t.stop());
+      }
+    }
+  };
 
   if (!memberUser || !memberDetails) return null;
 
@@ -1407,6 +1454,25 @@ export default function MemberDashboard() {
                        <button type="button" onClick={takePhoto} className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl">
                          <Camera className="w-5 h-5" />
                        </button>
+                       <button 
+                          type="button" 
+                          onClick={async () => {
+                            try {
+                              const stream = videoRef.current?.srcObject as MediaStream;
+                              const track = stream?.getVideoTracks()[0];
+                              if (track) {
+                                const next = !profileTorch;
+                                // @ts-ignore
+                                await track.applyConstraints({ advanced: [{ torch: next }] });
+                                setProfileTorch(next);
+                              }
+                            } catch {}
+                          }} 
+                          className={cn("w-10 h-10 rounded-full flex items-center justify-center transition-all backdrop-blur-md", 
+                            profileTorch ? "bg-amber-500 text-black border-amber-400" : "bg-slate-800/80 text-white")}
+                        >
+                          {profileTorch ? <Zap className="w-5 h-5 fill-current" /> : <ZapOff className="w-5 h-5" />}
+                        </button>
                        <button type="button" onClick={toggleCamera} className="w-10 h-10 rounded-full bg-slate-800/80 text-white flex items-center justify-center hover:bg-blue-500 transition-colors backdrop-blur-md">
                          <Sparkles className={cn("w-5 h-5 transition-transform duration-500", facingMode === "user" ? "rotate-180" : "rotate-0")} />
                        </button>
