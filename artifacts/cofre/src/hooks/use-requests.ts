@@ -1009,61 +1009,56 @@ export function useApproveLiquidationRequest() {
       setIsPending(true);
       try {
         const req = ((dbStore as any).liquidationRequests || []).find((r: any) => r.id === requestId);
-        if (!req || req.status !== "Pendente") return;
-
+        if (!req) throw new Error("Pedido não encontrado.");
+        
         const loanId = req.loan_id;
         const detail = dbStore.loanDetails[loanId];
-        if (!detail) return;
+        if (!detail || !detail.loan) throw new Error(`Detalhes do empréstimo #${loanId} não carregados.`);
 
         const updates: any = {};
         const loan = detail.loan;
-        const totalPagoNestaRodada = req.valor;
+        const totalPagoNestaRodada = Number(req.valor) || 0;
         
-        // 🧮 Lógica Profissional de Divisão de Lucro (Tecnologia Gogoma)
+        if (!loan.valor_original || !loan.data_inicio) {
+           throw new Error("Dados do contrato (valor/data) estão incompletos.");
+        }
+
+        // 🧮 Lógica Profissional de Divisão de Lucro
         const status = calcularStatusEmprestimo(loan.valor_original, loan.data_inicio, loan.valor_pago || 0);
-        const taxa = status.taxaAtual; // 10, 20 ou 50
-        
-        // Verifica se estão a pagar o total devido agora
+        const taxa = status.taxaAtual || 10;
         const totalAindaDevido = status.totalDevido;
-        const isLiquidacaoTotal = totalPagoNestaRodada >= (totalAindaDevido - 10); // Margem de 0.10 MTn para arredondamentos
+        
+        const isLiquidacaoTotal = totalPagoNestaRodada >= (totalAindaDevido - 20); // Margem de 0.20 MTn
         const valorRealmenteAbatido = Math.min(totalPagoNestaRodada, totalAindaDevido);
 
-        // Fator de lucro: Se taxa é 10%, o lucro é 10/110 do montante pago (Capital + Juro).
         const fatorLucro = taxa / (100 + taxa);
         const lucroBruto = Math.round(valorRealmenteAbatido * fatorLucro);
 
+        console.log("[Liquidação] Processando:", { loanId, totalPagoNestaRodada, lucroBruto, taxa });
+
         const userDeltas: Record<string, { emCaixa: number, lucro: number }> = {};
         const addDelta = (uid: string, c: number, l: number) => {
+          if (!uid) return;
           if (!userDeltas[uid]) userDeltas[uid] = { emCaixa: 0, lucro: 0 };
-          userDeltas[uid].emCaixa += Math.round(c);
-          userDeltas[uid].lucro += Math.round(l);
+          userDeltas[uid].emCaixa += Math.round(c || 0);
+          userDeltas[uid].lucro += Math.round(l || 0);
         };
 
-        const updatedTraces = [...detail.traces];
-        updatedTraces.forEach((trace: any) => {
-          const fatiaBruta = valorRealmenteAbatido * (trace.pctReal / 100);
-          const lucroDesteTrace = lucroBruto * (trace.pctReal / 100);
-          
-          let cAReceber = fatiaBruta;
-          let lucroFinal = 0;
+        const updatedTraces = detail.traces || [];
+        if (updatedTraces.length === 0) throw new Error("Este empréstimo não possui investidores (traces) registados.");
 
-          // Regra de Ouro: Self-funding (100%) vs Collective (80/20)
+        updatedTraces.forEach((trace: any) => {
+          const pct = Number(trace.pctReal) || 0;
+          const fatiaBruta = valorRealmenteAbatido * (pct / 100);
+          const lucroDesteTrace = lucroBruto * (pct / 100);
+          
           if (trace.owner_id === loan.user_id) {
-            // Auto-investimento: Recebe 100% do juro de volta
-            lucroFinal = lucroDesteTrace;
+            addDelta(trace.owner_id, fatiaBruta, lucroDesteTrace);
           } else {
-            // Investimento Colectivo: 
-            // 80% p/ investidor (quem proveu o capital)
-            // 20% p/ tomador (quem produziu os juros)
-            lucroFinal = lucroDesteTrace * 0.8;
-            const cashbackTomador = lucroDesteTrace * 0.2;
-            
-            // Atribui o cashback de 20% a quem produziu o juro (o próprio membro do empréstimo)
-            addDelta(loan.user_id, 0, cashbackTomador);
+            addDelta(trace.owner_id, fatiaBruta, lucroDesteTrace * 0.8);
+            addDelta(loan.user_id, 0, lucroDesteTrace * 0.2); // Cashback p/ tomador
           }
 
-          addDelta(trace.owner_id, cAReceber, lucroFinal);
-          
           if (isLiquidacaoTotal) {
             const currentCirc = dbStore.userDetails[trace.owner_id]?.emCirculacao || [];
             const circIndex = currentCirc.findIndex((c: any) => c.loan_id === loanId);
@@ -1071,41 +1066,30 @@ export function useApproveLiquidationRequest() {
           }
         });
 
-        // 💾 GRAVAÇÃO CONSOLIDADA E SINCRONIZAÇÃO DE ESTADO
+        // 💾 GRAVAÇÃO CONSOLIDADA
         Object.keys(userDeltas).forEach(uid => {
           const ud = dbStore.userDetails[uid];
           const u = dbStore.users.find(x => x.id === uid);
-          if (ud) {
-            const novaCaixa = ud.emCaixa + userDeltas[uid].emCaixa;
-            updates[`userDetails/${uid}/emCaixa`] = novaCaixa;
-            updates[`users/${uid}/saldo_base`] = novaCaixa;
-            updates[`users/${uid}/lucro_acumulado`] = (u?.lucro_acumulado || 0) + userDeltas[uid].lucro;
+          const currentCaixa = ud?.emCaixa || u?.saldo_base || 0;
+          const currentLucro = u?.lucro_acumulado || 0;
 
-            const currentCirc = ud.emCirculacao || [];
-            const activeCirc = currentCirc.filter((c: any) => c.status !== "Liquidado" && (isLiquidacaoTotal ? c.loan_id !== loanId : true));
-            updates[`userDetails/${uid}/totalEmCirculacao`] = activeCirc.reduce((acc: number, c: any) => acc + (c.valor_contribuido || 0), 0);
-            updates[`userDetails/${uid}/totalJuroEsperado`] = activeCirc.reduce((acc: number, c: any) => acc + (c.juro_esperado || 0), 0);
+          updates[`userDetails/${uid}/emCaixa`] = currentCaixa + userDeltas[uid].emCaixa;
+          updates[`users/${uid}/saldo_base`] = currentCaixa + userDeltas[uid].emCaixa;
+          updates[`users/${uid}/lucro_acumulado`] = currentLucro + userDeltas[uid].lucro;
+
+          if (ud) {
+             const activeCirc = (ud.emCirculacao || []).filter((c: any) => c.status !== "Liquidado" && (isLiquidacaoTotal ? c.loan_id !== loanId : true));
+             updates[`userDetails/${uid}/totalEmCirculacao`] = activeCirc.reduce((acc: number, c: any) => acc + (c.valor_contribuido || 0), 0);
           }
         });
 
-        // Actualização Atómica do Contrato de
         const tsNow = Date.now();
         updates[`liquidationRequests/${requestId}/status`] = "Aprovado";
         updates[`liquidationRequests/${requestId}/approvedAt`] = tsNow;
         
-        // Audit Trail
-        updates[`audit/liq_${tsNow}`] = {
-           id: `liq_${tsNow}`, ts: tsNow, tipo: "LIQUIDACAO_APROVADA",
-           desc: `Liquidação aprovada: ${formatMT(totalPagoNestaRodada)} abatidos do empréstimo #${loanId.slice(0,6)}.`,
-           valor: totalPagoNestaRodada
-        };
-
-        // Actualização do Contrato
-        const novoTotalDevido = Math.max(0, totalAnteriormenteDevido - totalPagoNestaRodada);
         updates[`loans/${loanId}/valor_pago`] = (loan.valor_pago || 0) + totalPagoNestaRodada;
-        updates[`loans/${loanId}/status`] = isLiquidacaoTotal ? "Liquidado" : "Ativo";
-        
-        // Sincroniza o objecto de detalhes para evitar delay na UI
+        if (isLiquidacaoTotal) updates[`loans/${loanId}/status`] = "Liquidado";
+
         updates[`loanDetails/${loanId}/loan`] = { 
           ...loan, 
           status: isLiquidacaoTotal ? "Liquidado" : "Ativo", 
@@ -1113,10 +1097,10 @@ export function useApproveLiquidationRequest() {
         };
 
         await update(ref(rtdb), updates);
-        toast({ title: isLiquidacaoTotal ? "✅ Liquidado" : "📈 Amortizado", description: isLiquidacaoTotal ? "Contrato encerrado com sucesso." : `Restam ${formatMT(novoTotalDevido)} por pagar.` });
-      } catch (err) {
-        console.error("[Audit] Erro na Amortização:", err);
-        toast({ title: "Erro Crítico", description: "Falha ao processar pagamento.", variant: "destructive" });
+        toast({ title: isLiquidacaoTotal ? "✅ Liquidado" : "📈 Amortizado", description: "O processamento fiduciário foi concluído." });
+      } catch (err: any) {
+        console.error("[CRITICAL] Falha na Liquidação:", err.message, err);
+        toast({ title: "Erro de Processamento", description: err.message || "Falha ao liquidar.", variant: "destructive" });
       } finally {
         setIsPending(false);
       }
