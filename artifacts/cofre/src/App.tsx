@@ -21,6 +21,7 @@ import AuditPage from "@/pages/audit/index";
 import NotFound from "@/pages/not-found";
 import { LandingPage } from "@/components/layout/LandingPage";
 import { useAdmin } from "@/hooks/use-admin";
+import { FrozenAccountScreen } from "@/components/layout/FrozenAccountScreen";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -103,6 +104,10 @@ function AppContent() {
   }
 
   if (isMember) {
+    if (memberUser?.status === "Congelado") {
+      return <FrozenAccountScreen />;
+    }
+
     return (
       <AnimatePresence mode="wait">
         {memberUser?.needsProfileSetup ? (

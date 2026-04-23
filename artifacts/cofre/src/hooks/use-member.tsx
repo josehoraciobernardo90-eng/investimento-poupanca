@@ -55,7 +55,12 @@ export function MemberProvider({ children }: { children: ReactNode }) {
     
     if (user) {
       if (user.status === "Congelado") {
-        toast({ title: "Acesso Restrito", description: "A sua conta está congelada. Contacte o administrador.", variant: "destructive" });
+        const supportPhone = dbStore.dashboard.support_phone || "pelo painel de suporte";
+        toast({ 
+          title: "Acesso Restrito", 
+          description: `A sua conta foi totalmente congelada. Entre em contacto com o Suporte: ${supportPhone}`, 
+          variant: "destructive" 
+        });
         return false;
       }
       

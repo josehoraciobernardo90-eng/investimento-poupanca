@@ -129,6 +129,17 @@
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
   }
 
+  /* ─── Premium Elite Glass Card ─── */
+  .glass-panel-elite {
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      0 8px 32px 0 rgba(0, 0, 0, 0.37),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+
   /* ─── Card Principal ─── */
   .card-elite, .glass-card-elite {
     background: linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);

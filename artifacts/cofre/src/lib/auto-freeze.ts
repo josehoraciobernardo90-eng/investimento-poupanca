@@ -29,6 +29,7 @@ export interface LoanStatus {
  * Calcula o status de um empréstimo com base na data de início e a data actual.
  * 
  * @param valorBase - Valor original do empréstimo em centavos
+ * @param valorPago - Quanto o membro já pagou neste contrato
  * @param dataInicio - Timestamp Unix (seconds) da data de início
  * @param agora - Data actual (opcional, default = new Date())
  * @returns LoanStatus com fase, taxa, juros e se deve bloquear
@@ -36,6 +37,7 @@ export interface LoanStatus {
 export function calcularStatusEmprestimo(
   valorBase: number,
   dataInicio: number,
+  valorPago: number = 0,
   agora: Date = new Date()
 ): LoanStatus {
   const inicio = new Date(dataInicio > 1e11 ? dataInicio : dataInicio * 1000);
@@ -61,7 +63,7 @@ export function calcularStatusEmprestimo(
       taxaAtual: 10,
       juro,
       multaAtraso: 0,
-      totalDevido: valorBase + juro,
+      totalDevido: Math.max(0, valorBase + juro - valorPago),
       diasRestantes,
       proximaData: data1,
       dataLimite,
@@ -77,7 +79,7 @@ export function calcularStatusEmprestimo(
       taxaAtual: 20,
       juro,
       multaAtraso: 0,
-      totalDevido: valorBase + juro,
+      totalDevido: Math.max(0, valorBase + juro - valorPago),
       diasRestantes,
       proximaData: data2,
       dataLimite,
@@ -93,7 +95,7 @@ export function calcularStatusEmprestimo(
       taxaAtual: 50,
       juro,
       multaAtraso: 0,
-      totalDevido: valorBase + juro,
+      totalDevido: Math.max(0, valorBase + juro - valorPago),
       diasRestantes,
       proximaData: data3,
       dataLimite,
@@ -111,7 +113,7 @@ export function calcularStatusEmprestimo(
       taxaAtual: 50,
       juro,
       multaAtraso,
-      totalDevido: valorBase + juro + multaAtraso,
+      totalDevido: Math.max(0, valorBase + juro + multaAtraso - valorPago),
       diasRestantes: 0,
       proximaData: data3,
       dataLimite,
@@ -125,7 +127,7 @@ export function calcularStatusEmprestimo(
  * Verifica todos os empréstimos activos e retorna quais membros devem ser bloqueados.
  */
 export function verificarCongelamentos(
-  emprestimos: Array<{ user_id: string; valor_original: number; data_inicio: number; status: string }>,
+  emprestimos: Array<{ user_id: string; valor_original: number; valor_pago?: number; data_inicio: number; status: string }>,
   agora: Date = new Date()
 ): string[] {
   const membrosBloqueados: string[] = [];
@@ -133,7 +135,7 @@ export function verificarCongelamentos(
   for (const emp of emprestimos) {
     if (emp.status === "Liquidado") continue; // já pagou
     
-    const status = calcularStatusEmprestimo(emp.valor_original, emp.data_inicio, agora);
+    const status = calcularStatusEmprestimo(emp.valor_original, emp.data_inicio, emp.valor_pago || 0, agora);
     if (status.deveBloqueiar) {
       membrosBloqueados.push(emp.user_id);
     }

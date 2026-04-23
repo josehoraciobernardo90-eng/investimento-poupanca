@@ -27,7 +27,9 @@ import {
   Star,
   ShieldAlert,
   Receipt,
-  Sparkles
+  Sparkles,
+  Copy,
+  Check
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, ReactNode, useRef, useEffect, useMemo } from "react";
@@ -44,6 +46,7 @@ import { NotificationHub } from "@/components/dashboard/NotificationHub";
 import { calcularStatusEmprestimo } from "@/lib/auto-freeze";
 import { ReceiptScanner } from "@/components/dashboard/ReceiptScanner";
 import { SlideToConfirm } from "@/components/ui/SlideToConfirm";
+import { useToast } from "@/hooks/use-toast";
 
 function NavButton({ 
   id, label, icon: Icon, active, set 
@@ -78,6 +81,7 @@ export default function MemberDashboard() {
   const { logout, memberUser, memberDetails } = useMember();
   const { notifications } = useNotifications();
   const { data: globalStats } = useDashboard();
+  const { toast } = useToast();
   
   const [activeTab, setActiveTab] = useState<"summary" | "assets" | "loans" | "profile" | "rank" | "simulator">("summary");
 
@@ -128,26 +132,9 @@ export default function MemberDashboard() {
 
   if (!memberUser || !memberDetails) return null;
 
-  const calculateLoanStatus = (loan: any) => {
-    const tsNow = Math.floor(Date.now() / 1000);
-    const diffSecs = tsNow - (loan.data_inicio || tsNow);
-    const diffDays = Math.floor(diffSecs / (24 * 3600));
-    
-    let mes = 1;
-    let taxa = 10;
-    if (diffDays >= 60) { mes = 3; taxa = 50; }
-    else if (diffDays >= 30) { mes = 2; taxa = 20; }
-
-    const juroReal = (loan.valor_original || 0) * (taxa / 100);
-    return {
-      mes, taxa, juroReal, totalADevolver: (loan.valor_original || 0) + juroReal, 
-      diasRestantes: Math.max(0, (30 * mes) - diffDays), base: loan.valor_original || 0
-    };
-  };
-
   const myActiveLoans = (dbStore.loans || [])
     .filter(l => l.user_id === memberUser.id && l.status === "Ativo")
-    .map(l => ({ ...l, statusCalc: calculateLoanStatus(l) }));
+    .map(l => ({ ...l, statusCalc: calcularStatusEmprestimo(l.valor_original, l.data_inicio, l.valor_pago || 0) }));
 
   const handleLoanSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -180,8 +167,25 @@ export default function MemberDashboard() {
 
   const handleLiquidationRequest = async (loanId: string, valor: number) => {
     if (!liquidationPhoto) {
-      alert("Por favor, anexe a foto do comprovativo para liquidar.");
+      toast({ 
+        title: "Comprovativo Necessário", 
+        description: "Por favor, anexe a foto do recibo para validar o pagamento.",
+        variant: "destructive" 
+      });
       return;
+    }
+
+    const loan = (dbStore.loans || []).find(l => l.id === loanId);
+    if (loan) {
+      const status = calcularStatusEmprestimo(loan.valor_original, loan.data_inicio, loan.valor_pago || 0);
+      if (valor > status.totalDevido + 10) { // Margem de 0.10 para arredondamentos
+        toast({
+          title: "Valor Excedido",
+          description: `Você não pode pagar mais do que a dívida atual (${formatMT(status.totalDevido)}).`,
+          variant: "destructive"
+        });
+        return;
+      }
     }
     try {
       const success = await createLiqMet.mutateAsync({ 
@@ -452,6 +456,91 @@ export default function MemberDashboard() {
                                  <p className="text-xl font-black text-blue-500">{formatMT(memberDetails.totalEmCirculacao)}</p>
                               </div>
                            </div>
+
+                            {/* CANAIS OFICIAIS DE PAGAMENTO (REATIVO) */}
+                            {(dbStore.dashboard.mpesa_number || dbStore.dashboard.emola_number || dbStore.dashboard.bank_account) && (
+                              <div className="bg-slate-900/40 rounded-[2rem] p-6 border border-white/5 space-y-4">
+                                <div className="flex items-center gap-2 mb-2 px-2">
+                                  <CreditCard className="w-4 h-4 text-blue-500" />
+                                  <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Canais Oficiais de Depósito</h4>
+                                </div>
+                                
+                                <div className="space-y-3">
+                                  {dbStore.dashboard.mpesa_number && (
+                                    <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5 group/row">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-rose-500/20 flex items-center justify-center border border-rose-500/30">
+                                          <span className="text-[8px] font-black text-rose-500">M</span>
+                                        </div>
+                                        <div>
+                                          <p className="text-[8px] text-slate-500 font-black uppercase tracking-tighter">M-Pesa {dbStore.dashboard.mpesa_name && <span className="text-rose-500/50 ml-1">• {dbStore.dashboard.mpesa_name}</span>}</p>
+                                          <p className="text-xs font-mono text-white font-bold">{dbStore.dashboard.mpesa_number}</p>
+                                        </div>
+                                      </div>
+                                      <button 
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(dbStore.dashboard.mpesa_number);
+                                          toast({ title: "Copiado", description: "Número M-Pesa copiado para a área de transferência." });
+                                        }}
+                                        className="p-2 rounded-lg bg-white/5 text-slate-500 hover:text-white transition-colors"
+                                      >
+                                        <Copy className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  )}
+
+                                  {dbStore.dashboard.emola_number && (
+                                    <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5 group/row">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center border border-orange-500/30">
+                                          <span className="text-[8px] font-black text-orange-500">E</span>
+                                        </div>
+                                        <div>
+                                          <p className="text-[8px] text-slate-500 font-black uppercase tracking-tighter">E-Mola {dbStore.dashboard.emola_name && <span className="text-orange-500/50 ml-1">• {dbStore.dashboard.emola_name}</span>}</p>
+                                          <p className="text-xs font-mono text-white font-bold">{dbStore.dashboard.emola_number}</p>
+                                        </div>
+                                      </div>
+                                      <button 
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(dbStore.dashboard.emola_number);
+                                          toast({ title: "Copiado", description: "Número E-Mola copiado para a área de transferência." });
+                                        }}
+                                        className="p-2 rounded-lg bg-white/5 text-slate-500 hover:text-white transition-colors"
+                                      >
+                                        <Copy className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  )}
+
+                                  {(dbStore.dashboard.bank_name || dbStore.dashboard.bank_number) && (
+                                    <div className="flex items-center justify-between p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10 group/row">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-xl bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                                          <Building2 className="w-4 h-4 text-blue-400" />
+                                        </div>
+                                        <div>
+                                          <p className="text-[10px] text-blue-400 font-black uppercase tracking-tighter leading-none mb-1">{dbStore.dashboard.bank_name || "Conta Bancária"}</p>
+                                          <p className="text-[11px] font-mono text-white font-bold max-w-[180px] break-all leading-tight mb-1">{dbStore.dashboard.bank_number || "A definir..."}</p>
+                                          {dbStore.dashboard.bank_titular && <p className="text-[9px] text-slate-500 font-bold uppercase">{dbStore.dashboard.bank_titular}</p>}
+                                        </div>
+                                      </div>
+                                      {dbStore.dashboard.bank_number && (
+                                        <button 
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(dbStore.dashboard.bank_number);
+                                            toast({ title: "Copiado", description: "Dados bancários copiados com sucesso." });
+                                          }}
+                                          className="p-2 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-all shadow-lg active:scale-95"
+                                        >
+                                          <Copy className="w-4 h-4" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                                <p className="text-[8px] text-slate-600 font-bold uppercase tracking-widest text-center italic">Sincronizado com a Central de Controlo</p>
+                              </div>
+                            )}
 
                            {/* APOIO AO CLIENTE (SUPORTE TÉCNICO) */}
                            {dbStore.dashboard.support_phone && (
@@ -726,7 +815,7 @@ export default function MemberDashboard() {
                        <div className="flex justify-between items-end">
                           <div>
                              <p className="text-[11px] text-slate-400 mb-1">Total a Devolver</p>
-                             <div className="text-2xl font-display font-medium text-white">{formatMT(l.statusCalc.totalADevolver)}</div>
+                             <div className="text-2xl font-display font-medium text-white">{formatMT(l.statusCalc.totalDevido)}</div>
                           </div>
                           <div className="text-right">
                              <p className="text-[11px] text-slate-400 mb-1">Juros</p>
@@ -860,7 +949,7 @@ export default function MemberDashboard() {
                       {(() => {
                         const top3 = Object.values(dbStore.userDetails || {})
                           .map((ud: any) => {
-                            const dLoans = (dbStore.loans || []).filter(l => l.user_id === ud.user.id && l.status !== "Liquidado" && (calcularStatusEmprestimo(l.valor_original, l.data_inicio).fase !== 1));
+                            const dLoans = (dbStore.loans || []).filter(l => l.user_id === ud.user.id && l.status !== "Liquidado" && (calcularStatusEmprestimo(l.valor_original, l.data_inicio, l.valor_pago || 0).fase !== 1));
                             const pLoans = (dbStore.loans || []).filter(l => l.user_id === ud.user.id && l.status === "Liquidado").length;
                             let s = 800;
                             s -= dLoans.length * 150;
@@ -903,7 +992,7 @@ export default function MemberDashboard() {
                    <div className="bg-slate-800/20 rounded-3xl border border-white/5 overflow-hidden">
                       {Object.values(dbStore.userDetails || {})
                         .map((ud: any) => {
-                          const delayedLoans = (dbStore.loans || []).filter(l => l.user_id === ud.user.id && l.status !== "Liquidado" && (calcularStatusEmprestimo(l.valor_original, l.data_inicio).fase !== 1));
+                          const delayedLoans = (dbStore.loans || []).filter(l => l.user_id === ud.user.id && l.status !== "Liquidado" && (calcularStatusEmprestimo(l.valor_original, l.data_inicio, l.valor_pago || 0).fase !== 1));
                           const paidLoans = (dbStore.loans || []).filter(l => l.user_id === ud.user.id && l.status === "Liquidado").length;
                           let score = 800;
                           score -= delayedLoans.length * 150;
@@ -1155,7 +1244,7 @@ export default function MemberDashboard() {
                    </div>
                    <div className="flex justify-between items-center p-5 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
                      <span className="text-emerald-400 font-medium">Total para Liquidação</span>
-                     <span className="text-xl font-bold text-emerald-400">{formatMT(selectedLoan.statusCalc.totalADevolver)}</span>
+                     <span className="text-xl font-bold text-emerald-400">{formatMT(selectedLoan.statusCalc.totalDevido)}</span>
                    </div>
                 </div>
 
@@ -1181,17 +1270,23 @@ export default function MemberDashboard() {
                           type="number"
                           value={liquidationAmount}
                           onChange={(e) => setLiquidationAmount(e.target.value)}
-                          placeholder={(selectedLoan.statusCalc.totalADevolver / 100).toString()}
-                          className="w-full bg-transparent text-2xl font-bold text-white outline-none"
+                          placeholder={(selectedLoan.statusCalc.totalDevido / 100).toString()}
+                          className={cn(
+                            "w-full bg-transparent text-2xl font-bold outline-none transition-colors",
+                            parseFloat(liquidationAmount) * 100 > selectedLoan.statusCalc.totalDevido + 10 ? "text-rose-500" : "text-white"
+                          )}
                         />
                         <button 
                           type="button"
-                          onClick={() => setLiquidationAmount((selectedLoan.statusCalc.totalADevolver / 100).toString())}
-                          className="text-[10px] font-bold text-blue-400 uppercase tracking-widest bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20 whitespace-nowrap"
+                          onClick={() => setLiquidationAmount((selectedLoan.statusCalc.totalDevido / 100).toString())}
+                          className="text-[10px] font-black text-blue-400 uppercase tracking-widest bg-blue-500/10 px-3 py-1.5 rounded-xl border border-blue-500/20 whitespace-nowrap active:scale-95 transition-all"
                         >
-                          Total
+                          Máximo
                         </button>
                       </div>
+                      {parseFloat(liquidationAmount) * 100 > selectedLoan.statusCalc.totalDevido + 10 && (
+                        <p className="text-[10px] text-rose-500 font-bold uppercase mt-2 animate-pulse">⚠️ O valor excede a dívida total ({formatMT(selectedLoan.statusCalc.totalDevido)})</p>
+                      )}
                     </div>
 
                     <div className="space-y-4">
@@ -1224,7 +1319,7 @@ export default function MemberDashboard() {
                     <SlideToConfirm 
                       label="Deslize para Confirmar"
                       successLabel="Pagamento Enviado!"
-                      onConfirm={() => handleLiquidationRequest(selectedLoan.id, liquidationAmount ? parseFloat(liquidationAmount) * 100 : selectedLoan.statusCalc.totalADevolver)}
+                      onConfirm={() => handleLiquidationRequest(selectedLoan.id, liquidationAmount ? parseFloat(liquidationAmount) * 100 : selectedLoan.statusCalc.totalDevido)}
                     />
                  </div>
               </motion.div>

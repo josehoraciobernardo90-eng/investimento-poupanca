@@ -1019,28 +1019,48 @@ export function useApproveLiquidationRequest() {
         const totalPagoNestaRodada = req.valor;
         const totalAnteriormenteDevido = loan.total_devido;
         
+        // 🧮 Lógica Profissional de Divisão de Lucro (Tecnologia Gogoma)
+        const status = calcularStatusEmprestimo(loan.valor_original, loan.data_inicio, loan.valor_pago || 0);
+        const taxa = status.taxaAtual; // 10, 20 ou 50
+        
+        // Fator de lucro: Se taxa é 10%, o lucro é 10/110 do montante pago (Capital + Juro).
+        // Se houver multa, ela é 100% lucro.
+        const valorRealmenteAbatido = totalPagoNestaRodada; // Assumindo valor total como abatimento
         const isLiquidacaoTotal = totalPagoNestaRodada >= totalAnteriormenteDevido;
-        const valorRealmenteAbatido = Math.min(totalPagoNestaRodada, totalAnteriormenteDevido);
-
-        // 🧮 Lógica de Divisão de Lucro (20/80)
-        // Estimamos o juro contido nesta amortização (aprox. 10% do valor abatido se for no prazo)
-        // No sistema Cofre, o 'lucro' é a diferença entre o que entra e o que sai do principal.
-        const juroProporcional = valorRealmenteAbatido * 0.0909; // Aproximação de 10% sobre o principal
-        const juroInvestidores = juroProporcional * 0.8;
-        const juroIndicador = juroProporcional * 0.2;
+        const fatorLucro = taxa / (100 + taxa);
+        const lucroBruto = Math.round(valorRealmenteAbatido * fatorLucro);
 
         const userDeltas: Record<string, { emCaixa: number, lucro: number }> = {};
         const addDelta = (uid: string, c: number, l: number) => {
           if (!userDeltas[uid]) userDeltas[uid] = { emCaixa: 0, lucro: 0 };
-          userDeltas[uid].emCaixa += c;
-          userDeltas[uid].lucro += l;
+          userDeltas[uid].emCaixa += Math.round(c);
+          userDeltas[uid].lucro += Math.round(l);
         };
 
         const updatedTraces = [...detail.traces];
         updatedTraces.forEach((trace: any) => {
-          const fatiaDoRecebimento = valorRealmenteAbatido * (trace.pctReal / 100);
-          const lucroDesteInvestidor = juroInvestidores * (trace.pctReal / 100);
-          addDelta(trace.owner_id, fatiaDoRecebimento, lucroDesteInvestidor);
+          const fatiaBruta = valorRealmenteAbatido * (trace.pctReal / 100);
+          const lucroDesteTrace = lucroBruto * (trace.pctReal / 100);
+          
+          let cAReceber = fatiaBruta;
+          let lucroFinal = 0;
+
+          // Regra de Ouro: Self-funding (100%) vs Collective (80/20)
+          if (trace.owner_id === loan.user_id) {
+            // Auto-investimento: Recebe 100% do juro de volta
+            lucroFinal = lucroDesteTrace;
+          } else {
+            // Investimento Colectivo: 
+            // 80% p/ investidor (quem proveu o capital)
+            // 20% p/ tomador (quem produziu os juros)
+            lucroFinal = lucroDesteTrace * 0.8;
+            const cashbackTomador = lucroDesteTrace * 0.2;
+            
+            // Atribui o cashback de 20% a quem produziu o juro (o próprio membro do empréstimo)
+            addDelta(loan.user_id, 0, cashbackTomador);
+          }
+
+          addDelta(trace.owner_id, cAReceber, lucroFinal);
           
           if (isLiquidacaoTotal) {
             const currentCirc = dbStore.userDetails[trace.owner_id]?.emCirculacao || [];
@@ -1049,17 +1069,7 @@ export function useApproveLiquidationRequest() {
           }
         });
 
-
-        // 💰 Bónus do Indicador (20%)
-        let indicadorId = loan.indicador_id;
-        const isSelfFunded = updatedTraces.length === 1 && updatedTraces[0].owner_id === loan.user_id;
-        if (!indicadorId && isSelfFunded) indicadorId = loan.user_id;
-
-        if (indicadorId) {
-          addDelta(indicadorId, 0, juroIndicador);
-        }
-
-        // 💾 GRAVAÇÃO CONSOLIDADA
+        // 💾 GRAVAÇÃO CONSOLIDADA E SINCRONIZAÇÃO DE ESTADO
         Object.keys(userDeltas).forEach(uid => {
           const ud = dbStore.userDetails[uid];
           const u = dbStore.users.find(x => x.id === uid);
@@ -1071,30 +1081,37 @@ export function useApproveLiquidationRequest() {
 
             const currentCirc = ud.emCirculacao || [];
             const activeCirc = currentCirc.filter((c: any) => c.status !== "Liquidado" && (isLiquidacaoTotal ? c.loan_id !== loanId : true));
-            updates[`userDetails/${uid}/totalEmCirculacao`] = activeCirc.reduce((acc, c) => acc + (c.valor_contribuido || 0), 0);
-            updates[`userDetails/${uid}/totalJuroEsperado`] = activeCirc.reduce((acc, c) => acc + (c.juro_esperado || 0), 0);
+            updates[`userDetails/${uid}/totalEmCirculacao`] = activeCirc.reduce((acc: number, c: any) => acc + (c.valor_contribuido || 0), 0);
+            updates[`userDetails/${uid}/totalJuroEsperado`] = activeCirc.reduce((acc: number, c: any) => acc + (c.juro_esperado || 0), 0);
           }
         });
 
-        const novoTotalDevido = Math.max(0, totalAnteriormenteDevido - totalPagoNestaRodada);
+        // Actualização Atómica do Contrato de
+        const tsNow = Date.now();
         updates[`liquidationRequests/${requestId}/status`] = "Aprovado";
-        updates[`loans/${loanId}/status`] = isLiquidacaoTotal ? "Liquidado" : "Ativo";
-        updates[`loans/${loanId}/total_devido`] = novoTotalDevido;
-        updates[`loans/${loanId}/valor_pago`] = (loan.valor_pago || 0) + totalPagoNestaRodada;
+        updates[`liquidationRequests/${requestId}/approvedAt`] = tsNow;
         
-        updates[`loanDetails/${loanId}/loan`] = { ...loan, status: isLiquidacaoTotal ? "Liquidado" : "Ativo", total_devido: novoTotalDevido, valor_pago: (loan.valor_pago || 0) + totalPagoNestaRodada };
+        // Audit Trail
+        updates[`audit/liq_${tsNow}`] = {
+           id: `liq_${tsNow}`, ts: tsNow, tipo: "LIQUIDACAO_APROVADA",
+           desc: `Liquidação aprovada: ${formatMT(totalPagoNestaRodada)} abatidos do empréstimo #${loanId.slice(0,6)}.`,
+           valor: totalPagoNestaRodada
+        };
 
-        updates[`dashboard/caixa`] = dbStore.dashboard.caixa + totalPagoNestaRodada;
-        const ratioPrincipal = loan.valor_original / loan.total_devido;
-        const abatimentoPrincipalExacto = isLiquidacaoTotal ? (loan.valor_original - (loan.valor_abatido_na_rua || 0)) : (valorRealmenteAbatido * ratioPrincipal);
-        updates[`dashboard/naRua`] = Math.max(0, dbStore.dashboard.naRua - abatimentoPrincipalExacto);
-        updates[`loans/${loanId}/valor_abatido_na_rua`] = (loan.valor_abatido_na_rua || 0) + abatimentoPrincipalExacto;
+        // Actualização do Contrato
+        const novoTotalDevido = Math.max(0, totalAnteriormenteDevido - totalPagoNestaRodada);
+        updates[`loans/${loanId}/valor_pago`] = (loan.valor_pago || 0) + totalPagoNestaRodada;
+        updates[`loans/${loanId}/status`] = isLiquidacaoTotal ? "Liquidado" : "Ativo";
         
-        updates[`dashboard/lucros`] = dbStore.dashboard.lucros + (valorRealmenteAbatido - abatimentoPrincipalExacto);
-        if (isLiquidacaoTotal) updates[`dashboard/emprestimos_ativos`] = Math.max(0, dbStore.dashboard.emprestimos_ativos - 1);
+        // Sincroniza o objecto de detalhes para evitar delay na UI
+        updates[`loanDetails/${loanId}/loan`] = { 
+          ...loan, 
+          status: isLiquidacaoTotal ? "Liquidado" : "Ativo", 
+          valor_pago: (loan.valor_pago || 0) + totalPagoNestaRodada 
+        };
 
         await update(ref(rtdb), updates);
-        toast({ title: isLiquidacaoTotal ? "✅ Liquidado" : "📈 Amortizado", description: isLiquidacaoTotal ? "Contrato encerrado." : `Ainda faltam ${formatMT(novoTotalDevido)}.` });
+        toast({ title: isLiquidacaoTotal ? "✅ Liquidado" : "📈 Amortizado", description: isLiquidacaoTotal ? "Contrato encerrado com sucesso." : `Restam ${formatMT(novoTotalDevido)} por pagar.` });
       } catch (err) {
         console.error("[Audit] Erro na Amortização:", err);
         toast({ title: "Erro Crítico", description: "Falha ao processar pagamento.", variant: "destructive" });
@@ -1146,15 +1163,30 @@ export function useUpdateSettings() {
   const { toast } = useToast();
   return {
     isPending,
-    mutateAsync: async (settings: { support_phone?: string }) => {
+    mutateAsync: async (settings: { 
+      support_phone?: string;
+      mpesa_number?: string;
+      mpesa_name?: string;
+      emola_number?: string;
+      emola_name?: string;
+      bank_name?: string;
+      bank_number?: string;
+      bank_titular?: string;
+    }) => {
       setIsPending(true);
       try {
         const updates: any = {};
-        if (settings.support_phone !== undefined) {
-          updates['dashboard/support_phone'] = settings.support_phone;
-        }
+        if (settings.support_phone !== undefined) updates['dashboard/support_phone'] = settings.support_phone;
+        if (settings.mpesa_number !== undefined) updates['dashboard/mpesa_number'] = settings.mpesa_number;
+        if (settings.mpesa_name !== undefined) updates['dashboard/mpesa_name'] = settings.mpesa_name;
+        if (settings.emola_number !== undefined) updates['dashboard/emola_number'] = settings.emola_number;
+        if (settings.emola_name !== undefined) updates['dashboard/emola_name'] = settings.emola_name;
+        if (settings.bank_name !== undefined) updates['dashboard/bank_name'] = settings.bank_name;
+        if (settings.bank_number !== undefined) updates['dashboard/bank_number'] = settings.bank_number;
+        if (settings.bank_titular !== undefined) updates['dashboard/bank_titular'] = settings.bank_titular;
+        
         await update(ref(rtdb), updates);
-        toast({ title: "Definições Actualizadas", description: "O número de apoio foi actualizado com sucesso." });
+        toast({ title: "Definições Actualizadas", description: "As configurações foram sincronizadas com todos os membros." });
       } catch (err) {
         toast({ title: "Erro", description: "Não foi possível actualizar as definições.", variant: "destructive" });
       } finally {

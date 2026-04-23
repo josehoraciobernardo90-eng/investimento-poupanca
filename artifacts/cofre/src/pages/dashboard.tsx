@@ -12,13 +12,14 @@ import { TechSlideshow } from "@/components/dashboard/TechSlideshow";
 import { BankingCharts } from "@/components/dashboard/BankingCharts";
 import { useSystemAudit } from "@/hooks/use-audit";
 import { useRequests, useAdminComissao, useUpdateSettings } from "@/hooks/use-requests";
-import { Loader2, Wallet, Zap, TrendingUp, AlertCircle, ShieldAlert, Activity, Database, History, Coins, Clock, Settings, BarChart3, Building2, CheckCircle2, X, Star, Phone } from "lucide-react";
+import { Loader2, Wallet, Zap, TrendingUp, AlertCircle, ShieldAlert, Activity, Database, History, Coins, Clock, Settings, BarChart3, Building2, CheckCircle2, X, Star, Phone, CreditCard } from "lucide-react";
 import React, { useState, ReactNode } from "react";
 import { dbStore } from "@/data/firebase-data";
 import { InnovationHub } from "@/components/dashboard/InnovationHub";
 import { CommunityPerformance } from "@/components/dashboard/CommunityPerformance";
 import { GeralIntelligence } from "@/components/dashboard/GeralIntelligence";
 import { NotificationHub } from "@/components/dashboard/NotificationHub";
+import { useToast } from "@/hooks/use-toast";
 
 function CorporatePanel({ children, className }: { children: ReactNode; className?: string }) {
   return (
@@ -43,6 +44,7 @@ export default function DashboardPage() {
   const { runAudit, isAuditing } = useSystemAudit();
   const comissao = useAdminComissao();
   const updateSettings = useUpdateSettings();
+  const { toast } = useToast();
   const [photoPreview, setPhotoPreview] = useState<{ url: string, name: string } | null>(null);
 
   if (isLoading) return <PageLoader />;
@@ -57,10 +59,15 @@ export default function DashboardPage() {
 
   const emprestimosStatus = (loans || [])
     .filter(l => l.status !== "Liquidado")
-    .map(l => ({ ...l, autoFreezeStatus: calcularStatusEmprestimo(l.valor_original, l.data_inicio) }));
+    .map(l => ({ ...l, autoFreezeStatus: calcularStatusEmprestimo(l.valor_original, l.data_inicio, l.valor_pago || 0) }));
 
-  // --- CÁLCULO PROFISSIONAL DO PATRIMÓNIO GLOBAL (VALOR DE MERCADO) ---
+  // --- CÁLCULO PROFISSIONAL E RIGOROSO DO PATRIMÓNIO GLOBAL ---
   let globalCaixa = 0;
+  let globalLucroRealizado = 0; // Soma do lucro real já distribuído aos membros
+  Object.values(dbStore.users || {}).forEach((u: any) => {
+    globalLucroRealizado += u.lucro_acumulado || 0;
+  });
+
   Object.values(dbStore.userDetails || {}).forEach((ud: any) => {
     globalCaixa += ud.emCaixa || 0;
   });
@@ -70,19 +77,22 @@ export default function DashboardPage() {
   let activeContracts = 0;
   (dbStore.loans || []).forEach((l: any) => {
     if (l.status === "Aprovado" || l.status === "Ativo" || l.status === "Atrasado" || l.status === "Auditoria" || l.status === "Em Processo") {
-      globalNaRua += l.valor_original || 0;
-      const status = calcularStatusEmprestimo(l.valor_original, l.data_inicio);
+      const status = calcularStatusEmprestimo(l.valor_original, l.data_inicio, l.valor_pago || 0);
+      globalNaRua += status.totalDevido;
       jurosProjectados += status.juro;
       activeContracts++;
     }
   });
 
-  // O Lucro Global (Realizado) já está no globalCaixa dos membros.
-  // O Património Total do Fundo é: Líquido em Caixa + Contratos a Decorrer (Principal + Juro Vital)
-  const globalLucro = (dbStore.dashboard?.lucros || 0) + jurosProjectados;
-  const patrimonyGlobal = globalCaixa + globalNaRua + jurosProjectados;
+  // 1. O Património Físico (O que existe agora no ecossistema)
+  const patrimonyGlobal = globalCaixa + globalNaRua;
+  
+  // 2. O Lucro Global (O que foi ganho + o que está por vir)
+  // Usamos a soma dos lucros dos membros para evitar inconsistências de contadores globais
+  const globalLucro = globalLucroRealizado + jurosProjectados;
+  
   const membrosCount = (dbStore.users || []).length;
-  // -----------------------------------------
+  // -------------------------------------------------------------
 
   return (
     <div className="space-y-8 pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -589,34 +599,193 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Suporte ao Cliente */}
-          <div className="p-8 rounded-[2rem] bg-[#0A1121] border border-white/5 mt-6 shadow-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-10 transition-opacity">
-               <Phone className="w-32 h-32" />
+          {/* Suporte ao Cliente (Tecnologia de Última Geração) */}
+          <div className="p-8 rounded-[2.5rem] bg-[#0A1121]/80 backdrop-blur-xl border border-indigo-500/10 mt-6 shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-10 transition-opacity pointer-events-none">
+               <Phone className="w-48 h-48 text-indigo-500" />
             </div>
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
-              <div className="flex items-center gap-5">
-                <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 shadow-lg">
-                  <Phone className="w-7 h-7 text-indigo-400" />
+            
+            {/* Animated Glow */}
+            <div className="absolute -left-20 -top-20 w-64 h-64 bg-indigo-500/5 blur-[100px] rounded-full pointer-events-none" />
+
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 relative z-10">
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center border border-indigo-500/30 shadow-xl group-hover:scale-105 transition-transform duration-500">
+                    <Phone className="w-8 h-8 text-indigo-400 group-hover:animate-bounce" />
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-[#0A1121] rounded-full animate-pulse" title="Sistema Sincronizado" />
                 </div>
                 <div>
-                  <h4 className="font-display text-xl font-bold text-white italic uppercase tracking-tighter">Apoio ao Cliente</h4>
-                  <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.2em] mb-1">Linha Telemática Directa</p>
-                  <p className="text-xs text-slate-400 font-medium max-w-md">
-                    Defina o número que os membros visualizarão como suporte oficial do Cofre.
+                  <h4 className="font-display text-2xl font-black text-white italic uppercase tracking-tighter leading-none mb-2">Linha de Apoio Directa</h4>
+                  <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping" />
+                    Protocolo de Suporte em Tempo Real
+                  </p>
+                  <p className="text-xs text-slate-400 font-medium max-w-sm leading-relaxed">
+                    Este número será projectado instantaneamente em todas as telas de membros congelados ou em dificuldades.
                   </p>
                 </div>
               </div>
 
-              <div className="w-full md:w-auto flex items-center gap-2">
-                 <input 
-                   type="text"
-                   defaultValue={dbStore.dashboard.support_phone || ""}
-                   placeholder="+258 84 000 0000"
-                   onBlur={(e) => updateSettings.mutateAsync({ support_phone: e.target.value })}
-                   className="flex-1 md:w-64 h-12 bg-black/40 border border-white/10 rounded-xl px-4 text-sm font-mono text-white placeholder:text-white/10 focus:outline-none focus:border-indigo-500/50 transition-all"
-                 />
-                 {updateSettings.isPending && <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />}
+              <div className="w-full md:w-auto space-y-3">
+                <div className="relative group/input">
+                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within/input:text-indigo-400 transition-colors">
+                      <Phone className="w-4 h-4" />
+                   </div>
+                   <input 
+                     type="text"
+                     defaultValue={dbStore.dashboard.support_phone || ""}
+                     placeholder="+258 84 000 0000"
+                     onBlur={(e) => updateSettings.mutateAsync({ support_phone: e.target.value })}
+                     className="w-full md:w-80 h-14 bg-black/40 border border-white/10 group-hover/input:border-indigo-500/30 rounded-2xl pl-12 pr-4 text-sm font-mono text-white placeholder:text-white/10 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-inner"
+                   />
+                   <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                      {updateSettings.isPending && (
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                          <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
+                        </motion.div>
+                      )}
+                      {!updateSettings.isPending && dbStore.dashboard.support_phone && (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 opacity-50" />
+                      )}
+                   </div>
+                </div>
+                <div className="flex items-center gap-2 px-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500/40" />
+                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">A sincronização é imediata e atómica via Gogoma Cloud</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Canais de Pagamento (M-Pesa, E-Mola, Banco) */}
+          <div className="p-8 rounded-[2.5rem] bg-[#0A1121]/80 backdrop-blur-xl border border-blue-500/10 mt-6 shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-10 transition-opacity pointer-events-none">
+               <CreditCard className="w-48 h-48 text-blue-500" />
+            </div>
+            
+            <div className="flex flex-col gap-8 relative z-10">
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-emerald-500/20 flex items-center justify-center border border-blue-500/30 shadow-xl">
+                  <CreditCard className="w-8 h-8 text-blue-400" />
+                </div>
+                <div>
+                  <h4 className="font-display text-2xl font-black text-white italic uppercase tracking-tighter leading-none mb-2">Canais de Recebimento</h4>
+                  <p className="text-[10px] text-blue-400 font-black uppercase tracking-[0.3em]">Gestão de Fluxo Financeiro em Tempo Real</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* M-Pesa */}
+                <div className="space-y-3 bg-white/[0.02] p-4 rounded-2xl border border-white/5">
+                  <div className="flex items-center gap-2 px-1">
+                    <div className="w-2 h-2 rounded-full bg-rose-500" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">M-Pesa (Vodacom)</span>
+                  </div>
+                  <input 
+                    type="text"
+                    maxLength={9}
+                    defaultValue={dbStore.dashboard.mpesa_number || ""}
+                    placeholder="Esq: 840000000 (9 Digitos)"
+                    onBlur={(e) => {
+                      const clean = e.target.value.replace(/\D/g, "").slice(0, 9);
+                      if (clean.length === 9 || clean.length === 0) {
+                        updateSettings.mutateAsync({ mpesa_number: clean });
+                        e.target.value = clean;
+                      } else {
+                        toast({ title: "Número Inválido", description: "O número M-Pesa deve ter exactamente 9 dígitos.", variant: "destructive" });
+                      }
+                    }}
+                    className="w-full h-10 bg-black/40 border border-white/10 rounded-xl px-4 text-[10px] font-mono text-white focus:border-rose-500/50 focus:outline-none transition-all placeholder:text-white/10"
+                  />
+                  <input 
+                    type="text"
+                    defaultValue={dbStore.dashboard.mpesa_name || ""}
+                    placeholder="Nome do Titular"
+                    onBlur={(e) => updateSettings.mutateAsync({ mpesa_name: e.target.value })}
+                    className="w-full h-10 bg-black/40 border border-white/10 rounded-xl px-4 text-[10px] text-white focus:border-rose-500/50 focus:outline-none transition-all placeholder:text-white/10"
+                  />
+                </div>
+
+                {/* E-Mola */}
+                <div className="space-y-3 bg-white/[0.02] p-4 rounded-2xl border border-white/5">
+                  <div className="flex items-center gap-2 px-1">
+                    <div className="w-2 h-2 rounded-full bg-orange-500" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">E-Mola (Movitel)</span>
+                  </div>
+                  <input 
+                    type="text"
+                    maxLength={9}
+                    defaultValue={dbStore.dashboard.emola_number || ""}
+                    placeholder="Esq: 860000000 (9 Digitos)"
+                    onBlur={(e) => {
+                      const clean = e.target.value.replace(/\D/g, "").slice(0, 9);
+                      if (clean.length === 9 || clean.length === 0) {
+                        updateSettings.mutateAsync({ emola_number: clean });
+                        e.target.value = clean;
+                      } else {
+                        toast({ title: "Número Inválido", description: "O número E-Mola deve ter exactamente 9 dígitos.", variant: "destructive" });
+                      }
+                    }}
+                    className="w-full h-10 bg-black/40 border border-white/10 rounded-xl px-4 text-[10px] font-mono text-white focus:border-orange-500/50 focus:outline-none transition-all placeholder:text-white/10"
+                  />
+                  <input 
+                    type="text"
+                    defaultValue={dbStore.dashboard.emola_name || ""}
+                    placeholder="Nome do Titular"
+                    onBlur={(e) => updateSettings.mutateAsync({ emola_name: e.target.value })}
+                    className="w-full h-10 bg-black/40 border border-white/10 rounded-xl px-4 text-[10px] text-white focus:border-orange-500/50 focus:outline-none transition-all placeholder:text-white/10"
+                  />
+                </div>
+
+                {/* Conta Bancária */}
+                <div className="space-y-3 bg-white/[0.02] p-4 rounded-2xl border border-white/5">
+                  <div className="flex items-center gap-2 px-1">
+                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Instituição Bancária</span>
+                  </div>
+                  <input 
+                    list="mocambique-banks"
+                    type="text"
+                    defaultValue={dbStore.dashboard.bank_name || ""}
+                    placeholder="Escolha o Banco"
+                    onBlur={(e) => updateSettings.mutateAsync({ bank_name: e.target.value })}
+                    className="w-full h-10 bg-black/40 border border-white/10 rounded-xl px-4 text-[10px] text-white focus:border-blue-500/50 focus:outline-none transition-all placeholder:text-white/10"
+                  />
+                  <datalist id="mocambique-banks">
+                    <option value="Millennium BIM" />
+                    <option value="BCI" />
+                    <option value="Standard Bank" />
+                    <option value="Moza Banco" />
+                    <option value="FNB" />
+                    <option value="ABSA Bank" />
+                    <option value="Nedbank" />
+                  </datalist>
+                  <input 
+                    type="text"
+                    maxLength={21}
+                    defaultValue={dbStore.dashboard.bank_number || ""}
+                    placeholder="NID (21 Digitos)"
+                    onBlur={(e) => {
+                      const clean = e.target.value.replace(/\D/g, "").slice(0, 21);
+                      if (clean.length === 21 || clean.length === 0) {
+                        updateSettings.mutateAsync({ bank_number: clean });
+                        e.target.value = clean;
+                      } else {
+                        toast({ title: "NIB Inválido", description: "O número bancário (NIB) deve ter exactamente 21 dígitos.", variant: "destructive" });
+                      }
+                    }}
+                    className="w-full h-10 bg-black/40 border border-white/10 rounded-xl px-4 text-[10px] font-mono text-white focus:border-blue-500/50 focus:outline-none transition-all placeholder:text-white/10"
+                  />
+                  <input 
+                    type="text"
+                    defaultValue={dbStore.dashboard.bank_titular || ""}
+                    placeholder="Nome do Titular"
+                    onBlur={(e) => updateSettings.mutateAsync({ bank_titular: e.target.value })}
+                    className="w-full h-10 bg-black/40 border border-white/10 rounded-xl px-4 text-[10px] text-white focus:border-blue-500/50 focus:outline-none transition-all placeholder:text-white/10"
+                  />
+                </div>
               </div>
             </div>
           </div>
