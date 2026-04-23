@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ref, update } from "firebase/database";
 import { rtdb } from "@/lib/firebase";
 import { dbStore } from "@/data/firebase-data";
+import { calcularStatusEmprestimo } from "@/lib/auto-freeze";
 
 export function useRequests() {
   useMockDataSync();
@@ -1017,16 +1018,17 @@ export function useApproveLiquidationRequest() {
         const updates: any = {};
         const loan = detail.loan;
         const totalPagoNestaRodada = req.valor;
-        const totalAnteriormenteDevido = loan.total_devido;
         
         // 🧮 Lógica Profissional de Divisão de Lucro (Tecnologia Gogoma)
         const status = calcularStatusEmprestimo(loan.valor_original, loan.data_inicio, loan.valor_pago || 0);
         const taxa = status.taxaAtual; // 10, 20 ou 50
         
+        // Verifica se estão a pagar o total devido agora
+        const totalAindaDevido = status.totalDevido;
+        const isLiquidacaoTotal = totalPagoNestaRodada >= (totalAindaDevido - 10); // Margem de 0.10 MTn para arredondamentos
+        const valorRealmenteAbatido = Math.min(totalPagoNestaRodada, totalAindaDevido);
+
         // Fator de lucro: Se taxa é 10%, o lucro é 10/110 do montante pago (Capital + Juro).
-        // Se houver multa, ela é 100% lucro.
-        const valorRealmenteAbatido = totalPagoNestaRodada; // Assumindo valor total como abatimento
-        const isLiquidacaoTotal = totalPagoNestaRodada >= totalAnteriormenteDevido;
         const fatorLucro = taxa / (100 + taxa);
         const lucroBruto = Math.round(valorRealmenteAbatido * fatorLucro);
 
