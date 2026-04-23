@@ -32,13 +32,19 @@ export default function MemberDetailPage() {
   if (!data) return <div className="text-destructive p-8 bg-destructive/10 rounded-xl">Membro não encontrado.</div>;
 
   const toggleStatus = async () => {
-    await updateMutation.mutateAsync({
-      userId: id,
-      data: {
-        status: data.user.status === "Ativo" ? "Congelado" : "Ativo"
-      }
-    });
+    // Close modal BEFORE mutation to avoid DOM reconciliation conflicts during re-render
     setIsConfirmOpen(false);
+    
+    try {
+      await updateMutation.mutateAsync({
+        userId: id,
+        data: {
+          status: data.user.status === "Ativo" ? "Congelado" : "Ativo"
+        }
+      });
+    } catch (error) {
+      console.error("Erro ao alternar status do membro:", error);
+    }
   };
 
   // Professional Limit Calculation
@@ -65,7 +71,14 @@ export default function MemberDetailPage() {
           disabled={updateMutation.isPending}
           className="flex items-center gap-2 glass-panel px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-white/5 transition-colors disabled:opacity-50"
         >
-          {data.user.status === "Ativo" ? <><Lock className="w-4 h-4 text-warning" /> Congelar Conta</> : <><Unlock className="w-4 h-4 text-success" /> Ativar Conta</>}
+          <span className="flex items-center gap-2">
+            {data.user.status === "Ativo" ? (
+              <Lock className="w-4 h-4 text-warning" />
+            ) : (
+              <Unlock className="w-4 h-4 text-success" />
+            )}
+            <span>{data.user.status === "Ativo" ? "Congelar Conta" : "Ativar Conta"}</span>
+          </span>
         </button>
       </div>
 
