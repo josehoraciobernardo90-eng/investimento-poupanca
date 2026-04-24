@@ -41,15 +41,12 @@ self.addEventListener('push', event => {
     body: data.message || "Há uma nova atualização na sua conta.",
     icon: '/icon-192.png',
     badge: '/icon-192.png',
-    vibrate: [100, 50, 100, 50, 400], // Vibração em segundo plano
+    vibrate: [200, 100, 200, 100, 500, 100, 200], // Vibração de Alta Intensidade
+    tag: 'elite-approval',
+    renotify: true,
     data: {
-      dateOfArrival: Date.now(),
-      primaryKey: '2'
-    },
-    actions: [
-      { action: 'explore', title: 'Abrir App' },
-      { action: 'close', title: 'Fechar' },
-    ]
+      url: '/'
+    }
   };
 
   event.waitUntil(
@@ -57,10 +54,22 @@ self.addEventListener('push', event => {
   );
 });
 
-// Clique na Notificação (Trazer para Primeiro Plano)
+// Clique na Notificação (Trazer para Primeiro Plano e disparar Flash)
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(
-    clients.openWindow('/')
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+      // Se já houver uma janela aberta, foca nela
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i];
+        if (client.url === '/' && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Se não, abre uma nova
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
   );
 });

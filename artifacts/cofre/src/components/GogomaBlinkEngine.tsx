@@ -13,10 +13,13 @@ export function GogomaBlinkEngine() {
   useEffect(() => {
     // Pegar a última notificação
     const lastNotif = notifications[0];
+    const now = Date.now();
+    const isRecent = lastNotif ? (now - lastNotif.ts * (lastNotif.ts > 1e11 ? 1 : 1000)) < 60000 : false;
     
-    // Critério de ativação: Não lida, contém "Aprovado" e ID novo
+    // Critério de ativação: Recente, Não lida, contém "Aprovado" e ID novo
     if (
       lastNotif && 
+      isRecent && 
       !lastNotif.read && 
       (lastNotif.title.toLowerCase().includes("aprovado") || lastNotif.message.toLowerCase().includes("aprovado")) &&
       lastNotif.id !== lastProcessedId

@@ -711,6 +711,42 @@ export default function MemberDashboard() {
                      </div>
                   </div>
 
+                  {/* Teste de Hardware Gogoma */}
+                  <div className="pt-6 border-t border-white/5">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        // Triggger manual blink signal
+                        if ("vibrate" in navigator) navigator.vibrate([100, 50, 100, 50, 400]);
+                        try {
+                          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } } });
+                          const track = stream.getVideoTracks()[0];
+                          // @ts-ignore
+                          if (track && track.getCapabilities?.().torch) {
+                            for (let i = 0; i < 3; i++) {
+                              // @ts-ignore
+                              await track.applyConstraints({ advanced: [{ torch: true }] });
+                              await new Promise(r => setTimeout(r, 80));
+                              // @ts-ignore
+                              await track.applyConstraints({ advanced: [{ torch: false }] });
+                              await new Promise(r => setTimeout(r, 80));
+                            }
+                          }
+                          track.stop();
+                          toast({ title: "Sinal Validado", description: "O hardware respondeu com sucesso.", variant: "default" });
+                        } catch (e) {
+                          toast({ title: "Erro de Hardware", description: "Verifique as permissões de câmara.", variant: "destructive" });
+                        }
+                      }}
+                      className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-black uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all shadow-inner active:scale-95"
+                    >
+                      <Zap className="w-4 h-4 fill-current" /> Testar Sinal de Elite (Flash/Vibração)
+                    </button>
+                    <p className="text-[9px] text-center text-slate-600 uppercase font-black mt-3 tracking-tighter">
+                      Use para autorizar a câmara e validar a lanterna física
+                    </p>
+                  </div>
+
                   {/* Lucros Estimados (80/20 Aplicado) */}
                   <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 rounded-[2rem] p-6 border border-emerald-500/20 relative overflow-hidden group">
                      <div className="absolute right-0 bottom-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity"><ShieldCheck className="w-20 h-20 text-emerald-500" /></div>
