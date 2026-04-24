@@ -4,35 +4,39 @@
  */
 
 export const eliteNotify = {
-  // 1. Notificação Visual e Sonora (Mesmo em background se PWA instalado)
+  // 1. Notificação Visual e Sonora (Foco em Intensidade)
   send: async (title: string, body: string) => {
-    // Tocar Som Selecionado
-    const selectedSound = localStorage.getItem("cofre_tone") || "elite";
+    // Som de Aprovação de Alta Prioridade
     const sounds: any = {
       elite: "https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3",
-      digital: "https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3",
-      success: "https://assets.mixkit.co/active_storage/sfx/2016/2016-preview.mp3"
     };
 
-    const audio = new Audio(sounds[selectedSound]);
-    audio.play().catch(() => {});
+    const audio = new Audio(sounds.elite);
+    audio.volume = 1.0;
+    audio.play().catch(() => {
+      console.warn("Autoplay bloqueado pelo browser. O sinal sonoro requer interação prévia.");
+    });
 
-    // Vibrar Telemóvel (Padrão: 200ms vibra, 100ms pausa, 200ms vibra)
+    // Padrão de Vibração de Urgência (Mais longo para ser sentido no bolso)
     if ("vibrate" in navigator) {
-      navigator.vibrate([200, 100, 200]);
+      navigator.vibrate([200, 100, 200, 100, 500]);
     }
 
-    // Notificação de Sistema (Push)
+    // Notificação Nativa do Sistema
     if (Notification.permission === "granted") {
-      new Notification(title, {
-        body,
-        icon: "/icons/icon-192x192.png",
-        badge: "/icons/icon-192x192.png"
-      });
-    } else if (Notification.permission !== "denied") {
-      const permission = await Notification.requestPermission();
-      if (permission === "granted") {
-        new Notification(title, { body });
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) {
+        // Enviar via Service Worker (Melhor para background)
+        reg.showNotification(title, {
+          body,
+          icon: "/icon-192.png",
+          badge: "/icon-192.png",
+          vibrate: [200, 100, 200, 100, 500],
+          tag: 'approval-notif',
+          renotify: true
+        } as any);
+      } else {
+        new Notification(title, { body, icon: "/icon-192.png" } as any);
       }
     }
   }

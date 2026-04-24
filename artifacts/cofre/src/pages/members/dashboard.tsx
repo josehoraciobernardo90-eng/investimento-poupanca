@@ -102,7 +102,6 @@ export default function MemberDashboard() {
   const [simAmount, setSimAmount] = useState(10000);
   const [isProfitModalOpen, setIsProfitModalOpen] = useState(false);
   const [profileTorch, setProfileTorch] = useState(false);
-  const [lastBlinkedId, setLastBlinkedId] = useState<string | null>(null);
 
   const createLoanMut = useCreateLoanRequest();
   const createDepositMut = useCreateDepositRequest();
@@ -132,50 +131,6 @@ export default function MemberDashboard() {
 
   const [newPhoto, setNewPhoto] = useState<string | null>(null);
 
-  // ⚡ GOGOMA BLINK ENGINE (Sinal de Aprovação do Patrão)
-  useEffect(() => {
-    const lastNotif = notifications[0];
-    if (lastNotif && !lastNotif.read && lastNotif.title.includes("Aprovado") && lastNotif.id !== lastBlinkedId) {
-      setLastBlinkedId(lastNotif.id);
-      triggerGogomaBlink();
-    }
-  }, [notifications.length, notifications]);
-
-  const triggerGogomaBlink = async () => {
-    // 1. Haptic Feedback
-    if ("vibrate" in navigator) {
-      navigator.vibrate([100, 50, 100, 50, 300]);
-    }
-
-    // 2. Hardware Torch Blink (Com Stream de Fundo Invisível)
-    let tempStream: MediaStream | null = null;
-    try {
-      // Tentar capturar a câmara traseira em background
-      tempStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: "environment" } 
-      });
-      
-      const track = tempStream.getVideoTracks()[0];
-      if (track) {
-        // Sequência de 3 piscadelas stealth
-        for (let i = 0; i < 3; i++) {
-          // @ts-ignore
-          await track.applyConstraints({ advanced: [{ torch: true }] });
-          await new Promise(r => setTimeout(r, 80));
-          // @ts-ignore
-          await track.applyConstraints({ advanced: [{ torch: false }] });
-          await new Promise(r => setTimeout(r, 80));
-        }
-      }
-    } catch (err) {
-      console.warn("Silent Blink: Hardware não permitiu acesso em background.");
-    } finally {
-      // Encerrar o canal imediatamente para poupar bateria e privacidade
-      if (tempStream) {
-        tempStream.getTracks().forEach(t => t.stop());
-      }
-    }
-  };
 
   if (!memberUser || !memberDetails) return null;
 

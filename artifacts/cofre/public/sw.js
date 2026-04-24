@@ -1,18 +1,66 @@
-// Minimal Service Worker para permitir a instalação no Android
-const CACHE_NAME = 'cofre-capital-cache-v1';
+/**
+ * 📡 ELITE PWA SERVICE WORKER v2.0
+ * Gerencia cache e notificações em segundo plano.
+ */
 
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
+const CACHE_NAME = 'cofre-elite-cache-v1';
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/manifest.json'
+];
+
+// Instalação do Service Worker
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
+  );
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
-});
-
-self.addEventListener('fetch', (event) => {
+// Interceção de chamadas (Offline Support)
+self.addEventListener('fetch', event => {
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
-    })
+    caches.match(event.request)
+      .then(response => response || fetch(event.request))
+  );
+});
+
+// 🔔 LIGAR O MOTOR DE NOTIFICAÇÕES (Segundo Plano)
+self.addEventListener('push', event => {
+  let data = {};
+  if (event.data) {
+    try {
+        data = event.data.json();
+    } catch (e) {
+        data = { title: "Cofre Capital", message: event.data.text() };
+    }
+  }
+
+  const options = {
+    body: data.message || "Há uma nova atualização na sua conta.",
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    vibrate: [100, 50, 100, 50, 400], // Vibração em segundo plano
+    data: {
+      dateOfArrival: Date.now(),
+      primaryKey: '2'
+    },
+    actions: [
+      { action: 'explore', title: 'Abrir App' },
+      { action: 'close', title: 'Fechar' },
+    ]
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || "Elite Approval", options)
+  );
+});
+
+// Clique na Notificação (Trazer para Primeiro Plano)
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow('/')
   );
 });

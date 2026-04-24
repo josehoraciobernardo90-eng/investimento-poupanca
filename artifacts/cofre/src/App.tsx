@@ -22,6 +22,7 @@ import NotFound from "@/pages/not-found";
 import { LandingPage } from "@/components/layout/LandingPage";
 import { useAdmin } from "@/hooks/use-admin";
 import { FrozenAccountScreen } from "@/components/layout/FrozenAccountScreen";
+import { GogomaBlinkEngine } from "@/components/GogomaBlinkEngine";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -110,6 +111,7 @@ function AppContent() {
 
     return (
       <AnimatePresence mode="wait">
+        <GogomaBlinkEngine />
         {memberUser?.needsProfileSetup ? (
           <ProfileSetupScreen key="setup-screen" />
         ) : (
